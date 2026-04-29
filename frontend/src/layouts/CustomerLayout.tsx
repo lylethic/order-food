@@ -29,7 +29,7 @@ export interface CustomerOutletContext {
 // ─── Layout ───────────────────────────────────────────────────────────────────
 
 export default function CustomerLayout() {
-  const { user, token, isStaff, logout } = useAuthContext();
+  const { user, token, isStaff, isLoading, logout } = useAuthContext();
   const { t } = useLang();
   const navigate = useNavigate();
   const { pathname } = useLocation();
@@ -42,17 +42,18 @@ export default function CustomerLayout() {
   const [placedOrder, setPlacedOrder] = useState<PlacedOrder | null>(null);
 
   // Role guards
-  if (!user) return <Navigate to="/auth" replace />;
-  if (isStaff) return <Navigate to="/kitchen" replace />;
+  if (isLoading) return null;
+  if (!user) return <Navigate to='/auth' replace />;
+  if (isStaff) return <Navigate to='/kitchen' replace />;
 
   const navItems: NavItem[] = [
-    { id: 'menu',   label: t.menu,   icon: UtensilsCrossed },
-    { id: 'status', label: t.status, icon: ClipboardList   },
+    { id: 'menu', label: t.menu, icon: UtensilsCrossed },
+    { id: 'status', label: t.status, icon: ClipboardList },
   ];
 
   const activeTab = pathname.startsWith('/status') ? 'status' : 'menu';
-  const topTitle    = activeTab === 'status' ? t.orderStatus : t.ourMenu;
-  const topSubtitle = activeTab === 'status' ? t.statusSub   : t.menuSub;
+  const topTitle = activeTab === 'status' ? t.orderStatus : t.ourMenu;
+  const topSubtitle = activeTab === 'status' ? t.statusSub : t.menuSub;
 
   const handlePlaceOrder = async (tableNumber: string) => {
     setPlacing(true);
@@ -70,6 +71,7 @@ export default function CustomerLayout() {
         ticketNumber: order.ticketNumber,
         table: order.table,
         status: order.status as OrderStatus,
+        total: order.total,
       });
       clearCart();
       setCartOpen(false);
@@ -82,7 +84,9 @@ export default function CustomerLayout() {
   const onCancelOrder = async () => {
     if (!placedOrder) return;
     await api.cancelOrder(placedOrder.id);
-    setPlacedOrder((p) => (p ? { ...p, status: 'Cancelled' as OrderStatus } : null));
+    setPlacedOrder((p) =>
+      p ? { ...p, status: 'Cancelled' as OrderStatus } : null,
+    );
   };
 
   const outletCtx: CustomerOutletContext = {
@@ -98,7 +102,7 @@ export default function CustomerLayout() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex">
+    <div className='min-h-screen bg-slate-50 flex'>
       <Sidebar
         items={navItems}
         active={activeTab}
@@ -107,7 +111,7 @@ export default function CustomerLayout() {
         onLogout={logout}
       />
 
-      <div className="flex-1 md:ml-64 flex flex-col">
+      <div className='flex-1 md:ml-64 flex flex-col'>
         <TopBar
           title={topTitle}
           subtitle={topSubtitle}
@@ -116,10 +120,10 @@ export default function CustomerLayout() {
             count > 0 ? (
               <button
                 onClick={() => setCartOpen(true)}
-                className="relative p-2 hover:bg-slate-100 rounded-xl text-slate-600 transition-all"
+                className='relative p-2 hover:bg-slate-100 rounded-xl text-slate-600 transition-all'
               >
-                <ShoppingCart className="w-5 h-5" />
-                <span className="absolute -top-1 -right-1 bg-indigo-600 text-white text-[10px] font-extrabold w-4 h-4 rounded-full flex items-center justify-center">
+                <ShoppingCart className='w-5 h-5' />
+                <span className='absolute -top-1 -right-1 bg-indigo-600 text-white text-[10px] font-extrabold w-4 h-4 rounded-full flex items-center justify-center'>
                   {count}
                 </span>
               </button>
@@ -127,7 +131,7 @@ export default function CustomerLayout() {
           }
         />
 
-        <main className="flex-1">
+        <main className='flex-1'>
           <Outlet context={outletCtx} />
         </main>
       </div>

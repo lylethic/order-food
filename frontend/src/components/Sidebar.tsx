@@ -14,19 +14,19 @@ interface Props {
 export function Sidebar({ items, active, onChange, user, onLogout }: Props) {
   const { t } = useLang();
   return (
-    <aside className="hidden md:flex w-64 bg-white border-r border-slate-100 flex-col fixed h-full z-40">
+    <aside className='hidden md:flex w-64 bg-white border-r border-slate-100 flex-col fixed h-full z-40'>
       {/* Logo */}
-      <div className="p-7 flex items-center gap-3 border-b border-slate-50">
-        <div className="w-9 h-9 bg-indigo-600 rounded-xl flex items-center justify-center shadow-md shadow-indigo-100">
-          <UtensilsCrossed className="w-5 h-5 text-white" strokeWidth={2.5} />
+      <div className='p-7 flex items-center gap-3 border-b border-slate-50'>
+        <div className='w-9 h-9 bg-indigo-600 rounded-xl flex items-center justify-center shadow-md shadow-indigo-100'>
+          <UtensilsCrossed className='w-5 h-5 text-white' strokeWidth={2.5} />
         </div>
-        <span className="font-extrabold text-lg text-slate-800 italic uppercase tracking-tight">
-          Gourmet
+        <span className='font-extrabold text-lg text-slate-800 italic uppercase tracking-tight'>
+          RUBYKET
         </span>
       </div>
 
       {/* Nav items */}
-      <nav className="flex-1 px-4 py-6 space-y-1">
+      <nav className='flex-1 px-4 py-6 space-y-1'>
         {items.map((item) => (
           <button
             key={item.id}
@@ -38,7 +38,7 @@ export function Sidebar({ items, active, onChange, user, onLogout }: Props) {
             }`}
           >
             <item.icon
-              className="w-5 h-5"
+              className='w-5 h-5'
               strokeWidth={active === item.id ? 2.5 : 2}
             />
             {item.label}
@@ -47,23 +47,23 @@ export function Sidebar({ items, active, onChange, user, onLogout }: Props) {
       </nav>
 
       {/* User / logout */}
-      <div className="p-4 border-t border-slate-50">
-        <div className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 transition-all">
-          <div className="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center shrink-0">
-            <User className="w-4 h-4 text-indigo-600" />
+      <div className='p-4 border-t border-slate-50'>
+        <div className='flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 transition-all'>
+          <div className='w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center shrink-0'>
+            <User className='w-4 h-4 text-indigo-600' />
           </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold text-slate-800 truncate">
+          <div className='flex-1 min-w-0'>
+            <p className='text-sm font-bold text-slate-800 truncate'>
               {user.name || user.email}
             </p>
-            <p className="text-xs text-slate-400 font-medium">{user.role}</p>
+            <p className='text-xs text-slate-400 font-medium'>{user.role}</p>
           </div>
           <button
             onClick={onLogout}
-            className="text-slate-300 hover:text-rose-500 transition-colors p-1 rounded-lg"
+            className='text-slate-300 hover:text-rose-500 transition-colors p-1 rounded-lg'
             title={t.logout}
           >
-            <LogOut className="w-4 h-4" />
+            <LogOut className='w-4 h-4' />
           </button>
         </div>
       </div>

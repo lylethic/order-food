@@ -71,9 +71,18 @@ export const translations = {
     cancelling: 'Cancelling…',
     orderCancelled: 'Order Cancelled',
     steps: {
-      received: { label: 'Order Received', desc: "We've confirmed your order." },
-      preparing: { label: 'Preparing', desc: 'Kitchen is gathering ingredients.' },
-      cooking: { label: 'Cooking', desc: 'Our chefs are working on your meal.' },
+      received: {
+        label: 'Order Received',
+        desc: "We've confirmed your order.",
+      },
+      preparing: {
+        label: 'Preparing',
+        desc: 'Kitchen is gathering ingredients.',
+      },
+      cooking: {
+        label: 'Cooking',
+        desc: 'Our chefs are working on your meal.',
+      },
       ready: { label: 'Ready to Serve', desc: 'Your order is ready!' },
       delivered: { label: 'Delivered', desc: 'Enjoy your meal!' },
       cancelled: { label: 'Cancelled', desc: 'This order was cancelled.' },
@@ -95,6 +104,18 @@ export const translations = {
     readyToServe: 'Ready to Serve',
     waitingDelivery: 'Orders waiting to be delivered.',
     newItems: 'ready',
+    unpaidOrders: 'Awaiting Payment',
+    unpaidSub: 'Delivered orders waiting for checkout.',
+    noUnpaidOrders: 'No orders waiting for payment.',
+    paymentMethod: 'Payment Method',
+    paymentStatus: 'Payment Status',
+    collectPayment: 'Collect Payment',
+    processingPayment: 'Processing payment…',
+    paid: 'Paid',
+    unpaid: 'Unpaid',
+    paidAt: 'Paid At',
+    paymentDone: 'Payment completed',
+    paymentFailed: 'Payment failed. Please try again.',
 
     // ── Role Selection / Sidebar Footer ─────────────────────────────────────
     chefSpecial: "Chef's Special",
@@ -174,9 +195,18 @@ export const translations = {
     cancelling: 'Đang hủy…',
     orderCancelled: 'Đã hủy đơn',
     steps: {
-      received: { label: 'Đã nhận đơn', desc: 'Chúng tôi đã xác nhận đơn hàng.' },
-      preparing: { label: 'Đang chuẩn bị', desc: 'Bếp đang tập hợp nguyên liệu.' },
-      cooking: { label: 'Đang chế biến', desc: 'Đầu bếp đang nấu món cho bạn.' },
+      received: {
+        label: 'Đã nhận đơn',
+        desc: 'Chúng tôi đã xác nhận đơn hàng.',
+      },
+      preparing: {
+        label: 'Đang chuẩn bị',
+        desc: 'Bếp đang tập hợp nguyên liệu.',
+      },
+      cooking: {
+        label: 'Đang chế biến',
+        desc: 'Đầu bếp đang nấu món cho bạn.',
+      },
       ready: { label: 'Sẵn sàng phục vụ', desc: 'Đơn hàng đã sẵn sàng!' },
       delivered: { label: 'Đã giao', desc: 'Chúc ngon miệng!' },
       cancelled: { label: 'Đã hủy', desc: 'Đơn hàng này đã bị hủy.' },
@@ -198,6 +228,18 @@ export const translations = {
     readyToServe: 'Sẵn sàng phục vụ',
     waitingDelivery: 'Đơn hàng chờ giao đến bàn.',
     newItems: 'sẵn sàng',
+    unpaidOrders: 'Chờ thanh toán',
+    unpaidSub: 'Các đơn đã giao đang chờ thu tiền.',
+    noUnpaidOrders: 'Không có đơn nào chờ thanh toán.',
+    paymentMethod: 'Phương thức thanh toán',
+    paymentStatus: 'Trạng thái thanh toán',
+    collectPayment: 'Thu tiền',
+    processingPayment: 'Đang xử lý thanh toán…',
+    paid: 'Đã thanh toán',
+    unpaid: 'Chưa thanh toán',
+    paidAt: 'Thời điểm thanh toán',
+    paymentDone: 'Thanh toán hoàn tất',
+    paymentFailed: 'Thanh toán thất bại. Vui lòng thử lại.',
 
     // ── Role Selection / Sidebar Footer ─────────────────────────────────────
     chefSpecial: 'Gợi ý Bếp trưởng',

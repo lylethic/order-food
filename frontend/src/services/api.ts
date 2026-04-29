@@ -2,6 +2,7 @@ import type {
   MenuItem,
   Order,
   OrderStatus,
+  PaymentMethod,
   Category,
   User,
   OrderDetail,
@@ -126,6 +127,19 @@ function normalizeOrderSummary(raw: Record<string, unknown>): OrderSummary {
     ticketNumber: String(raw.ticketNumber ?? raw.ticket_number ?? ''),
     table: String(raw.table ?? raw.table_number ?? ''),
     status: String(raw.status ?? 'Received') as OrderStatus,
+    isPaid: Boolean(raw.isPaid ?? raw.is_paid ?? false),
+    paymentMethod:
+      raw.paymentMethod != null
+        ? (String(raw.paymentMethod) as PaymentMethod)
+        : raw.payment_method != null
+          ? (String(raw.payment_method) as PaymentMethod)
+          : undefined,
+    paidAt:
+      raw.paidAt != null
+        ? String(raw.paidAt)
+        : raw.paid_at != null
+          ? String(raw.paid_at)
+          : undefined,
     timestamp: String(raw.timestamp ?? ''),
     itemCount: Number(raw.itemCount ?? raw.item_count ?? 0),
     total: Number(raw.total ?? 0),
@@ -245,6 +259,7 @@ export const api = {
     ticketNumber: string;
     table: string;
     status: string;
+    total: number;
   }> {
     const r = await fetch(`${BASE}/api/v1/orders`, {
       method: 'POST',
@@ -270,6 +285,23 @@ export const api = {
     const r = await fetch(`${BASE}/api/v1/orders/${id}/cancel`, {
       method: 'PUT',
       headers: jsonHeaders(),
+    });
+    return unwrap(r);
+  },
+
+  async markOrderPaid(
+    id: string,
+    paymentMethod: PaymentMethod,
+  ): Promise<{
+    id: string;
+    isPaid: boolean;
+    paymentMethod: PaymentMethod;
+    paidAt: string;
+  }> {
+    const r = await fetch(`${BASE}/api/v1/orders/${id}/payment`, {
+      method: 'PUT',
+      headers: jsonHeaders(),
+      body: JSON.stringify({ paymentMethod }),
     });
     return unwrap(r);
   },

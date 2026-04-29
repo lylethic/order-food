@@ -37,8 +37,20 @@ export const UpdateStatusSchema = z.object({
   status: z.enum(['Received', 'Preparing', 'Cooking', 'Ready', 'Delivered']),
 });
 
+export const PaymentMethodSchema = z.enum([
+  'Cash',
+  'Credit Card',
+  'E-Wallet',
+  'Bank Transfer',
+]);
+
+export const MarkOrderPaidSchema = z.object({
+  paymentMethod: PaymentMethodSchema,
+});
+
 // Inferred TypeScript types from schemas
 export type RegisterBodyType = z.infer<typeof RegisterSchema>;
 export type LoginRequest = z.infer<typeof LoginSchema>;
 export type CreateOrderBodyType = z.infer<typeof CreateOrderSchema>;
 export type UpdateStatusBodyType = z.infer<typeof UpdateStatusSchema>;
+export type MarkOrderPaidBodyType = z.infer<typeof MarkOrderPaidSchema>;

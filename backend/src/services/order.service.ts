@@ -4,6 +4,7 @@ import { AppError } from '../utils/AppError.js';
 import { orderEmitter } from '../lib/orderEvents.js';
 import type {
   CreateOrderBodyType,
+  MarkOrderPaidBodyType,
   UpdateStatusBodyType,
 } from '../schemas/validation.js';
 
@@ -20,6 +21,10 @@ export interface OrderDto {
   ticketNumber: string;
   table: string;
   status: string;
+  total: number;
+  isPaid: boolean;
+  paymentMethod?: string;
+  paidAt?: string;
   timestamp: string;
   waitLevel?: string;
   waitTimeMinutes?: number;
@@ -31,6 +36,7 @@ export interface OrderCreatedDto {
   ticketNumber: string;
   table: string;
   status: string;
+  total: number;
 }
 
 export interface OrderStatusDto {
@@ -43,9 +49,19 @@ export interface OrderSummaryDto {
   ticketNumber: string;
   table: string;
   status: string;
+  isPaid: boolean;
+  paymentMethod?: string;
+  paidAt?: string;
   timestamp: string;
   itemCount: number;
   total: number;
+}
+
+export interface OrderPaymentDto {
+  id: string;
+  isPaid: boolean;
+  paymentMethod: string;
+  paidAt: string;
 }
 
 const STAFF_ROLES = new Set(['admin', 'employee', 'chef']);
@@ -54,29 +70,52 @@ export const isStaffRole = (role: string) =>
 
 function formatOrderSummary(order: any): OrderSummaryDto {
   const items: any[] = order.items ?? [];
+  const total =
+    order.total != null
+      ? Number(order.total)
+      : Math.round(
+          items.reduce(
+            (sum: number, i: any) => sum + Number(i.price_at_order) * i.qty,
+            0,
+          ),
+        );
   return {
     id: order.id.toString(),
     ticketNumber: order.ticket_number,
     table: order.table_number,
     status: order.status,
+    isPaid: Boolean(order.is_paid),
+    paymentMethod: order.payment_method ?? undefined,
+    paidAt: order.paid_at ? (order.paid_at as Date).toISOString() : undefined,
     timestamp: (order.created as Date).toLocaleTimeString('en-US', {
       hour: '2-digit',
       minute: '2-digit',
     }),
     itemCount: items.reduce((sum: number, i: any) => sum + i.qty, 0),
-    total: items.reduce(
-      (sum: number, i: any) => sum + Number(i.price_at_order) * i.qty,
-      0,
-    ),
+    total,
   };
 }
 
 function formatOrder(order: any): OrderDto {
+  const items: any[] = order.items ?? [];
+  const total =
+    order.total != null
+      ? Number(order.total)
+      : Math.round(
+          items.reduce(
+            (sum: number, i: any) => sum + Number(i.price_at_order) * i.qty,
+            0,
+          ),
+        );
   return {
     id: order.id.toString(),
     ticketNumber: order.ticket_number,
     table: order.table_number,
     status: order.status,
+    total,
+    isPaid: Boolean(order.is_paid),
+    paymentMethod: order.payment_method ?? undefined,
+    paidAt: order.paid_at ? (order.paid_at as Date).toISOString() : undefined,
     timestamp: (order.created as Date).toLocaleTimeString('en-US', {
       hour: '2-digit',
       minute: '2-digit',
@@ -151,22 +190,31 @@ export const orderService = {
     }
 
     const menuItemMap = new Map(menuItems.map((mi) => [mi.id.toString(), mi]));
-    const ticketNumber = `GK-${Math.floor(10000 + Math.random() * 90000)}`;
+    const ticketNumber = `RBK-${Math.floor(10000 + Math.random() * 90000)}`;
+    const resolvedItems = dto.items.map((item) => {
+      const mi = menuItemMap.get(item.menuItemId);
+      return {
+        menuItemId: BigInt(item.menuItemId),
+        nameAtOrder: mi?.name ?? 'Unknown Item',
+        qty: item.qty,
+        priceAtOrder: Number(mi?.price ?? 0),
+        modifications: item.modifications ?? [],
+      };
+    });
+
+    const total = Math.round(
+      resolvedItems.reduce(
+        (sum, item) => sum + Number(item.priceAtOrder) * item.qty,
+        0,
+      ),
+    );
 
     const order = await orderDal.create(
       {
         tableNumber: dto.tableNumber,
         customerId: customerId ? BigInt(customerId) : undefined,
-        items: dto.items.map((item) => {
-          const mi = menuItemMap.get(item.menuItemId);
-          return {
-            menuItemId: BigInt(item.menuItemId),
-            nameAtOrder: mi?.name ?? 'Unknown Item',
-            qty: item.qty,
-            priceAtOrder: Number(mi?.price ?? 0),
-            modifications: item.modifications ?? [],
-          };
-        }),
+        total,
+        items: resolvedItems,
       },
       ticketNumber,
     );
@@ -176,6 +224,7 @@ export const orderService = {
       ticketNumber: order.ticket_number,
       table: order.table_number,
       status: order.status,
+      total: Number((order as any).total ?? total),
     };
   },
 
@@ -186,6 +235,7 @@ export const orderService = {
     const order = await orderDal.updateStatus(BigInt(id), dto.status);
     const result = { id: order.id.toString(), status: order.status };
     orderEmitter.emit('status', {
+      eventType: 'status',
       orderId: order.id.toString(),
       status: order.status,
     });
@@ -210,9 +260,52 @@ export const orderService = {
     const updated = await orderDal.updateStatus(BigInt(id), 'Cancelled');
     const result = { id: updated.id.toString(), status: updated.status };
     orderEmitter.emit('status', {
+      eventType: 'status',
       orderId: updated.id.toString(),
       status: updated.status,
     });
     return result;
+  },
+
+  async markPaid(
+    id: string,
+    dto: MarkOrderPaidBodyType,
+  ): Promise<OrderPaymentDto> {
+    const order = await orderDal.findById(BigInt(id));
+    if (!order) throw new AppError(404, 'Order not found');
+    const orderRow = order as any;
+
+    if (order.status !== 'Delivered') {
+      throw new AppError(409, 'Order can only be paid after it is delivered');
+    }
+
+    if (orderRow.is_paid) {
+      throw new AppError(409, 'Order is already paid');
+    }
+
+    const paidAt = new Date();
+    const updated = await orderDal.markAsPaid(
+      BigInt(id),
+      dto.paymentMethod,
+      paidAt,
+    );
+    if (!updated) throw new AppError(404, 'Order not found');
+    const updatedRow = updated as any;
+
+    orderEmitter.emit('payment', {
+      eventType: 'payment',
+      orderId: updated.id.toString(),
+      status: updated.status,
+      isPaid: true,
+      paymentMethod: updatedRow.payment_method ?? dto.paymentMethod,
+      paidAt: (updatedRow.paid_at ?? paidAt).toISOString(),
+    });
+
+    return {
+      id: updated.id.toString(),
+      isPaid: Boolean(updatedRow.is_paid),
+      paymentMethod: updatedRow.payment_method ?? dto.paymentMethod,
+      paidAt: (updatedRow.paid_at ?? paidAt).toISOString(),
+    };
   },
 };

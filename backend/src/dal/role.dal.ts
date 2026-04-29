@@ -49,4 +49,20 @@ export const roleDal = {
       data: { user_id: userId, role_id: roleId },
     });
   },
+
+  /** Remove assign Role's user */
+  async removeAssignRole(userId: bigint, roleId: bigint) {
+    return prisma.userRole.update({
+      where: {
+        user_id_role_id: {
+          user_id: userId,
+          role_id: roleId,
+        },
+      },
+      data: {
+        deleted: true,
+        active: false,
+      },
+    });
+  },
 };
