@@ -32,7 +32,7 @@ export function useAuth() {
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {
-    setState((s) => ({ ...s, isLoading: true, error: null }));
+    setState((s) => ({ ...s, error: null }));
     try {
       const { token } = await api.login(email, password);
       tokenStore.set(token);
@@ -40,14 +40,14 @@ export function useAuth() {
       setState({ user, token, isLoading: false, error: null });
     } catch (err) {
       const message = (err as Error).message;
-      setState((s) => ({ ...s, isLoading: false, error: message }));
+      setState((s) => ({ ...s, error: message }));
       throw err;
     }
   }, []);
 
   const register = useCallback(
     async (name: string, email: string, password: string) => {
-      setState((s) => ({ ...s, isLoading: true, error: null }));
+      setState((s) => ({ ...s, error: null }));
       try {
         // Attempt registration; some backends return a token directly
         const result = await api.register(name, email, password);
@@ -64,7 +64,7 @@ export function useAuth() {
         setState({ user, token, isLoading: false, error: null });
       } catch (err) {
         const message = (err as Error).message;
-        setState((s) => ({ ...s, isLoading: false, error: message }));
+        setState((s) => ({ ...s, error: message }));
         throw err;
       }
     },
@@ -76,9 +76,11 @@ export function useAuth() {
     setState({ user: null, token: null, isLoading: false, error: null });
   }, []);
 
+  const STAFF_ROLES = new Set(['ADMIN', 'EMPLOYEE', 'CHEF']);
+
   return {
     ...state,
-    isStaff: state.user ? state.user.role !== 'Customer' : false,
+    isStaff: state.user ? STAFF_ROLES.has(state.user.role) : false,
     login,
     register,
     logout,

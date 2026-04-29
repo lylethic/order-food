@@ -3,6 +3,7 @@ import { prisma } from '../lib/prisma.js';
 export interface CreateOrderData {
   tableNumber: string;
   customerId?: bigint;
+  total: number;
   items: Array<{
     menuItemId: bigint;
     nameAtOrder: string;
@@ -44,6 +45,7 @@ export const orderDal = {
         ticket_number: ticketNumber,
         table_number: data.tableNumber,
         status: 'Received',
+        total: data.total,
         customer_id: data.customerId,
         items: {
           create: data.items.map((item, idx) => ({
@@ -74,5 +76,18 @@ export const orderDal = {
       where: { id },
       data: { status },
     });
+  },
+
+  /** Mark an order as paid and persist payment metadata. */
+  async markAsPaid(id: bigint, paymentMethod: string, paidAt: Date) {
+    await prisma.$executeRaw`
+      UPDATE orders
+      SET is_paid = TRUE,
+          payment_method = ${paymentMethod},
+          paid_at = ${paidAt}
+      WHERE id = ${id}
+    `;
+
+    return prisma.order.findFirst({ where: { id, deleted: false } });
   },
 };

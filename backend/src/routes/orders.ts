@@ -1,10 +1,11 @@
 import { Router } from 'express';
 import { orderService } from '../services/order.service.js';
-import { orderEmitter, type OrderStatusEvent } from '../lib/orderEvents.js';
+import { orderEmitter, type OrderRealtimeEvent } from '../lib/orderEvents.js';
 import { authenticate } from '../middleware/auth.js';
-import { isStaff } from '../middleware/rbac.js';
+import { isEmployee, isStaff } from '../middleware/rbac.js';
 import {
   CreateOrderSchema,
+  MarkOrderPaidSchema,
   UpdateStatusSchema,
 } from '../schemas/validation.js';
 import { sendResponse, handleRouteError } from '../utils/response.js';
@@ -155,15 +156,17 @@ router.get('/orders/events', authenticate, (req, res) => {
   // Keep the connection alive through proxies / load balancers
   const heartbeat = setInterval(() => res.write(': heartbeat\n\n'), 30_000);
 
-  const onStatus = (event: OrderStatusEvent) => {
+  const onRealtime = (event: OrderRealtimeEvent) => {
     res.write(`data: ${JSON.stringify(event)}\n\n`);
   };
 
-  orderEmitter.on('status', onStatus);
+  orderEmitter.on('status', onRealtime);
+  orderEmitter.on('payment', onRealtime);
 
   req.on('close', () => {
     clearInterval(heartbeat);
-    orderEmitter.off('status', onStatus);
+    orderEmitter.off('status', onRealtime);
+    orderEmitter.off('payment', onRealtime);
   });
 });
 
@@ -354,5 +357,71 @@ router.put('/orders/:id/cancel', authenticate, async (req, res) => {
     handleRouteError(err, res);
   }
 });
+
+/**
+ * @swagger
+ * /api/v1/orders/{id}/payment:
+ *   put:
+ *     summary: Mark order as paid
+ *     tags: [Orders]
+ *     description: >
+ *       Confirms payment for a delivered order and stores payment metadata:
+ *       `is_paid`, `payment_method`, and `paid_at`.
+ *       Only staff responsible for checkout can perform this action.
+ *       Order must be in `Delivered` status and not already paid.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Order ID
+ *         example: '1714291200000'
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/MarkOrderPaidRequest'
+ *           example:
+ *             paymentMethod: E-Wallet
+ *     responses:
+ *       200:
+ *         description: Payment confirmed successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/MarkOrderPaidResponse'
+ *       400:
+ *         description: Validation error
+ *       401:
+ *         description: Missing or invalid token
+ *       403:
+ *         description: Insufficient permissions
+ *       404:
+ *         description: Order not found
+ *       409:
+ *         description: Order not delivered yet or already paid
+ */
+router.put(
+  '/orders/:id/payment',
+  authenticate,
+  isEmployee,
+  async (req, res) => {
+    try {
+      const dto = MarkOrderPaidSchema.parse(req.body);
+      const data = await orderService.markPaid(req.params.id, dto);
+      sendResponse(res, {
+        message: 'Thanh toán đơn hàng thành công',
+        message_en: 'Order paid successfully',
+        data,
+      });
+    } catch (err) {
+      handleRouteError(err, res);
+    }
+  },
+);
 
 export default router;

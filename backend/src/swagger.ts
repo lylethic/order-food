@@ -511,17 +511,33 @@ const options: swaggerJSDoc.Options = {
             'ticketNumber',
             'table',
             'status',
+            'total',
+            'isPaid',
             'timestamp',
             'items',
           ],
           properties: {
             id: { type: 'string', example: '1714291200000' },
-            ticketNumber: { type: 'string', example: 'GK-84729' },
+            ticketNumber: { type: 'string', example: 'RBK-84729' },
             table: { type: 'string', example: '12' },
             status: {
               type: 'string',
               enum: ['Received', 'Preparing', 'Cooking', 'Ready', 'Delivered'],
               example: 'Cooking',
+            },
+            total: { type: 'integer', example: 180000 },
+            isPaid: { type: 'boolean', example: false },
+            paymentMethod: {
+              type: 'string',
+              nullable: true,
+              enum: ['Cash', 'Credit Card', 'E-Wallet', 'Bank Transfer'],
+              example: 'Cash',
+            },
+            paidAt: {
+              type: 'string',
+              format: 'date-time',
+              nullable: true,
+              example: '2026-04-29T10:45:00.000Z',
             },
             timestamp: { type: 'string', example: '12:42 PM' },
             waitLevel: {
@@ -565,11 +581,13 @@ const options: swaggerJSDoc.Options = {
 
         CreateOrderResponse: {
           type: 'object',
+          required: ['id', 'ticketNumber', 'table', 'status', 'total'],
           properties: {
             id: { type: 'string', example: '1714291200000' },
-            ticketNumber: { type: 'string', example: 'GK-84729' },
+            ticketNumber: { type: 'string', example: 'RBK-84729' },
             table: { type: 'string', example: '12' },
             status: { type: 'string', example: 'Received' },
+            total: { type: 'integer', example: 180000 },
           },
         },
 
@@ -590,6 +608,37 @@ const options: swaggerJSDoc.Options = {
           properties: {
             id: { type: 'string', example: '1714291200000' },
             status: { type: 'string', example: 'Received' },
+          },
+        },
+
+        MarkOrderPaidRequest: {
+          type: 'object',
+          required: ['paymentMethod'],
+          properties: {
+            paymentMethod: {
+              type: 'string',
+              enum: ['Cash', 'Credit Card', 'E-Wallet', 'Bank Transfer'],
+              example: 'E-Wallet',
+            },
+          },
+        },
+
+        MarkOrderPaidResponse: {
+          type: 'object',
+          required: ['id', 'isPaid', 'paymentMethod', 'paidAt'],
+          properties: {
+            id: { type: 'string', example: '1714291200000' },
+            isPaid: { type: 'boolean', example: true },
+            paymentMethod: {
+              type: 'string',
+              enum: ['Cash', 'Credit Card', 'E-Wallet', 'Bank Transfer'],
+              example: 'E-Wallet',
+            },
+            paidAt: {
+              type: 'string',
+              format: 'date-time',
+              example: '2026-04-29T10:45:00.000Z',
+            },
           },
         },
       },

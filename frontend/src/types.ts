@@ -15,6 +15,12 @@ export type OrderStatus =
   | 'Delivered'
   | 'Cancelled';
 
+export type PaymentMethod =
+  | 'Cash'
+  | 'Credit Card'
+  | 'E-Wallet'
+  | 'Bank Transfer';
+
 export interface MenuItem {
   id: string;
   name: string;
@@ -46,6 +52,9 @@ export interface OrderSummary {
   ticketNumber: string;
   table: string;
   status: OrderStatus;
+  isPaid?: boolean;
+  paymentMethod?: PaymentMethod;
+  paidAt?: string;
   timestamp: string;
   itemCount: number;
   total: number;
@@ -61,6 +70,10 @@ export interface Order {
   table: string;
   items: OrderItem[];
   status: OrderStatus;
+  total: number;
+  isPaid?: boolean;
+  paymentMethod?: PaymentMethod;
+  paidAt?: string;
   timestamp: string;
   waitLevel?: 'Low' | 'Medium' | 'High';
   waitTimeMinutes?: number;
@@ -87,4 +100,5 @@ export interface PlacedOrder {
   ticketNumber: string;
   table: string;
   status: OrderStatus;
+  total: number;
 }

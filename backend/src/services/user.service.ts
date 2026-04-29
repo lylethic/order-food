@@ -56,4 +56,26 @@ export const userService = {
       hasNextPage,
     };
   },
+
+  async assignRole(userId: number, roleId: number) {
+    var user = await userDal.findById(userId);
+    if (!user) throw new AppError(404, 'User not found');
+
+    var role = await roleDal.findById(roleId);
+    if (!role) throw new AppError(404, 'Role not found');
+
+    await roleDal.assignRole(user.id, role.id);
+    return true;
+  },
+
+  async removeAssignRole(userId: number, roleId: number) {
+    var user = await userDal.findById(userId);
+    if (!user) throw new AppError(404, 'User not found');
+
+    var role = await roleDal.findById(roleId);
+    if (!role) throw new AppError(404, 'Role not found');
+
+    await roleDal.removeAssignRole(user.id, role.id);
+    return true;
+  },
 };

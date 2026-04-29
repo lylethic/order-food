@@ -7,51 +7,19 @@ datasource db {
   provider = "postgresql"
 }
 
-model Permission {
-  id          BigInt           @id @default(autoincrement())
-  name        String           @unique
-  description String?
-  created     DateTime         @default(now())
-  updated     DateTime?        @updatedAt
-  created_by  BigInt?
-  updated_by  BigInt?
-  deleted     Boolean          @default(false)
-  active      Boolean          @default(true)
-  roles       RolePermission[]
-
-  @@map("permissions")
-}
-
 model Role {
-  id          BigInt           @id @default(autoincrement())
-  name        String           @unique
+  id          BigInt     @id @default(autoincrement())
+  name        String     @unique
   description String?
-  created     DateTime         @default(now())
-  updated     DateTime?        @updatedAt
+  created     DateTime   @default(now())
+  updated     DateTime?  @updatedAt
   created_by  BigInt?
   updated_by  BigInt?
-  deleted     Boolean          @default(false)
-  active      Boolean          @default(true)
-  permissions RolePermission[]
+  deleted     Boolean    @default(false)
+  active      Boolean    @default(true)
   users       UserRole[]
 
   @@map("roles")
-}
-
-model RolePermission {
-  role_id       BigInt
-  permission_id BigInt
-  created       DateTime   @default(now())
-  updated       DateTime?  @updatedAt
-  created_by    BigInt?
-  updated_by    BigInt?
-  deleted       Boolean    @default(false)
-  active        Boolean    @default(true)
-  permission    Permission @relation(fields: [permission_id], references: [id])
-  role          Role       @relation(fields: [role_id], references: [id])
-
-  @@id([role_id, permission_id])
-  @@map("role_permissions")
 }
 
 model User {
@@ -140,6 +108,10 @@ model Order {
   updated_by        BigInt?
   deleted           Boolean     @default(false)
   active            Boolean     @default(true)
+  is_paid           Boolean?    @default(false)
+  payment_method    String?     @db.VarChar(20)
+  paid_at           DateTime?   @db.Timestamp(6)
+  total             Int?
   items             OrderItem[]
   customer          User?       @relation(fields: [customer_id], references: [id])
 

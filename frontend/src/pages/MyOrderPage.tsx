@@ -1,17 +1,30 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
-import { ArrowLeft, Clock3, ClipboardList, RefreshCw } from 'lucide-react';
+import {
+  ArrowLeft,
+  Clock3,
+  ClipboardList,
+  RefreshCw,
+  FileText,
+} from 'lucide-react';
 import { motion } from 'motion/react';
 import { useLang } from '../context/LangContext';
 import { api } from '../services/api';
 import { Spinner } from '../components/Spinner';
 import { StatusBadge } from '../components/StatusBadge';
 import { formatVnd } from '../utils/money';
+import { formatPaymentMethod } from '../utils/payment';
+import InvoiceModal from '../components/InvoiceModal';
 import type { CustomerOutletContext } from '../layouts/CustomerLayout';
-import type { OrderDetail, OrderSummary, OrderStatus } from '../types';
+import type {
+  OrderDetail,
+  OrderSummary,
+  OrderStatus,
+  PaymentMethod,
+} from '../types';
 
 export default function MyOrderPage() {
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const navigate = useNavigate();
   const { placedOrder, lastEvent } = useOutletContext<CustomerOutletContext>();
 
@@ -21,6 +34,7 @@ export default function MyOrderPage() {
   const [loadingList, setLoadingList] = useState(true);
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [error, setError] = useState('');
+  const [showInvoice, setShowInvoice] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -62,11 +76,43 @@ export default function MyOrderPage() {
       mounted = false;
     };
   }, [placedOrder?.id]);
+  console.log(selectedOrder);
 
   useEffect(() => {
     if (!lastEvent) return;
 
     console.log('[MyOrderPage] Update triggered for lastEvent:', lastEvent);
+
+    if (lastEvent.eventType === 'payment') {
+      setOrders((current) =>
+        current.map((order) =>
+          order.id === lastEvent.orderId
+            ? {
+                ...order,
+                isPaid: lastEvent.isPaid ?? true,
+                paymentMethod: lastEvent.paymentMethod as
+                  | PaymentMethod
+                  | undefined,
+                paidAt: lastEvent.paidAt,
+              }
+            : order,
+        ),
+      );
+
+      setSelectedOrder((current) =>
+        current && current.id === lastEvent.orderId
+          ? {
+              ...current,
+              isPaid: lastEvent.isPaid ?? true,
+              paymentMethod: lastEvent.paymentMethod as
+                | PaymentMethod
+                | undefined,
+              paidAt: lastEvent.paidAt,
+            }
+          : current,
+      );
+      return;
+    }
 
     setOrders((current) =>
       current.map((order) =>
@@ -133,6 +179,11 @@ export default function MyOrderPage() {
       setError((err as Error).message);
     }
   };
+
+  const paymentBadgeClass = (isPaid: boolean) =>
+    isPaid
+      ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+      : 'bg-amber-50 text-amber-700 border-amber-200';
 
   return (
     <div className='pt-24 pb-32 md:pb-10 px-6 md:px-10 max-w-6xl mx-auto'>
@@ -243,6 +294,14 @@ export default function MyOrderPage() {
                         {formatVnd(order.total)}
                       </span>
                     </div>
+
+                    <div className='mt-3'>
+                      <span
+                        className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-extrabold ${paymentBadgeClass(Boolean(order.isPaid))}`}
+                      >
+                        {Boolean(order.isPaid) ? t.paid : t.unpaid}
+                      </span>
+                    </div>
                   </button>
                 );
               })}
@@ -283,6 +342,32 @@ export default function MyOrderPage() {
                       {selectedOrder.status}
                     </span>
                   </div>
+
+                  <div className='mt-3 flex items-center justify-between text-sm'>
+                    <span className='text-slate-500'>{t.paymentStatus}</span>
+                    <span
+                      className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-extrabold ${paymentBadgeClass(Boolean(selectedOrder.isPaid))}`}
+                    >
+                      {Boolean(selectedOrder.isPaid) ? t.paid : t.unpaid}
+                    </span>
+                  </div>
+
+                  <div className='mt-3 flex items-center justify-between text-sm'>
+                    <span className='text-slate-500'>{t.paymentMethod}</span>
+                    <span className='font-bold text-slate-800'>
+                      {formatPaymentMethod(selectedOrder.paymentMethod, lang)}
+                    </span>
+                  </div>
+
+                  <div className='mt-3 flex items-center justify-between text-sm'>
+                    <span className='text-slate-500'>{t.paidAt}</span>
+                    <span className='font-bold text-slate-800'>
+                      {selectedOrder.paidAt
+                        ? new Date(selectedOrder.paidAt).toLocaleString()
+                        : '--'}
+                    </span>
+                  </div>
+
                   <div className='mt-3 flex items-center justify-between text-sm'>
                     <span className='text-slate-500'>Total</span>
                     <span className='font-extrabold text-indigo-600'>
@@ -326,10 +411,38 @@ export default function MyOrderPage() {
                     {t.cancelOrder}
                   </button>
                 )}
+
+                {selectedOrder.isPaid && (
+                  <button
+                    onClick={() => setShowInvoice(true)}
+                    className='w-full py-3.5 border border-indigo-200 text-indigo-600 rounded-xl font-bold text-sm hover:bg-indigo-50 active:scale-95 transition-all flex items-center justify-center gap-2'
+                  >
+                    <FileText className='w-4 h-4' />
+                    {lang === 'vi'
+                      ? 'Xem & Tải hóa đơn'
+                      : 'View & Download Invoice'}
+                  </button>
+                )}
               </motion.div>
             )}
           </div>
         </div>
+      )}
+
+      {showInvoice && selectedOrder && (
+        <InvoiceModal
+          data={{
+            ticketNumber: selectedOrder.ticketNumber,
+            table: selectedOrder.table,
+            isPaid: Boolean(selectedOrder.isPaid),
+            paymentMethod: selectedOrder.paymentMethod,
+            paidAt: selectedOrder.paidAt,
+            timestamp: selectedOrder.timestamp,
+            items: selectedOrder.items,
+            total: selectedOrder.total,
+          }}
+          onClose={() => setShowInvoice(false)}
+        />
       )}
     </div>
   );

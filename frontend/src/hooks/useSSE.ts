@@ -1,8 +1,12 @@
 import { useState, useEffect } from 'react';
 
 export interface StatusEvent {
+  eventType?: 'status' | 'payment';
   orderId: string;
   status: string;
+  isPaid?: boolean;
+  paymentMethod?: string;
+  paidAt?: string;
 }
 
 /**

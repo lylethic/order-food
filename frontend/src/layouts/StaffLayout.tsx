@@ -17,7 +17,7 @@ export interface StaffOutletContext {
 // ─── Layout ───────────────────────────────────────────────────────────────────
 
 export default function StaffLayout() {
-  const { user, token, isStaff, logout } = useAuthContext();
+  const { user, token, isStaff, isLoading, logout } = useAuthContext();
   const { t } = useLang();
   const navigate = useNavigate();
   const { pathname } = useLocation();
@@ -25,6 +25,7 @@ export default function StaffLayout() {
   const lastEvent = useSSE(token);
 
   // Role guards
+  if (isLoading) return null;
   if (!user) return <Navigate to="/auth" replace />;
   if (!isStaff) return <Navigate to="/menu" replace />;
 
