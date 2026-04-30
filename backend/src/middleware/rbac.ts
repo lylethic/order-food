@@ -28,3 +28,4 @@ export const isAdmin = checkRole(['admin']);
 export const isStaff = checkRole(['admin', 'employee', 'chef']);
 export const isChef = checkRole(['admin', 'chef']);
 export const isEmployee = checkRole(['admin', 'employee']);
+export const isCustomer = checkRole(['customer']);

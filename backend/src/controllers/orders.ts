@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { orderService } from '../services/order.service.js';
 import { orderEmitter, type OrderRealtimeEvent } from '../lib/orderEvents.js';
+import { registerSSEClient, unregisterSSEClient } from '../lib/commentEvents.js';
 import { authenticate } from '../middleware/auth.js';
 import { isEmployee, isStaff } from '../middleware/rbac.js';
 import {
@@ -156,6 +157,10 @@ router.get('/orders/events', authenticate, (req, res) => {
   // Keep the connection alive through proxies / load balancers
   const heartbeat = setInterval(() => res.write(': heartbeat\n\n'), 30_000);
 
+  // Register client in the targeted SSE registry (for comment/notification events)
+  const userId = req.user!.userId;
+  registerSSEClient(userId, res);
+
   const onRealtime = (event: OrderRealtimeEvent) => {
     res.write(`data: ${JSON.stringify(event)}\n\n`);
   };
@@ -165,6 +170,7 @@ router.get('/orders/events', authenticate, (req, res) => {
 
   req.on('close', () => {
     clearInterval(heartbeat);
+    unregisterSSEClient(userId, res);
     orderEmitter.off('status', onRealtime);
     orderEmitter.off('payment', onRealtime);
   });

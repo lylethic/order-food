@@ -20,6 +20,7 @@ export type CreateOrderBodyType = z.infer<typeof CreateOrderBody>;
 
 export const OrderItemDto = z.object({
   id: z.string(),
+  menuItemId: z.string().optional(),
   name: z.string(),
   qty: z.number(),
   price: z.number(),

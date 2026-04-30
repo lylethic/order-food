@@ -4,12 +4,21 @@ import { UtensilsCrossed, ClipboardList, ShoppingCart } from 'lucide-react';
 import { useAuthContext } from '../context/AuthContext';
 import { useLang } from '../context/LangContext';
 import { useCart } from '../hooks/useCart';
-import { useSSE, type StatusEvent } from '../hooks/useSSE';
+import { useSSE } from '../hooks/useSSE';
+import type { SSEEvent, StatusEvent, CommentRepliedEvent, NotificationCreatedEvent } from '../hooks/useSSE';
+
+function toStatusEvent(event: SSEEvent | null): StatusEvent | null {
+  if (!event) return null;
+  const t = event.eventType;
+  if (t === 'status' || t === 'payment' || t === undefined) return event as StatusEvent;
+  return null;
+}
 import { api } from '../services/api';
 import { Sidebar } from '../components/Sidebar';
 import { TopBar } from '../components/TopBar';
 import { BottomNav } from '../components/BottomNav';
 import { CartPanel } from '../components/CartPanel';
+import { NotificationDropdown } from '../components/NotificationDropdown';
 import type { CartItem, NavItem, OrderStatus, PlacedOrder } from '../types';
 
 // ─── Outlet context type ──────────────────────────────────────────────────────
@@ -23,7 +32,9 @@ export interface CustomerOutletContext {
   onOpenCart: () => void;
   placedOrder: PlacedOrder | null;
   onCancelOrder: () => Promise<void>;
+  /** Order status/payment events only — backward-compatible with existing pages */
   lastEvent: StatusEvent | null;
+  commentRepliedEvent: CommentRepliedEvent | null;
 }
 
 // ─── Layout ───────────────────────────────────────────────────────────────────
@@ -45,6 +56,14 @@ export default function CustomerLayout() {
   if (isLoading) return null;
   if (!user) return <Navigate to='/auth' replace />;
   if (isStaff) return <Navigate to='/kitchen' replace />;
+
+  // Dispatch SSE events by type
+  const commentRepliedEvent =
+    lastEvent?.eventType === 'comment.replied' ? (lastEvent as CommentRepliedEvent) : null;
+  const notificationEvent =
+    lastEvent?.eventType === 'notification.created'
+      ? (lastEvent as NotificationCreatedEvent)
+      : null;
 
   const navItems: NavItem[] = [
     { id: 'menu', label: t.menu, icon: UtensilsCrossed },
@@ -98,7 +117,8 @@ export default function CustomerLayout() {
     onOpenCart: () => setCartOpen(true),
     placedOrder,
     onCancelOrder,
-    lastEvent,
+    lastEvent: toStatusEvent(lastEvent),
+    commentRepliedEvent,
   };
 
   return (
@@ -117,17 +137,23 @@ export default function CustomerLayout() {
           subtitle={topSubtitle}
           onLogout={logout}
           right={
-            count > 0 ? (
-              <button
-                onClick={() => setCartOpen(true)}
-                className='relative p-2 hover:bg-slate-100 rounded-xl text-slate-600 transition-all'
-              >
-                <ShoppingCart className='w-5 h-5' />
-                <span className='absolute -top-1 -right-1 bg-indigo-600 text-white text-[10px] font-extrabold w-4 h-4 rounded-full flex items-center justify-center'>
-                  {count}
-                </span>
-              </button>
-            ) : undefined
+            <div className='flex items-center gap-1'>
+              {/* Notification bell */}
+              <NotificationDropdown notificationEvent={notificationEvent} />
+
+              {/* Cart button */}
+              {count > 0 && (
+                <button
+                  onClick={() => setCartOpen(true)}
+                  className='relative p-2 hover:bg-slate-100 rounded-xl text-slate-600 transition-all'
+                >
+                  <ShoppingCart className='w-5 h-5' />
+                  <span className='absolute -top-1 -right-1 bg-indigo-600 text-white text-[10px] font-extrabold w-4 h-4 rounded-full flex items-center justify-center'>
+                    {count}
+                  </span>
+                </button>
+              )}
+            </div>
           }
         />
 

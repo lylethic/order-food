@@ -11,6 +11,8 @@ import type {
   OrderDetail,
   OrderSummary,
   OrderItem,
+  Comment,
+  Notification,
 } from '../types';
 
 // In development the Vite proxy forwards /api/* → http://localhost:3001
@@ -127,6 +129,12 @@ function normalizeMenuItem(raw: Record<string, unknown>): MenuItem {
         : String(raw.category_id ?? ''),
     isAvailable: raw.isAvailable !== false && raw.is_available !== false,
     rating: raw.rating != null ? Number(raw.rating) : undefined,
+    commentCount:
+      raw.commentCount != null
+        ? Number(raw.commentCount)
+        : raw.comment_count != null
+          ? Number(raw.comment_count)
+          : undefined,
     tag: raw.tag != null ? String(raw.tag) : undefined,
   };
 }
@@ -173,6 +181,7 @@ function normalizeOrderSummary(raw: Record<string, unknown>): OrderSummary {
 function normalizeOrderItem(raw: Record<string, unknown>): OrderItem {
   return {
     id: String(raw.id ?? ''),
+    menuItemId: raw.menuItemId != null ? String(raw.menuItemId) : undefined,
     name: String(raw.name ?? raw.name_at_order ?? ''),
     qty: Number(raw.qty ?? 0),
     price: Number(raw.price ?? raw.price_at_order ?? 0),
@@ -442,7 +451,8 @@ export const api = {
   ): Promise<MenuItemDetail> {
     const form = new FormData();
     files.forEach((f) => form.append('files', f));
-    if (primaryIndex !== undefined) form.append('primaryIndex', String(primaryIndex));
+    if (primaryIndex !== undefined)
+      form.append('primaryIndex', String(primaryIndex));
     const r = await fetch(`${BASE}/api/v1/menuItems/${id}/images`, {
       method: 'POST',
       headers: authHeaders(),
@@ -452,11 +462,17 @@ export const api = {
     return normalizeMenuItemDetail(raw);
   },
 
-  async adminDeleteMenuItemImage(menuItemId: string, imageId: string): Promise<MenuItemDetail> {
-    const r = await fetch(`${BASE}/api/v1/menuItems/${menuItemId}/images/${imageId}`, {
-      method: 'DELETE',
-      headers: jsonHeaders(),
-    });
+  async adminDeleteMenuItemImage(
+    menuItemId: string,
+    imageId: string,
+  ): Promise<MenuItemDetail> {
+    const r = await fetch(
+      `${BASE}/api/v1/menuItems/${menuItemId}/images/${imageId}`,
+      {
+        method: 'DELETE',
+        headers: jsonHeaders(),
+      },
+    );
     const raw = await unwrap<Record<string, unknown>>(r);
     return normalizeMenuItemDetail(raw);
   },
@@ -464,7 +480,9 @@ export const api = {
   // --- Admin: Users ---
 
   async adminGetUsers(): Promise<AdminUser[]> {
-    const r = await fetch(`${BASE}/api/v1/users?limit=100`, { headers: authHeaders() });
+    const r = await fetch(`${BASE}/api/v1/users?limit=100`, {
+      headers: authHeaders(),
+    });
     const raw = await unwrapList<Record<string, unknown>>(r);
     return raw.map((u) => ({
       id: String(u.id ?? ''),
@@ -538,7 +556,9 @@ export const api = {
   // --- Admin: Roles ---
 
   async getRoles(): Promise<Role[]> {
-    const r = await fetch(`${BASE}/api/v1/roles?limit=50`, { headers: authHeaders() });
+    const r = await fetch(`${BASE}/api/v1/roles?limit=50`, {
+      headers: authHeaders(),
+    });
     const raw = await unwrapList<Record<string, unknown>>(r);
     return raw.map((role) => ({
       id: String(role.id ?? ''),
@@ -562,6 +582,79 @@ export const api = {
       method: 'POST',
       headers: jsonHeaders(),
       body: JSON.stringify({ roleId: Number(roleId) }),
+    });
+    await unwrap(r);
+  },
+
+  // --- Comments & Ratings ---
+
+  async getComments(menuItemId: string): Promise<Comment[]> {
+    const r = await fetch(`${BASE}/api/v1/menu-items/${menuItemId}/comments`);
+    return unwrap<Comment[]>(r);
+  },
+
+  async createComment(
+    menuItemId: string,
+    data: { content: string; rating?: number },
+  ): Promise<Comment> {
+    const r = await fetch(`${BASE}/api/v1/menu-items/${menuItemId}/comments`, {
+      method: 'POST',
+      headers: jsonHeaders(),
+      body: JSON.stringify(data),
+    });
+    return unwrap<Comment>(r);
+  },
+
+  async replyToComment(commentId: string, content: string): Promise<void> {
+    const r = await fetch(`${BASE}/api/v1/comments/${commentId}/reply`, {
+      method: 'POST',
+      headers: jsonHeaders(),
+      body: JSON.stringify({ content }),
+    });
+    await unwrap(r);
+  },
+
+  // --- Notifications ---
+
+  async getNotifications(): Promise<Notification[]> {
+    const r = await fetch(`${BASE}/api/v1/notifications`, {
+      headers: authHeaders(),
+    });
+    return unwrap<Notification[]>(r);
+  },
+
+  async markNotificationRead(id: string): Promise<void> {
+    const r = await fetch(`${BASE}/api/v1/notifications/${id}/read`, {
+      method: 'PATCH',
+      headers: jsonHeaders(),
+    });
+    await unwrap(r);
+  },
+
+  // --- Staff/Admin: All Comments ---
+
+  async getAllComments(params?: {
+    status?: string;
+    menuItemId?: string;
+    limit?: number;
+  }): Promise<Comment[]> {
+    const qs = new URLSearchParams();
+    if (params?.status) qs.set('status', params.status);
+    if (params?.menuItemId) qs.set('menuItemId', params.menuItemId);
+    if (params?.limit) qs.set('limit', String(params.limit));
+    const url = `${BASE}/api/v1/comments${qs.toString() ? `?${qs}` : ''}`;
+    const r = await fetch(url, { headers: authHeaders() });
+    return unwrap<Comment[]>(r);
+  },
+
+  async adminUpdateCommentStatus(
+    commentId: string,
+    status: 'Visible' | 'Hidden',
+  ): Promise<void> {
+    const r = await fetch(`${BASE}/api/v1/comments/${commentId}/status`, {
+      method: 'PATCH',
+      headers: jsonHeaders(),
+      body: JSON.stringify({ status }),
     });
     await unwrap(r);
   },

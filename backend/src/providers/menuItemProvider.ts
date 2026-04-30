@@ -38,6 +38,11 @@ export const menuItemProvider = {
           where: { is_primary: true },
           take: 1,
         },
+        _count: {
+          select: {
+            menu_item_comments: true,
+          },
+        },
       },
       orderBy: { id: request.order },
       take: request.limit + 1,
@@ -60,6 +65,32 @@ export const menuItemProvider = {
         menu_item_images: {
           orderBy: [{ is_primary: 'desc' }, { display_order: 'asc' }],
         },
+        _count: {
+          select: {
+            menu_item_comments: true,
+          },
+        },
+      },
+    });
+  },
+
+  async updateAverageRating(menuItemId: bigint) {
+    const stats = await prisma.menu_item_comments.aggregate({
+      where: {
+        menu_item_id: menuItemId,
+        deleted: false,
+        rating: { not: null },
+      },
+      _avg: { rating: true },
+    });
+
+    const averageRating =
+      stats._avg.rating != null ? Number(stats._avg.rating) : null;
+
+    return prisma.menuItem.update({
+      where: { id: menuItemId },
+      data: {
+        rating: averageRating,
       },
     });
   },

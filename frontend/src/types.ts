@@ -38,6 +38,7 @@ export interface MenuItem {
   categoryId?: string;
   isAvailable?: boolean;
   rating?: number;
+  commentCount?: number;
   tag?: string;
 }
 
@@ -52,6 +53,7 @@ export interface Category {
 
 export interface OrderItem {
   id: string;
+  menuItemId?: string;
   name: string;
   qty: number;
   price: number;
@@ -133,4 +135,41 @@ export interface PlacedOrder {
   table: string;
   status: OrderStatus;
   total: number;
+}
+
+// ─── Comments & Ratings ───────────────────────────────────────────────────────
+
+export interface CommentReply {
+  id: string;
+  content: string;
+  staffName: string | null;
+  staffImg: string | null;
+  createdAt: string;
+}
+
+export interface Comment {
+  id: string;
+  menuItemId: string;
+  menuItemName?: string;
+  customerId: string;
+  customerName: string | null;
+  customerImg: string | null;
+  content: string;
+  rating: number | null;
+  status: string;
+  createdAt: string;
+  reply: CommentReply | null;
+}
+
+// ─── Notifications ────────────────────────────────────────────────────────────
+
+export interface Notification {
+  id: string;
+  type: string;
+  title: string;
+  body: string;
+  isRead: boolean;
+  readAt: string | null;
+  refId: string | null;
+  createdAt: string;
 }

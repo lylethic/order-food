@@ -3,6 +3,7 @@ import { useOutletContext } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { ShoppingCart, Plus, Minus, ImageOff } from 'lucide-react';
 import { useLang } from '../context/LangContext';
+import { useAuthContext } from '../context/AuthContext';
 import { api } from '../services/api';
 import { Spinner } from '../components/Spinner';
 import { MenuItemDetailModal } from '../components/MenuItemDetailModal';
@@ -12,7 +13,8 @@ import type { CustomerOutletContext } from '../layouts/CustomerLayout';
 
 export default function MenuPage() {
   const { t } = useLang();
-  const { cart, cartCount, addItem, updateQty, onOpenCart } =
+  const { user } = useAuthContext();
+  const { cart, cartCount, addItem, updateQty, onOpenCart, commentRepliedEvent } =
     useOutletContext<CustomerOutletContext>();
 
   const [categories, setCategories] = useState<Category[]>([]);
@@ -191,6 +193,9 @@ export default function MenuPage() {
           onAddItem={addItem}
           onUpdateQty={updateQty}
           onClose={() => setDetailId(null)}
+          currentUserId={user?.userId ?? null}
+          currentUserRole={user?.role ?? null}
+          commentRepliedEvent={commentRepliedEvent}
         />
       )}
 

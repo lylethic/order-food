@@ -12,6 +12,7 @@ export const MENU_ITEMS: MenuItem[] = [
       'https://lh3.googleusercontent.com/aida-public/AB6AXuBDwedFlKwLaRwCbE0lowiPRg6gNZBag0KpbcnwhDUxi3V0Ldx5Z3U1bwK0MQEXlyQ1v7DCIZMh1vJx3epTHvQUgrVmLvhrPPdn-hnkUk-r5lps-DZOEApBqfkMiQtKJpudcSaf10CKTdqjvnL_uYHoDqvQ5dhSeXGhuLctQHlgUnDNqLQu1rCES2c059_zSRpC_ve53zWqYUoit070bM1e4KumQUnHdKkAdQnETRYZt8H2yzyRr8s6WYQvOwmEOJjPbCPlu6ieS2I',
     category: 'Starters',
     rating: 4.8,
+    commentCount: 0,
   },
   {
     id: 's2',
@@ -23,6 +24,7 @@ export const MENU_ITEMS: MenuItem[] = [
       'https://lh3.googleusercontent.com/aida-public/AB6AXuDiCW0p7ND4Y076DXg6HedZg4BufwJxry9YBfIs8T0Cc5cSCPUDx6vyWda9snJ3O-43Bq9xnYkZHCkngvtfSCWdMjYg79xhsQKSzD9pnj1ms5vxaXed33VYcLso4aS3uFEO0ERBZlkbFV140ybUq9NWZc1wbW2_ERI_zjLST3WUDmffcZo62bnBDdYSTE22L7N3m7WJjcvwgwrcLHt4QNJGf_lfNrW1N7L-chB83tyuXunrD9nYVkPKpww3DDEB1coDW5thJenssqQ',
     category: 'Starters',
     tag: 'Vegan',
+    commentCount: 0,
   },
   {
     id: 's3',
@@ -33,6 +35,7 @@ export const MENU_ITEMS: MenuItem[] = [
     image:
       'https://lh3.googleusercontent.com/aida-public/AB6AXuAKxs1c5V0UYvVPc0HKwV8UOPkdBYuwGEYXsO6f3pBjW72HX2iy_KeNio-bE8riXLbxVZau3dni77ieyKwbGUL6YafNPWJ3PPOccrm2VUoTf5LFTxDuDE2U-kaTDb69S0yQ3q5o2KcvGu1AEIohhtNMlTVTir7XWQGrjQtRaXorP9Xwsw51Skm_iWeWaoh33fdMVWZ3KyFYA1KzB4k1kx-6X3VWdxc5_4zLMhCRy9bzBtNX-VQ6WpmnJsa6UI0NCBjytPRw0up0fz4',
     category: 'Starters',
+    commentCount: 0,
   },
   {
     id: 'm1',
@@ -43,6 +46,7 @@ export const MENU_ITEMS: MenuItem[] = [
     image:
       'https://lh3.googleusercontent.com/aida-public/AB6AXuBvfPNZHVpGHHC0RMv6ibj_zhkZQQgrn5nu0bGHtH04CFs8gzqvCY_lrHUGees7lAph7zpj9imze-4ep154KjvoxS4v7LFFGL5wuIXaW_OwfePJGMASB4C2Mkx5-dO0KhN9xfupXAFrw3dnfmWiYel8YoBhqqG8wyt_i1Jg3b65kuGt1AdVeDE5fqWfkj3nZYkpxJ-n7hbO0Wm6oAo83bI-Y-6xL9oa_ILAB4aSSSD6AaNWEgMnULBxpii2rwJuOz2jjKQAE12PzuE',
     category: 'Mains',
+    commentCount: 0,
   },
 ];
 

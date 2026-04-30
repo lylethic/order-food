@@ -77,6 +77,7 @@ function formatOrder(order: any): OrderDtoType {
     items: order.items.map(
       (item: any): OrderItemDtoType => ({
         id: item.id.toString(),
+        menuItemId: item.menu_item_id?.toString(),
         name: item.name_at_order,
         qty: item.qty,
         price: Number(item.price_at_order),
