@@ -76,13 +76,22 @@ export function useAuth() {
     setState({ user: null, token: null, isLoading: false, error: null });
   }, []);
 
+  const updateUser = useCallback((patch: Partial<User>) => {
+    setState((s) => ({
+      ...s,
+      user: s.user ? { ...s.user, ...patch } : s.user,
+    }));
+  }, []);
+
   const STAFF_ROLES = new Set(['ADMIN', 'EMPLOYEE', 'CHEF']);
 
   return {
     ...state,
     isStaff: state.user ? STAFF_ROLES.has(state.user.role) : false,
+    isAdmin: state.user?.role === 'ADMIN',
     login,
     register,
     logout,
+    updateUser,
   };
 }

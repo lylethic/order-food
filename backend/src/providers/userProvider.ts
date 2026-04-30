@@ -1,4 +1,4 @@
-import { BaseSearchRequestType } from './../schemas/search';
+import { BaseSearchRequestType } from '../schemas/search';
 import { prisma } from '../lib/prisma.js';
 import parseFilterString from '../utils/filterParser.js';
 import { UserCreateBodyType, UserUpdateBodyType } from '../schemas/user.js';
@@ -7,7 +7,7 @@ import { UserCreateBodyType, UserUpdateBodyType } from '../schemas/user.js';
  * Data Access Layer — User
  * All direct Prisma queries for the `users`, `roles`, and `user_roles` tables.
  */
-export const userDal = {
+export const userProvider = {
   /** Find all */
   async findAll(request: BaseSearchRequestType) {
     // Use generic parser and provide model-specific hints
@@ -68,6 +68,14 @@ export const userDal = {
     return prisma.user.update({
       where: { id },
       data,
+    });
+  },
+
+  /** Update only the avatar (img) field of a user */
+  async updateImg(id: number, img: string) {
+    return prisma.user.update({
+      where: { id },
+      data: { img },
     });
   },
 

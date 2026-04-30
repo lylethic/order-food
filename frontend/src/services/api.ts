@@ -1,10 +1,13 @@
 import type {
   MenuItem,
+  MenuItemDetail,
   Order,
   OrderStatus,
   PaymentMethod,
   Category,
   User,
+  AdminUser,
+  Role,
   OrderDetail,
   OrderSummary,
   OrderItem,
@@ -94,6 +97,7 @@ function normalizeUser(raw: Record<string, unknown>): User {
     userId: String(raw.userId ?? raw.id ?? ''),
     email: String(raw.email ?? ''),
     name: raw.name != null ? String(raw.name) : undefined,
+    img: raw.img != null ? String(raw.img) : null,
     role:
       typeof role === 'string'
         ? role
@@ -117,7 +121,27 @@ function normalizeMenuItem(raw: Record<string, unknown>): MenuItem {
         : (cat as Record<string, unknown>)?.name != null
           ? String((cat as Record<string, unknown>).name)
           : String(raw.categoryName ?? ''),
+    categoryId:
+      typeof cat === 'object' && cat != null
+        ? String((cat as Record<string, unknown>).id ?? '')
+        : String(raw.category_id ?? ''),
     isAvailable: raw.isAvailable !== false && raw.is_available !== false,
+    rating: raw.rating != null ? Number(raw.rating) : undefined,
+    tag: raw.tag != null ? String(raw.tag) : undefined,
+  };
+}
+
+function normalizeMenuItemDetail(raw: Record<string, unknown>): MenuItemDetail {
+  const base = normalizeMenuItem(raw);
+  const imgs = Array.isArray(raw.images) ? raw.images : [];
+  return {
+    ...base,
+    images: imgs.map((img: Record<string, unknown>) => ({
+      id: String(img.id ?? ''),
+      image_url: String(img.image_url ?? ''),
+      is_primary: Boolean(img.is_primary),
+      display_order: Number(img.display_order ?? 0),
+    })),
   };
 }
 
@@ -204,6 +228,18 @@ export const api = {
     return normalizeUser(raw);
   },
 
+  async uploadAvatar(userId: string, file: File): Promise<User> {
+    const form = new FormData();
+    form.append('file', file);
+    const r = await fetch(`${BASE}/api/v1/users/${userId}/avatar`, {
+      method: 'PUT',
+      headers: authHeaders(),
+      body: form,
+    });
+    const raw = await unwrap<Record<string, unknown>>(r);
+    return normalizeUser(raw);
+  },
+
   // --- Categories ---
 
   async getCategories(): Promise<Category[]> {
@@ -213,16 +249,18 @@ export const api = {
 
   // --- Menu Items ---
 
-  async getMenuItems(): Promise<MenuItem[]> {
-    const r = await fetch(`${BASE}/api/v1/menuItems`);
+  async getMenuItems(categoryId?: string): Promise<MenuItem[]> {
+    const params = new URLSearchParams({ limit: '100' });
+    if (categoryId) params.set('categoryId', categoryId);
+    const r = await fetch(`${BASE}/api/v1/menuItems?${params}`);
     const raw = await unwrapList<Record<string, unknown>>(r);
     return raw.map(normalizeMenuItem);
   },
 
-  async getMenuItem(id: number): Promise<MenuItem[]> {
+  async getMenuItemDetail(id: string): Promise<MenuItemDetail> {
     const r = await fetch(`${BASE}/api/v1/menuItems/${id}`);
-    const raw = await unwrapList<Record<string, unknown>>(r);
-    return raw.map(normalizeMenuItem);
+    const raw = await unwrap<Record<string, unknown>>(r);
+    return normalizeMenuItemDetail(raw);
   },
 
   // --- Orders ---
@@ -304,5 +342,227 @@ export const api = {
       body: JSON.stringify({ paymentMethod }),
     });
     return unwrap(r);
+  },
+
+  // --- Admin: Categories ---
+
+  async adminCreateCategory(name: string): Promise<Category> {
+    const r = await fetch(`${BASE}/api/v1/categories`, {
+      method: 'POST',
+      headers: jsonHeaders(),
+      body: JSON.stringify({ name }),
+    });
+    const raw = await unwrap<Record<string, unknown>>(r);
+    return { id: String(raw.id ?? ''), name: String(raw.name ?? '') };
+  },
+
+  async adminUpdateCategory(id: string, name: string): Promise<Category> {
+    const r = await fetch(`${BASE}/api/v1/categories/${id}`, {
+      method: 'PUT',
+      headers: jsonHeaders(),
+      body: JSON.stringify({ name }),
+    });
+    const raw = await unwrap<Record<string, unknown>>(r);
+    return { id: String(raw.id ?? ''), name: String(raw.name ?? '') };
+  },
+
+  async adminDeleteCategory(id: string): Promise<void> {
+    const r = await fetch(`${BASE}/api/v1/categories/${id}`, {
+      method: 'DELETE',
+      headers: jsonHeaders(),
+    });
+    await unwrap(r);
+  },
+
+  // --- Admin: Menu Items ---
+
+  async adminCreateMenuItem(data: {
+    category_id: number;
+    name: string;
+    description: string;
+    price: number;
+    tag?: string;
+  }): Promise<MenuItem> {
+    const r = await fetch(`${BASE}/api/v1/menuItems`, {
+      method: 'POST',
+      headers: jsonHeaders(),
+      body: JSON.stringify({
+        category_id: data.category_id,
+        name: data.name,
+        description: data.description,
+        price: data.price,
+        image: '',
+        rating: 0,
+        tag: data.tag ?? '',
+      }),
+    });
+    const raw = await unwrap<Record<string, unknown>>(r);
+    return normalizeMenuItem(raw);
+  },
+
+  async adminUpdateMenuItem(
+    id: string,
+    data: {
+      category_id: number;
+      name: string;
+      description: string;
+      price: number;
+      tag?: string;
+    },
+  ): Promise<MenuItem> {
+    const r = await fetch(`${BASE}/api/v1/menuItems/${id}`, {
+      method: 'PUT',
+      headers: jsonHeaders(),
+      body: JSON.stringify({
+        category_id: data.category_id,
+        name: data.name,
+        description: data.description,
+        price: data.price,
+        image: '',
+        rating: 0,
+        tag: data.tag ?? '',
+      }),
+    });
+    const raw = await unwrap<Record<string, unknown>>(r);
+    return normalizeMenuItem(raw);
+  },
+
+  async adminDeleteMenuItem(id: string): Promise<void> {
+    const r = await fetch(`${BASE}/api/v1/menuItems/${id}`, {
+      method: 'DELETE',
+      headers: jsonHeaders(),
+    });
+    await unwrap(r);
+  },
+
+  async adminUploadMenuItemImages(
+    id: string,
+    files: File[],
+    primaryIndex?: number,
+  ): Promise<MenuItemDetail> {
+    const form = new FormData();
+    files.forEach((f) => form.append('files', f));
+    if (primaryIndex !== undefined) form.append('primaryIndex', String(primaryIndex));
+    const r = await fetch(`${BASE}/api/v1/menuItems/${id}/images`, {
+      method: 'POST',
+      headers: authHeaders(),
+      body: form,
+    });
+    const raw = await unwrap<Record<string, unknown>>(r);
+    return normalizeMenuItemDetail(raw);
+  },
+
+  async adminDeleteMenuItemImage(menuItemId: string, imageId: string): Promise<MenuItemDetail> {
+    const r = await fetch(`${BASE}/api/v1/menuItems/${menuItemId}/images/${imageId}`, {
+      method: 'DELETE',
+      headers: jsonHeaders(),
+    });
+    const raw = await unwrap<Record<string, unknown>>(r);
+    return normalizeMenuItemDetail(raw);
+  },
+
+  // --- Admin: Users ---
+
+  async adminGetUsers(): Promise<AdminUser[]> {
+    const r = await fetch(`${BASE}/api/v1/users?limit=100`, { headers: authHeaders() });
+    const raw = await unwrapList<Record<string, unknown>>(r);
+    return raw.map((u) => ({
+      id: String(u.id ?? ''),
+      username: String(u.username ?? ''),
+      email: String(u.email ?? ''),
+      name: u.name != null ? String(u.name) : null,
+      img: u.img != null ? String(u.img) : null,
+      active: Boolean(u.active !== false),
+      deleted: Boolean(u.deleted),
+      created: String(u.created ?? ''),
+      updated: String(u.updated ?? ''),
+    }));
+  },
+
+  async adminCreateUser(data: {
+    username: string;
+    email: string;
+    password: string;
+    name?: string;
+  }): Promise<AdminUser> {
+    const r = await fetch(`${BASE}/api/v1/users`, {
+      method: 'POST',
+      headers: jsonHeaders(),
+      body: JSON.stringify(data),
+    });
+    const raw = await unwrap<Record<string, unknown>>(r);
+    return {
+      id: String(raw.id ?? ''),
+      username: String(raw.username ?? ''),
+      email: String(raw.email ?? ''),
+      name: raw.name != null ? String(raw.name) : null,
+      img: raw.img != null ? String(raw.img) : null,
+      active: Boolean(raw.active !== false),
+      deleted: Boolean(raw.deleted),
+      created: String(raw.created ?? ''),
+      updated: String(raw.updated ?? ''),
+    };
+  },
+
+  async adminUpdateUser(
+    id: string,
+    data: { username: string; name?: string; active?: boolean },
+  ): Promise<AdminUser> {
+    const r = await fetch(`${BASE}/api/v1/users/${id}`, {
+      method: 'PUT',
+      headers: jsonHeaders(),
+      body: JSON.stringify(data),
+    });
+    const raw = await unwrap<Record<string, unknown>>(r);
+    return {
+      id: String(raw.id ?? ''),
+      username: String(raw.username ?? ''),
+      email: String(raw.email ?? ''),
+      name: raw.name != null ? String(raw.name) : null,
+      img: raw.img != null ? String(raw.img) : null,
+      active: Boolean(raw.active !== false),
+      deleted: Boolean(raw.deleted),
+      created: String(raw.created ?? ''),
+      updated: String(raw.updated ?? ''),
+    };
+  },
+
+  async adminDeleteUser(id: string): Promise<void> {
+    const r = await fetch(`${BASE}/api/v1/users/${id}`, {
+      method: 'DELETE',
+      headers: jsonHeaders(),
+    });
+    await unwrap(r);
+  },
+
+  // --- Admin: Roles ---
+
+  async getRoles(): Promise<Role[]> {
+    const r = await fetch(`${BASE}/api/v1/roles?limit=50`, { headers: authHeaders() });
+    const raw = await unwrapList<Record<string, unknown>>(r);
+    return raw.map((role) => ({
+      id: String(role.id ?? ''),
+      name: String(role.name ?? ''),
+      active: Boolean(role.active !== false),
+      deleted: Boolean(role.deleted),
+    }));
+  },
+
+  async adminAssignRole(userId: string, roleId: string): Promise<void> {
+    const r = await fetch(`${BASE}/api/v1/roles/${userId}/assign`, {
+      method: 'POST',
+      headers: jsonHeaders(),
+      body: JSON.stringify({ roleId: Number(roleId) }),
+    });
+    await unwrap(r);
+  },
+
+  async adminRemoveRole(userId: string, roleId: string): Promise<void> {
+    const r = await fetch(`${BASE}/api/v1/roles/${userId}/removeAssign`, {
+      method: 'POST',
+      headers: jsonHeaders(),
+      body: JSON.stringify({ roleId: Number(roleId) }),
+    });
+    await unwrap(r);
   },
 };

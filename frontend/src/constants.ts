@@ -52,6 +52,7 @@ export const MOCK_ORDERS: Order[] = [
     ticketNumber: 'RBK-84729',
     table: '12',
     status: 'Preparing',
+    total: 68,
     timestamp: '12:42 PM',
     items: [
       {
@@ -86,6 +87,7 @@ export const MOCK_ORDERS: Order[] = [
     ticketNumber: '#1042',
     table: '12',
     status: 'Cooking',
+    total: 111,
     timestamp: '24m',
     items: [
       { id: 'i4', name: 'Truffle Risotto', qty: 2, price: 28.0 },
@@ -105,6 +107,7 @@ export const MOCK_ORDERS: Order[] = [
     ticketNumber: '#402',
     table: '12',
     status: 'Ready',
+    total: 96,
     timestamp: '4 mins waiting',
     items: [
       {

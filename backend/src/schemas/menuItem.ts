@@ -19,6 +19,29 @@ export const MenuItemRes = z.object({
 });
 export type MenuItemResType = z.TypeOf<typeof MenuItemRes>;
 
+export interface MenuItemImageResType {
+  id: string;
+  image_url: string;
+  is_primary: boolean;
+  display_order: number;
+  created_at: string;
+}
+
+export interface MenuItemDetailResType {
+  id: string;
+  name: string;
+  description: string | null;
+  price: number;
+  rating: number | null;
+  tag: string | null;
+  category: { id: string; name: string } | null;
+  images: MenuItemImageResType[];
+  created: string;
+  updated: string | null;
+  deleted: boolean;
+  active: boolean;
+}
+
 export const MenuItemCreateBody = z.object({
   category_id: z.number(),
   name: z.string(),

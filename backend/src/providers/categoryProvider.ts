@@ -1,11 +1,11 @@
-import { BaseSearchRequestType } from './../schemas/search';
+import { BaseSearchRequestType } from '../schemas/search';
 import { prisma } from '../lib/prisma.js';
 import parseFilterString from '../utils/filterParser';
 
 /**
  * Data Access Layer — Category
  */
-export const categoryDal = {
+export const categoryProvider = {
   /** Return all active categories ordered alphabetically. */
   async findAll(request: BaseSearchRequestType) {
     const where = parseFilterString(request.search, {

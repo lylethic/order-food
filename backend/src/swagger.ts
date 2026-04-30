@@ -14,13 +14,17 @@ const options: swaggerJSDoc.Options = {
       { url: 'http://localhost:3001', description: 'Development server' },
     ],
     tags: [
-      { name: 'Auth', description: 'Đăng ký, đăng nhập, profile' },
-      { name: 'Categories', description: 'Danh mục thực đơn' },
-      { name: 'Menu Items', description: 'Món ăn' },
-      { name: 'Roles', description: 'Quản lý vai trò — chỉ Admin' },
-      { name: 'Orders', description: 'Đơn hàng — yêu cầu xác thực' },
-      { name: 'Users', description: 'Quản lý người dùng — chỉ Admin' },
+      { name: 'Auth', description: 'Authentication and Authorization' },
+      { name: 'Categories', description: 'Menu categories' },
+      { name: 'Menu Items', description: 'Food and drink items' },
+      { name: 'Roles', description: 'Role management — Admin only' },
+      {
+        name: 'Orders',
+        description: 'Order management — Authentication required',
+      },
+      { name: 'Users', description: 'User management — Admin only' },
       { name: 'Health', description: 'Server health & metadata' },
+      { name: 'Files', description: 'Static file upload / delete / replace' },
     ],
     components: {
       // ── JWT Security Scheme ──────────────────────────────────────────────────
@@ -51,16 +55,16 @@ const options: swaggerJSDoc.Options = {
             email: {
               type: 'string',
               format: 'email',
-              example: 'chef@restaurant.com',
+              example: 'admin@gmail.com',
             },
-            password: { type: 'string', minLength: 8, example: 'secret123' },
+            password: { type: 'string', minLength: 8, example: 'Aa@123123' },
             username: { type: 'string', minLength: 3, example: 'chef_rivera' },
             name: { type: 'string', example: 'Chef Rivera' },
             role: {
               type: 'string',
-              enum: ['Admin', 'Employee', 'Chef', 'Customer'],
-              default: 'Customer',
-              example: 'Chef',
+              enum: ['ADMIN', 'EMPLOYEE', 'CHEF', 'CUSTOMER'],
+              default: 'CUSTOMER',
+              example: 'CHEF',
             },
           },
         },
@@ -72,9 +76,9 @@ const options: swaggerJSDoc.Options = {
             email: {
               type: 'string',
               format: 'email',
-              example: 'chef@restaurant.com',
+              example: 'admin@gmail.com',
             },
-            password: { type: 'string', example: 'secret123' },
+            password: { type: 'string', example: 'Aa@123123' },
           },
         },
 
@@ -98,14 +102,13 @@ const options: swaggerJSDoc.Options = {
             token: {
               type: 'string',
               example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
-              description:
-                'JWT — nhét vào header: Authorization: Bearer {token}',
+              description: 'JWT — Put in Header: Authorization: Bearer {token}',
             },
             user: { $ref: '#/components/schemas/SafeUser' },
             role: {
               type: 'string',
-              enum: ['Admin', 'Employee', 'Chef', 'Customer'],
-              example: 'Chef',
+              enum: ['ADMIN', 'EMPLOYEE', 'CHEF', 'CUSTOMER'],
+              example: 'CHEF',
             },
           },
         },
@@ -116,7 +119,7 @@ const options: swaggerJSDoc.Options = {
             {
               type: 'object',
               properties: {
-                role: { type: 'string', example: 'Chef' },
+                role: { type: 'string', example: 'CHEF' },
               },
             },
           ],
@@ -127,14 +130,18 @@ const options: swaggerJSDoc.Options = {
           type: 'object',
           required: ['username', 'email', 'password'],
           properties: {
-            username: { type: 'string', minLength: 3, example: 'chef_rivera' },
+            username: {
+              type: 'string',
+              minLength: 3,
+              example: 'nguyen_ai_linh',
+            },
             email: {
               type: 'string',
               format: 'email',
-              example: 'chef@restaurant.com',
+              example: 'customer@gmail.com',
             },
-            password: { type: 'string', minLength: 8, example: 'secret123' },
-            name: { type: 'string', nullable: true, example: 'Chef Rivera' },
+            password: { type: 'string', minLength: 8, example: 'Aa@123123' },
+            name: { type: 'string', nullable: true, example: 'Nguyen Ai Linh' },
             img: {
               type: 'string',
               nullable: true,
@@ -645,7 +652,7 @@ const options: swaggerJSDoc.Options = {
     },
   },
   // swagger-jsdoc scans JSDoc @swagger comments in these files
-  apis: ['./src/routes/*.ts'],
+  apis: ['./src/controllers/*.ts'],
 };
 
 export const swaggerSpec = swaggerJSDoc(options);

@@ -1,6 +1,6 @@
-import { z } from "zod";
+import { z } from 'zod';
 
-export const UserRoleEnum = z.enum(["Admin", "Employee", "Chef", "Customer"]);
+export const UserRoleEnum = z.enum(['ADMIN', 'EMPLOYEE', 'CHEF', 'CUSTOMER']);
 
 export const PermissionSchema = z.object({
   id: z.string().or(z.bigint()),
@@ -17,17 +17,20 @@ export const RoleSchema = z.object({
 export const UserSchema = z.object({
   id: z.string().or(z.bigint()),
   username: z.string().min(3).optional(),
-  email: z.string().email(),
+  email: z.email(),
   password: z.string().min(6),
   name: z.string().optional(),
   active: z.boolean().default(true),
 });
 
 export const LoginSchema = z.object({
-  email: z.string().email(),
+  email: z.email(),
   password: z.string().min(6),
 });
 
-export const RegisterSchema = UserSchema.omit({ id: true, active: true }).extend({
-  role: UserRoleEnum.default("Customer"),
+export const RegisterSchema = UserSchema.omit({
+  id: true,
+  active: true,
+}).extend({
+  role: UserRoleEnum.default('CUSTOMER'),
 });

@@ -22,7 +22,7 @@ const router = Router();
  *             email: chef@restaurant.com
  *             password: secret123
  *             name: Chef Rivera
- *             role: Chef
+ *             role: CHEF
  *     responses:
  *       200:
  *         description: Account created — returns JWT + user profile

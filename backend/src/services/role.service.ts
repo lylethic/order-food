@@ -1,4 +1,4 @@
-import { roleDal } from '../dal/role.dal.js';
+import { roleProvider } from '../providers/roleProvider.js';
 import { RoleRes } from '../schemas/role.js';
 import { BaseListResType, BaseSearchRequestType } from '../schemas/search.js';
 import { AppError } from '../utils/AppError.js';
@@ -11,7 +11,7 @@ import type {
 export const roleService = {
   async getAll(request: BaseSearchRequestType): Promise<BaseListResType> {
     const limit = request.limit;
-    const rows = await roleDal.findAll(request);
+    const rows = await roleProvider.findAll(request);
     const hasNextPage = rows.length > limit;
     const items = hasNextPage ? rows.slice(0, limit) : rows;
     const nextCursor =
@@ -26,15 +26,15 @@ export const roleService = {
   },
 
   async findById(id: number) {
-    const row = await roleDal.findById(id);
+    const row = await roleProvider.findById(id);
     if (!row) throw new AppError(404, 'Role not found');
     return RoleRes.parse(row);
   },
 
   async create(data: RoleCreateBodyType): Promise<RoleResType> {
-    const existing = await roleDal.findRoleByName(data.name);
+    const existing = await roleProvider.findRoleByName(data.name);
     if (existing) throw new AppError(409, 'Role already exists');
-    const row = await roleDal.create({
+    const row = await roleProvider.create({
       name: data.name,
       description: data.description ?? null,
     });
@@ -42,9 +42,9 @@ export const roleService = {
   },
 
   async update(data: RoleUpdateBodyType, id: number): Promise<RoleResType> {
-    const existing = await roleDal.findById(id);
+    const existing = await roleProvider.findById(id);
     if (!existing) throw new AppError(404, 'Role not found');
-    const row = await roleDal.update(
+    const row = await roleProvider.update(
       {
         ...(data.name !== undefined ? { name: data.name } : {}),
         ...(data.description !== undefined
@@ -58,9 +58,9 @@ export const roleService = {
   },
 
   async delete(id: number): Promise<RoleResType> {
-    const existing = await roleDal.findById(id);
+    const existing = await roleProvider.findById(id);
     if (!existing) throw new AppError(404, 'Role not found');
-    const row = await roleDal.delete(id);
+    const row = await roleProvider.delete(id);
     return RoleRes.parse(row);
   },
 };

@@ -6,6 +6,7 @@ import {
 import { UtensilsCrossed } from 'lucide-react';
 import { useAuthContext } from '../context/AuthContext';
 import { Spinner } from '../components/Spinner';
+import AdminLayout from '../layouts/AdminLayout';
 import CustomerLayout from '../layouts/CustomerLayout';
 import StaffLayout from '../layouts/StaffLayout';
 import AuthPage from '../pages/AuthPage';
@@ -13,6 +14,9 @@ import MenuPage from '../pages/MenuPage';
 import MyOrderPage from '../pages/MyOrderPage';
 import KitchenPage from '../pages/KitchenPage';
 import ServerPage from '../pages/ServerPage';
+import AdminCategoriesPage from '../pages/admin/AdminCategoriesPage';
+import AdminMenuItemsPage from '../pages/admin/AdminMenuItemsPage';
+import AdminUsersPage from '../pages/admin/AdminUsersPage';
 
 // ─── Loading screen ───────────────────────────────────────────────────────────
 
@@ -33,17 +37,24 @@ function LoadingScreen() {
 
 /** Shown at / — redirects to the right home page once auth resolves. */
 function RootRedirect() {
-  const { user, isLoading, isStaff } = useAuthContext();
+  const { user, isLoading, isAdmin, isStaff } = useAuthContext();
   if (isLoading) return <LoadingScreen />;
   if (!user) return <Navigate to='/auth' replace />;
+  if (isAdmin) return <Navigate to='/admin/categories' replace />;
   return <Navigate to={isStaff ? '/kitchen' : '/menu'} replace />;
 }
 
 /** Wraps the auth page — redirects away if already logged in. */
 function RequireGuest() {
-  const { user, isLoading, isStaff } = useAuthContext();
+  const { user, isLoading, isAdmin, isStaff } = useAuthContext();
   if (isLoading) return <LoadingScreen />;
-  if (user) return <Navigate to={isStaff ? '/kitchen' : '/menu'} replace />;
+  if (user)
+    return (
+      <Navigate
+        to={isAdmin ? '/admin/categories' : isStaff ? '/kitchen' : '/menu'}
+        replace
+      />
+    );
   return <AuthPage />;
 }
 
@@ -68,6 +79,17 @@ const router = createBrowserRouter([
     children: [
       { path: '/kitchen', element: <KitchenPage /> },
       { path: '/server', element: <ServerPage /> },
+    ],
+  },
+
+  // Admin routes — AdminLayout enforces admin-only access
+  {
+    element: <AdminLayout />,
+    children: [
+      { path: '/admin', element: <Navigate to='/admin/categories' replace /> },
+      { path: '/admin/categories', element: <AdminCategoriesPage /> },
+      { path: '/admin/menu-items', element: <AdminMenuItemsPage /> },
+      { path: '/admin/users', element: <AdminUsersPage /> },
     ],
   },
 

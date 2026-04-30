@@ -17,11 +17,8 @@ export default defineConfig(({ mode }) => {
     server: {
       port: 5173,
       proxy: {
-        // Proxy /api/* → backend in development
-        "/api": {
-          target: backendUrl,
-          changeOrigin: true,
-        },
+        "/api": { target: backendUrl, changeOrigin: true },
+        "/uploads": { target: backendUrl, changeOrigin: true },
       },
     },
   };

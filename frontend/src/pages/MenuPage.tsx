@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { ShoppingCart, Plus, Minus } from 'lucide-react';
+import { ShoppingCart, Plus, Minus, ImageOff } from 'lucide-react';
 import { useLang } from '../context/LangContext';
 import { api } from '../services/api';
 import { Spinner } from '../components/Spinner';
-import { MENU_ITEMS } from '../constants';
+import { MenuItemDetailModal } from '../components/MenuItemDetailModal';
 import { formatVnd } from '../utils/money';
 import type { MenuItem, Category } from '../types';
 import type { CustomerOutletContext } from '../layouts/CustomerLayout';
@@ -16,39 +16,36 @@ export default function MenuPage() {
     useOutletContext<CustomerOutletContext>();
 
   const [categories, setCategories] = useState<Category[]>([]);
-  const [menuItems, setMenuItems] = useState<MenuItem[]>(
-    MENU_ITEMS as MenuItem[],
-  );
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [activeCat, setActiveCat] = useState<string>('');
   const [loadingItems, setLoadingItems] = useState(true);
+  const [detailId, setDetailId] = useState<string | null>(null);
+  const [detailInitImg, setDetailInitImg] = useState<string | undefined>();
 
+  // Fetch categories once on mount
   useEffect(() => {
-    api
-      .getCategories()
-      .then(setCategories)
-      .catch(() => {});
+    api.getCategories().then(setCategories).catch(() => {});
+  }, []);
 
+  // Re-fetch items whenever active category changes
+  useEffect(() => {
+    setLoadingItems(true);
     api
-      .getMenuItems()
+      .getMenuItems(activeCat || undefined)
       .then((items) => {
         if (items.length) setMenuItems(items);
+        else setMenuItems([]);
       })
       .catch(() => {})
       .finally(() => setLoadingItems(false));
-  }, []);
+  }, [activeCat]);
 
   const allCats: Category[] = [
     { id: '', name: t.allCategories },
     ...categories,
   ];
 
-  const filtered = activeCat
-    ? menuItems.filter(
-        (m) =>
-          m.category === activeCat ||
-          categories.find((c) => c.id === activeCat)?.name === m.category,
-      )
-    : menuItems;
+  const filtered = menuItems;
 
   const getQty = (id: string) =>
     cart.find((c) => c.menuItemId === id)?.qty ?? 0;
@@ -96,17 +93,35 @@ export default function MenuPage() {
                   exit={{ opacity: 0, scale: 0.96 }}
                   className='bg-white rounded-[28px] overflow-hidden border border-slate-100 shadow-sm hover:shadow-card transition-all group'
                 >
-                  {item.image && (
-                    <div className='aspect-4/3 overflow-hidden m-3 rounded-[20px] bg-slate-100'>
+                  {/* Image — click to open detail */}
+                  <div
+                    className='aspect-4/3 overflow-hidden m-3 rounded-[20px] bg-slate-100 cursor-pointer'
+                    onClick={() => {
+                      setDetailId(item.id);
+                      setDetailInitImg(item.image);
+                    }}
+                  >
+                    {item.image ? (
                       <img
-                        src={item.image}
+                        src={`/${item.image}`}
                         alt={item.name}
                         className='w-full h-full object-cover group-hover:scale-105 transition-transform duration-700'
                       />
-                    </div>
-                  )}
+                    ) : (
+                      <div className='w-full h-full flex items-center justify-center text-slate-300'>
+                        <ImageOff className='w-8 h-8' />
+                      </div>
+                    )}
+                  </div>
+
                   <div className='px-6 pb-6 pt-2 flex flex-col'>
-                    <h3 className='text-base font-extrabold text-slate-800 mb-1'>
+                    <h3
+                      className='text-base font-extrabold text-slate-800 mb-1 cursor-pointer hover:text-indigo-600 transition-colors'
+                      onClick={() => {
+                        setDetailId(item.id);
+                        setDetailInitImg(item.image);
+                      }}
+                    >
                       {item.name}
                     </h3>
                     <p className='text-slate-400 text-sm line-clamp-2 leading-relaxed mb-5'>
@@ -165,6 +180,18 @@ export default function MenuPage() {
             })}
           </AnimatePresence>
         </div>
+      )}
+
+      {/* Menu item detail modal */}
+      {detailId && (
+        <MenuItemDetailModal
+          itemId={detailId}
+          initialImage={detailInitImg}
+          cart={cart}
+          onAddItem={addItem}
+          onUpdateQty={updateQty}
+          onClose={() => setDetailId(null)}
+        />
       )}
 
       {/* Floating cart button */}
