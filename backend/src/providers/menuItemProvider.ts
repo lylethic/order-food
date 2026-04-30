@@ -65,16 +65,31 @@ export const menuItemProvider = {
   },
 
   async create(data: MenuItemCreateBodyType) {
-    return prisma.menuItem.create({
-      data,
-    });
+    const payload: any = { ...data };
+    // remove client-only/unknown fields that are not in Prisma model
+    if (payload.image != null) delete payload.image;
+    if (payload.category_id != null) {
+      payload.category = { connect: { id: BigInt(payload.category_id) } };
+      delete payload.category_id;
+    }
+    return prisma.menuItem.create({ data: payload });
   },
 
   async update(data: MenuItemUpdateBodyType, id: number) {
-    return prisma.menuItem.update({
-      where: { id },
-      data,
-    });
+    const payload: any = { ...data };
+    // remove client-only/unknown fields
+    if (payload.image != null) delete payload.image;
+    if (Object.prototype.hasOwnProperty.call(payload, 'category_id')) {
+      const cid = payload.category_id;
+      delete payload.category_id;
+      if (cid == null) {
+        payload.category = { disconnect: true };
+      } else {
+        payload.category = { connect: { id: BigInt(cid) } };
+      }
+    }
+
+    return prisma.menuItem.update({ where: { id }, data: payload });
   },
 
   async delete(id: number) {
