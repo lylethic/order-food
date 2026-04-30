@@ -108,6 +108,25 @@ export interface User {
   role: string;
 }
 
+export interface AdminUser {
+  id: string;
+  username: string;
+  email: string;
+  name: string | null;
+  img: string | null;
+  active: boolean;
+  deleted: boolean;
+  created: string;
+  updated: string;
+}
+
+export interface Role {
+  id: string;
+  name: string;
+  active: boolean;
+  deleted: boolean;
+}
+
 export interface PlacedOrder {
   id: string;
   ticketNumber: string;
