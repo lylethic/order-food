@@ -6,6 +6,7 @@ export const MenuItemRes = z.object({
   description: z.string().nullable(),
   price: z.number(),
   rating: z.number().nullable(),
+  commentCount: z.number().int().nonnegative(),
   tag: z.string().nullable(),
   image: z.string().nullable(),
   category_id: z.bigint(),
@@ -33,6 +34,7 @@ export interface MenuItemDetailResType {
   description: string | null;
   price: number;
   rating: number | null;
+  commentCount: number;
   tag: string | null;
   category: { id: string; name: string } | null;
   images: MenuItemImageResType[];

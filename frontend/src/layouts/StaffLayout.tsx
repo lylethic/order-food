@@ -2,15 +2,25 @@ import { Outlet, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { ChefHat, Truck } from 'lucide-react';
 import { useAuthContext } from '../context/AuthContext';
 import { useLang } from '../context/LangContext';
-import { useSSE, type StatusEvent } from '../hooks/useSSE';
+import { useSSE } from '../hooks/useSSE';
+import type { SSEEvent, StatusEvent, NotificationCreatedEvent } from '../hooks/useSSE';
+
+function toStatusEvent(event: SSEEvent | null): StatusEvent | null {
+  if (!event) return null;
+  const t = event.eventType;
+  if (t === 'status' || t === 'payment' || t === undefined) return event as StatusEvent;
+  return null;
+}
 import { Sidebar } from '../components/Sidebar';
 import { TopBar } from '../components/TopBar';
 import { BottomNav } from '../components/BottomNav';
+import { NotificationDropdown } from '../components/NotificationDropdown';
 import type { NavItem } from '../types';
 
 // ─── Outlet context type ──────────────────────────────────────────────────────
 
 export interface StaffOutletContext {
+  /** Order status/payment events only — backward-compatible with existing pages */
   lastEvent: StatusEvent | null;
 }
 
@@ -26,22 +36,27 @@ export default function StaffLayout() {
 
   // Role guards
   if (isLoading) return null;
-  if (!user) return <Navigate to="/auth" replace />;
-  if (!isStaff) return <Navigate to="/menu" replace />;
+  if (!user) return <Navigate to='/auth' replace />;
+  if (!isStaff) return <Navigate to='/menu' replace />;
+
+  const notificationEvent =
+    lastEvent?.eventType === 'notification.created'
+      ? (lastEvent as NotificationCreatedEvent)
+      : null;
 
   const navItems: NavItem[] = [
     { id: 'kitchen', label: t.kitchen, icon: ChefHat },
-    { id: 'server',  label: t.server,  icon: Truck   },
+    { id: 'server', label: t.server, icon: Truck },
   ];
 
-  const activeTab    = pathname.startsWith('/server') ? 'server' : 'kitchen';
-  const topTitle     = activeTab === 'server' ? t.deliveryStation : t.chefDashboard;
-  const topSubtitle  = activeTab === 'server' ? t.serverSub       : t.kitchenSub;
+  const activeTab = pathname.startsWith('/server') ? 'server' : 'kitchen';
+  const topTitle = activeTab === 'server' ? t.deliveryStation : t.chefDashboard;
+  const topSubtitle = activeTab === 'server' ? t.serverSub : t.kitchenSub;
 
-  const outletCtx: StaffOutletContext = { lastEvent };
+  const outletCtx: StaffOutletContext = { lastEvent: toStatusEvent(lastEvent) };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex">
+    <div className='min-h-screen bg-slate-50 flex'>
       <Sidebar
         items={navItems}
         active={activeTab}
@@ -50,10 +65,15 @@ export default function StaffLayout() {
         onLogout={logout}
       />
 
-      <div className="flex-1 md:ml-64 flex flex-col">
-        <TopBar title={topTitle} subtitle={topSubtitle} onLogout={logout} />
+      <div className='flex-1 md:ml-64 flex flex-col'>
+        <TopBar
+          title={topTitle}
+          subtitle={topSubtitle}
+          onLogout={logout}
+          right={<NotificationDropdown notificationEvent={notificationEvent} />}
+        />
 
-        <main className="flex-1">
+        <main className='flex-1'>
           <Outlet context={outletCtx} />
         </main>
       </div>

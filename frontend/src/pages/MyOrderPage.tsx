@@ -6,8 +6,11 @@ import {
   ClipboardList,
   RefreshCw,
   FileText,
+  Star,
+  Send,
+  CheckCircle2,
 } from 'lucide-react';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import { useLang } from '../context/LangContext';
 import { api } from '../services/api';
 import { Spinner } from '../components/Spinner';
@@ -18,10 +21,127 @@ import InvoiceModal from '../components/InvoiceModal';
 import type { CustomerOutletContext } from '../layouts/CustomerLayout';
 import type {
   OrderDetail,
+  OrderItem,
   OrderSummary,
   OrderStatus,
   PaymentMethod,
 } from '../types';
+
+// ─── Mini StarRating ──────────────────────────────────────────────────────────
+
+function StarPicker({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+  const [hovered, setHovered] = useState(0);
+  return (
+    <div className='flex gap-0.5'>
+      {[1, 2, 3, 4, 5].map((s) => (
+        <button
+          key={s}
+          type='button'
+          onClick={() => onChange(s)}
+          onMouseEnter={() => setHovered(s)}
+          onMouseLeave={() => setHovered(0)}
+          className='transition-transform active:scale-90'
+        >
+          <Star
+            className={`w-5 h-5 transition-colors ${
+              (hovered || value) >= s ? 'text-amber-400 fill-amber-400' : 'text-slate-200'
+            }`}
+          />
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// ─── Rating Panel ─────────────────────────────────────────────────────────────
+
+function RatingPanel({ items, orderId }: { items: OrderItem[]; orderId: string }) {
+  const rateableItems = items.filter((i) => i.menuItemId);
+  const [ratings, setRatings] = useState<Record<string, number>>({});
+  const [comments, setComments] = useState<Record<string, string>>({});
+  const [submitted, setSubmitted] = useState<Record<string, boolean>>({});
+  const [submitting, setSubmitting] = useState<Record<string, boolean>>({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const handleSubmit = async (item: OrderItem) => {
+    if (!item.menuItemId) return;
+    const content = comments[item.id]?.trim();
+    if (!content) {
+      setErrors((e) => ({ ...e, [item.id]: 'Vui lòng nhập nội dung đánh giá' }));
+      return;
+    }
+    setErrors((e) => ({ ...e, [item.id]: '' }));
+    setSubmitting((s) => ({ ...s, [item.id]: true }));
+    try {
+      await api.createComment(item.menuItemId!, {
+        content,
+        rating: ratings[item.id] ?? undefined,
+      });
+      setSubmitted((s) => ({ ...s, [item.id]: true }));
+    } catch (err: any) {
+      setErrors((e) => ({ ...e, [item.id]: err.message ?? 'Gửi thất bại' }));
+    } finally {
+      setSubmitting((s) => ({ ...s, [item.id]: false }));
+    }
+  };
+
+  if (rateableItems.length === 0) return null;
+
+  return (
+    <div className='border border-amber-100 bg-amber-50 rounded-2xl p-4 space-y-4'>
+      <h4 className='font-extrabold text-slate-800 flex items-center gap-2 text-sm'>
+        <Star className='w-4 h-4 text-amber-400 fill-amber-400' />
+        Đánh giá món ăn của bạn
+      </h4>
+
+      <div className='space-y-3'>
+        {rateableItems.map((item) => (
+          <div key={item.id} className='bg-white rounded-xl border border-slate-100 p-3'>
+            <p className='font-bold text-slate-800 text-sm mb-2'>{item.name}</p>
+
+            {submitted[item.id] ? (
+              <div className='flex items-center gap-2 text-emerald-600 text-sm font-semibold py-1'>
+                <CheckCircle2 className='w-4 h-4' />
+                Đánh giá đã được gửi. Cảm ơn bạn!
+              </div>
+            ) : (
+              <div className='space-y-2'>
+                <StarPicker
+                  value={ratings[item.id] ?? 0}
+                  onChange={(v) => setRatings((r) => ({ ...r, [item.id]: v }))}
+                />
+                <div className='flex gap-2'>
+                  <input
+                    value={comments[item.id] ?? ''}
+                    onChange={(e) =>
+                      setComments((c) => ({ ...c, [item.id]: e.target.value }))
+                    }
+                    placeholder='Chia sẻ cảm nhận...'
+                    className='flex-1 text-xs border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300'
+                  />
+                  <button
+                    onClick={() => handleSubmit(item)}
+                    disabled={submitting[item.id]}
+                    className='px-3 py-2 bg-indigo-600 text-white rounded-lg text-xs font-bold hover:bg-indigo-500 disabled:opacity-50 transition-colors flex items-center gap-1'
+                  >
+                    {submitting[item.id] ? (
+                      <Spinner size='sm' />
+                    ) : (
+                      <Send className='w-3.5 h-3.5' />
+                    )}
+                  </button>
+                </div>
+                {errors[item.id] && (
+                  <p className='text-xs text-rose-500'>{errors[item.id]}</p>
+                )}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export default function MyOrderPage() {
   const { t, lang } = useLang();
@@ -402,6 +522,11 @@ export default function MyOrderPage() {
                     ))}
                   </div>
                 </div>
+
+                {/* Rating panel — show after delivery */}
+                {(selectedOrder.status === 'Delivered' || selectedOrder.isPaid) && (
+                  <RatingPanel items={selectedOrder.items} orderId={selectedOrder.id} />
+                )}
 
                 {selectedOrder.status === 'Received' && (
                   <button

@@ -1,5 +1,5 @@
 import { Outlet, Navigate, useNavigate, useLocation } from 'react-router-dom';
-import { LayoutGrid, Tag, Users, ShieldCheck, LogOut, UtensilsCrossed } from 'lucide-react';
+import { LayoutGrid, Tag, Users, ShieldCheck, LogOut, UtensilsCrossed, MessageCircle } from 'lucide-react';
 import { useAuthContext } from '../context/AuthContext';
 import { useLang } from '../context/LangContext';
 import { LangToggle } from '../components/LangToggle';
@@ -48,13 +48,16 @@ export default function AdminLayout() {
     { id: 'categories', label: t.adminCategories, icon: Tag, path: '/admin/categories' },
     { id: 'menu-items', label: t.adminMenuItems, icon: UtensilsCrossed, path: '/admin/menu-items' },
     { id: 'users', label: t.adminUsers, icon: Users, path: '/admin/users' },
+    { id: 'comments', label: 'Đánh giá', icon: MessageCircle, path: '/admin/comments' },
   ];
 
   const activeId = pathname.startsWith('/admin/menu-items')
     ? 'menu-items'
     : pathname.startsWith('/admin/users')
       ? 'users'
-      : 'categories';
+      : pathname.startsWith('/admin/comments')
+        ? 'comments'
+        : 'categories';
 
   return (
     <div className='min-h-screen bg-slate-50 flex'>

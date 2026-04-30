@@ -6,6 +6,7 @@ import { useLang } from '../context/LangContext';
 import { api } from '../services/api';
 import { StatusBadge } from '../components/StatusBadge';
 import { Spinner } from '../components/Spinner';
+import { MenuItemReviewBrowser } from '../components/MenuItemReviewBrowser';
 import type { Order, OrderStatus } from '../types';
 import type { StaffOutletContext } from '../layouts/StaffLayout';
 
@@ -178,6 +179,15 @@ export default function KitchenPage() {
           </AnimatePresence>
         </div>
       )}
+
+      <div className='mt-12'>
+        <MenuItemReviewBrowser
+          title='Đánh giá món ăn'
+          subtitle='Theo dõi đánh giá theo từng món và phản hồi khi cần.'
+          canReply
+          commentScope='all'
+        />
+      </div>
     </div>
   );
 }

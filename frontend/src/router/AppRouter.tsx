@@ -17,6 +17,7 @@ import ServerPage from '../pages/ServerPage';
 import AdminCategoriesPage from '../pages/admin/AdminCategoriesPage';
 import AdminMenuItemsPage from '../pages/admin/AdminMenuItemsPage';
 import AdminUsersPage from '../pages/admin/AdminUsersPage';
+import AdminCommentsPage from '../pages/admin/AdminCommentsPage';
 
 // ─── Loading screen ───────────────────────────────────────────────────────────
 
@@ -90,6 +91,7 @@ const router = createBrowserRouter([
       { path: '/admin/categories', element: <AdminCategoriesPage /> },
       { path: '/admin/menu-items', element: <AdminMenuItemsPage /> },
       { path: '/admin/users', element: <AdminUsersPage /> },
+      { path: '/admin/comments', element: <AdminCommentsPage /> },
     ],
   },
 

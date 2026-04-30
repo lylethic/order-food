@@ -45,6 +45,7 @@ export const menuItemService = {
         ...r,
         price,
         rating,
+        commentCount: r._count?.menu_item_comments ?? 0,
         image: r.menu_item_images?.[0]?.image_url ?? null,
         created: r.created instanceof Date ? r.created : new Date(r.created),
         updated: r.updated
@@ -72,7 +73,9 @@ export const menuItemService = {
     const toNum = (v: any) =>
       v != null && typeof v === 'object' && typeof v.toNumber === 'function'
         ? v.toNumber()
-        : v != null ? Number(v) : null;
+        : v != null
+          ? Number(v)
+          : null;
 
     const imgs: any[] = r.menu_item_images ?? [];
 
@@ -82,6 +85,7 @@ export const menuItemService = {
       description: r.description ?? null,
       price: toNum(r.price) ?? 0,
       rating: r.rating != null ? toNum(r.rating) : null,
+      commentCount: r._count?.menu_item_comments ?? 0,
       tag: r.tag ?? null,
       category: r.category
         ? { id: r.category.id.toString(), name: r.category.name }
@@ -129,7 +133,11 @@ export const menuItemService = {
       throw new AppError(400, 'Ảnh không thuộc món ăn này');
 
     // Delete file from disk
-    try { staticFileService.delete(img.image_url); } catch { /* ignore */ }
+    try {
+      staticFileService.delete(img.image_url);
+    } catch {
+      /* ignore */
+    }
 
     await menuItemImageProvider.delete(imageId);
     return this.findById(menuItemId);
