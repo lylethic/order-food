@@ -4,7 +4,7 @@ import { BaseSearchRequestType } from '../schemas/search.js';
 /**
  * Data Access Layer — Role
  */
-export const roleDal = {
+export const roleProvider = {
   async findAll(request?: BaseSearchRequestType) {
     return prisma.role.findMany({
       where: {

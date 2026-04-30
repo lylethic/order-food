@@ -1,6 +1,9 @@
-import { LogOut, User } from 'lucide-react';
+import { useRef, useState } from 'react';
+import { LogOut, User, Camera } from 'lucide-react';
 import { UtensilsCrossed } from 'lucide-react';
 import { useLang } from '../context/LangContext';
+import { useAuthContext } from '../context/AuthContext';
+import { api } from '../services/api';
 import type { NavItem, User as UserType } from '../types';
 
 interface Props {
@@ -9,6 +12,64 @@ interface Props {
   onChange: (id: string) => void;
   user: UserType;
   onLogout: () => void;
+}
+
+function Avatar({ user }: { user: UserType }) {
+  const { updateUser } = useAuthContext();
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const updated = await api.uploadAvatar(user.userId, file);
+      updateUser({ img: updated.img });
+    } catch {
+      // silent — could show a toast here
+    } finally {
+      setUploading(false);
+      e.target.value = '';
+    }
+  };
+
+  return (
+    <div
+      className='relative w-9 h-9 shrink-0 cursor-pointer group'
+      onClick={() => inputRef.current?.click()}
+      title='Change avatar'
+    >
+      {user.img ? (
+        <img
+          src={`/${user.img}`}
+          alt={user.name || user.email}
+          className='w-9 h-9 rounded-full object-cover'
+        />
+      ) : (
+        <div className='w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center'>
+          <User className='w-4 h-4 text-indigo-600' />
+        </div>
+      )}
+
+      {/* Hover overlay */}
+      <div className='absolute inset-0 rounded-full bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity'>
+        {uploading ? (
+          <div className='w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin' />
+        ) : (
+          <Camera className='w-3 h-3 text-white' />
+        )}
+      </div>
+
+      <input
+        ref={inputRef}
+        type='file'
+        accept='image/*'
+        className='hidden'
+        onChange={handleFileChange}
+      />
+    </div>
+  );
 }
 
 export function Sidebar({ items, active, onChange, user, onLogout }: Props) {
@@ -49,9 +110,7 @@ export function Sidebar({ items, active, onChange, user, onLogout }: Props) {
       {/* User / logout */}
       <div className='p-4 border-t border-slate-50'>
         <div className='flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 transition-all'>
-          <div className='w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center shrink-0'>
-            <User className='w-4 h-4 text-indigo-600' />
-          </div>
+          <Avatar user={user} />
           <div className='flex-1 min-w-0'>
             <p className='text-sm font-bold text-slate-800 truncate'>
               {user.name || user.email}

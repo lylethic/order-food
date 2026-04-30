@@ -21,6 +21,13 @@ export type PaymentMethod =
   | 'E-Wallet'
   | 'Bank Transfer';
 
+export interface MenuItemImage {
+  id: string;
+  image_url: string;
+  is_primary: boolean;
+  display_order: number;
+}
+
 export interface MenuItem {
   id: string;
   name: string;
@@ -28,9 +35,14 @@ export interface MenuItem {
   price: number;
   image?: string;
   category?: string;
+  categoryId?: string;
   isAvailable?: boolean;
   rating?: number;
   tag?: string;
+}
+
+export interface MenuItemDetail extends MenuItem {
+  images: MenuItemImage[];
 }
 
 export interface Category {
@@ -92,6 +104,7 @@ export interface User {
   userId: string;
   email: string;
   name?: string;
+  img?: string | null;
   role: string;
 }
 

@@ -3,6 +3,8 @@ import { menuItemService } from '../services/menuItem.service.js';
 import { sendResponse, handleRouteError } from '../utils/response.js';
 import { BaseSearchRequest } from '../schemas/search.js';
 import { MenuItemCreateBody, MenuItemUpdateBody } from '../schemas/menuItem.js';
+import { AppError } from '../utils/AppError.js';
+import { uploadImage } from '../services/staticFile.service.js';
 
 const router = Router();
 
@@ -22,13 +24,12 @@ const router = Router();
  *         description: Free text search or filter string
  *         example: Crispy
  *       - in: query
- *         name: category
+ *         name: categoryId
  *         schema:
- *           type: string
- *           enum: [Starters, Mains, Desserts, Beverages, Specials]
+ *           type: integer
  *         required: false
- *         description: Filter by category name
- *         example: Starters
+ *         description: Filter by category id
+ *         example: 1
  *       - in: query
  *         name: limit
  *         schema:
@@ -170,6 +171,110 @@ router.post('/menuItems', async (_req, res) => {
  *       500:
  *         description: Database error
  */
+
+/**
+ * @swagger
+ * /api/v1/menuItems/{id}/images:
+ *   post:
+ *     summary: Upload images for a menu item
+ *     tags: [Menu Items]
+ *     description: Upload one or more images (max 10, 5 MB each). Send as multipart/form-data with field name "files". Optionally set "primaryIndex" (0-based) to mark one as primary.
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required: [files]
+ *             properties:
+ *               files:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   format: binary
+ *               primaryIndex:
+ *                 type: integer
+ *                 description: 0-based index of the primary image (default 0)
+ *     responses:
+ *       200:
+ *         description: Images uploaded — returns updated menu item with images array
+ *       400:
+ *         description: No files provided
+ *       404:
+ *         description: Menu item not found
+ *       415:
+ *         description: Unsupported file type
+ */
+router.post('/menuItems/:id/images', uploadImage.array('files', 10), async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id) || id <= 0) throw new AppError(400, 'Invalid menu item id');
+
+    const files = req.files as Express.Multer.File[] | undefined;
+    if (!files || files.length === 0) throw new AppError(400, 'Chưa chọn file ảnh');
+
+    const { primaryIndex } = req.body as { primaryIndex?: string };
+    const data = await menuItemService.uploadImages(id, files, primaryIndex);
+    sendResponse(res, {
+      message: 'Tải ảnh lên thành công',
+      message_en: 'Images uploaded successfully',
+      data,
+    });
+  } catch (err) {
+    handleRouteError(err, res);
+  }
+});
+
+/**
+ * @swagger
+ * /api/v1/menuItems/{id}/images/{imageId}:
+ *   delete:
+ *     summary: Delete one image from a menu item
+ *     tags: [Menu Items]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Menu item id
+ *       - in: path
+ *         name: imageId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Image id
+ *     responses:
+ *       200:
+ *         description: Image deleted — returns updated menu item
+ *       400:
+ *         description: Invalid id or image does not belong to this menu item
+ *       404:
+ *         description: Image not found
+ */
+router.delete('/menuItems/:id/images/:imageId', async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    const imageId = Number(req.params.imageId);
+    if (!Number.isInteger(id) || id <= 0) throw new AppError(400, 'Invalid menu item id');
+    if (!Number.isInteger(imageId) || imageId <= 0) throw new AppError(400, 'Invalid image id');
+
+    const data = await menuItemService.deleteImage(id, imageId);
+    sendResponse(res, {
+      message: 'Xóa ảnh thành công',
+      message_en: 'Image deleted successfully',
+      data,
+    });
+  } catch (err) {
+    handleRouteError(err, res);
+  }
+});
 
 router.put('/menuItems/:id', async (_req, res) => {
   try {

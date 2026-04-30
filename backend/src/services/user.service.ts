@@ -1,5 +1,5 @@
 import bcrypt from 'bcryptjs';
-import { userDal } from '../dal/user.dal';
+import { userProvider } from '../providers/userProvider';
 import { AppError } from '../utils/AppError.js';
 import {
   UserCreateBodyType,
@@ -8,43 +8,43 @@ import {
   UserUpdateBodyType,
 } from '../schemas/user';
 import { BaseListResType, BaseSearchRequestType } from '../schemas/search';
-import { roleDal } from '../dal/role.dal';
+import { roleProvider } from '../providers/roleProvider';
 
 export const userService = {
   async create(data: UserCreateBodyType): Promise<UserResType> {
-    var exstingEmail = await userDal.findByEmail(data.email);
+    var exstingEmail = await userProvider.findByEmail(data.email);
     if (exstingEmail) throw new AppError(409, 'Email already registered');
 
     const hashed = await bcrypt.hash(data.password, 12);
-    var result = await userDal.create({ ...data, password: hashed });
-    const role = await roleDal.findRoleByName('Customer'.toUpperCase());
-    if (role) await roleDal.assignRole(result.id, role.id);
+    var result = await userProvider.create({ ...data, password: hashed });
+    const role = await roleProvider.findRoleByName('Customer'.toUpperCase());
+    if (role) await roleProvider.assignRole(result.id, role.id);
     return UserRes.parse(result);
   },
 
   async update(data: UserUpdateBodyType, id: number) {
-    var user = await userDal.findById(id);
+    var user = await userProvider.findById(id);
     if (!user) throw new AppError(404, 'User not found');
 
-    var result = await userDal.update(data, id);
+    var result = await userProvider.update(data, id);
     return UserRes.parse(result);
   },
 
   async findById(id: number) {
-    var result = await userDal.findById(id);
+    var result = await userProvider.findById(id);
     return UserRes.parse(result);
   },
 
   async delete(id: number) {
-    var user = await userDal.findById(id);
+    var user = await userProvider.findById(id);
     if (!user) throw new AppError(404, 'User not found');
-    var result = await userDal.delete(id);
+    var result = await userProvider.delete(id);
     return UserRes.parse(result);
   },
 
   async findAll(request: BaseSearchRequestType): Promise<BaseListResType> {
     const limit = request.limit;
-    const users = await userDal.findAll(request);
+    const users = await userProvider.findAll(request);
     const hasNextPage = users.length > limit;
     const items = hasNextPage ? users.slice(0, limit) : users;
     const nextCursor =
@@ -58,24 +58,32 @@ export const userService = {
   },
 
   async assignRole(userId: number, roleId: number) {
-    var user = await userDal.findById(userId);
+    var user = await userProvider.findById(userId);
     if (!user) throw new AppError(404, 'User not found');
 
-    var role = await roleDal.findById(roleId);
+    var role = await roleProvider.findById(roleId);
     if (!role) throw new AppError(404, 'Role not found');
 
-    await roleDal.assignRole(user.id, role.id);
+    await roleProvider.assignRole(user.id, role.id);
     return true;
   },
 
   async removeAssignRole(userId: number, roleId: number) {
-    var user = await userDal.findById(userId);
+    var user = await userProvider.findById(userId);
     if (!user) throw new AppError(404, 'User not found');
 
-    var role = await roleDal.findById(roleId);
+    var role = await roleProvider.findById(roleId);
     if (!role) throw new AppError(404, 'Role not found');
 
-    await roleDal.removeAssignRole(user.id, role.id);
+    await roleProvider.removeAssignRole(user.id, role.id);
     return true;
+  },
+
+  async updateAvatar(userId: number, imgUrl: string): Promise<UserResType> {
+    var user = await userProvider.findById(userId);
+    if (!user) throw new AppError(404, 'User not found');
+
+    var result = await userProvider.updateImg(userId, imgUrl);
+    return UserRes.parse(result);
   },
 };

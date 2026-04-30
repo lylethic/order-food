@@ -1,4 +1,4 @@
-import { categoryDal } from '../dal/category.dal.js';
+import { categoryProvider } from '../providers/categoryProvider.js';
 import { CategoryRes } from '../schemas/category.js';
 import { BaseListResType, BaseSearchRequestType } from '../schemas/search.js';
 
@@ -9,7 +9,7 @@ import { BaseListResType, BaseSearchRequestType } from '../schemas/search.js';
 export const categoryService = {
   async getAll(request: BaseSearchRequestType): Promise<BaseListResType> {
     const limit = request.limit;
-    const rows = await categoryDal.findAll(request);
+    const rows = await categoryProvider.findAll(request);
     const hasNextPage = rows.length > limit;
     const items = hasNextPage ? rows.slice(0, limit) : rows;
     const nextCursor = hasNextPage ? items[items.length - 1].id : null;
@@ -23,19 +23,19 @@ export const categoryService = {
   },
 
   async findById(id: number) {
-    const row = await categoryDal.findById(id);
+    const row = await categoryProvider.findById(id);
     return CategoryRes.parse(row);
   },
 
   async create(name: string) {
-    return categoryDal.create({ name });
+    return categoryProvider.create({ name });
   },
 
   async update(name: string, id: number) {
-    return categoryDal.update({ name }, id);
+    return categoryProvider.update({ name }, id);
   },
 
   async delete(id: number) {
-    return categoryDal.delete(id);
+    return categoryProvider.delete(id);
   },
 };

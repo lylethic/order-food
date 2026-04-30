@@ -1,22 +1,10 @@
 import { prisma } from '../lib/prisma.js';
-
-export interface CreateOrderData {
-  tableNumber: string;
-  customerId?: bigint;
-  total: number;
-  items: Array<{
-    menuItemId: bigint;
-    nameAtOrder: string;
-    qty: number;
-    priceAtOrder: number | string;
-    modifications: string[];
-  }>;
-}
+import { CreateOrderBodyType } from '../schemas/order.js';
 
 /**
  * Data Access Layer — Order
  */
-export const orderDal = {
+export const orderProvider = {
   /** Find a single order by id. */
   async findById(id: bigint) {
     return prisma.order.findFirst({
@@ -39,7 +27,7 @@ export const orderDal = {
   },
 
   /** Insert a new order with its line items in a single transaction. */
-  async create(data: CreateOrderData, ticketNumber: string) {
+  async create(data: CreateOrderBodyType, ticketNumber: string) {
     return prisma.order.create({
       data: {
         ticket_number: ticketNumber,

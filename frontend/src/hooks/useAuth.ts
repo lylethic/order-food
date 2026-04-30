@@ -76,6 +76,13 @@ export function useAuth() {
     setState({ user: null, token: null, isLoading: false, error: null });
   }, []);
 
+  const updateUser = useCallback((patch: Partial<User>) => {
+    setState((s) => ({
+      ...s,
+      user: s.user ? { ...s.user, ...patch } : s.user,
+    }));
+  }, []);
+
   const STAFF_ROLES = new Set(['ADMIN', 'EMPLOYEE', 'CHEF']);
 
   return {
@@ -84,5 +91,6 @@ export function useAuth() {
     login,
     register,
     logout,
+    updateUser,
   };
 }

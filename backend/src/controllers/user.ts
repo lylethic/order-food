@@ -6,6 +6,7 @@ import { AppError } from '../utils/AppError.js';
 import { BaseSearchRequest } from '../schemas/search.js';
 import { UserCreateBody, UserUpdateBody } from '../schemas/user.js';
 import { sendResponse, handleRouteError } from '../utils/response.js';
+import { staticFileService, uploadImage } from '../services/staticFile.service.js';
 
 const router = Router();
 
@@ -271,6 +272,84 @@ router.delete('/users/:id', authenticate, isAdmin, async (req, res) => {
     sendResponse(res, {
       message: 'Xóa người dùng thành công',
       message_en: 'User deleted successfully',
+      data,
+    });
+  } catch (err) {
+    handleRouteError(err, res);
+  }
+});
+
+/**
+ * @swagger
+ * /api/v1/users/{id}/avatar:
+ *   put:
+ *     summary: Upload avatar for a user
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     description: Upload an image and save it as the user's avatar. User can update their own avatar; Admin can update anyone's.
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: User id
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required: [file]
+ *             properties:
+ *               file:
+ *                 type: string
+ *                 format: binary
+ *                 description: Image file (jpg, png, gif, webp, svg, bmp). Max 5 MB.
+ *     responses:
+ *       200:
+ *         description: Avatar updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/User'
+ *       400:
+ *         description: Invalid user id or no file provided
+ *       401:
+ *         description: Missing or invalid token
+ *       403:
+ *         description: Cannot update another user's avatar
+ *       404:
+ *         description: User not found
+ *       415:
+ *         description: Unsupported file type — images only
+ */
+router.put('/users/:id/avatar', authenticate, uploadImage.single('file'), async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id) || id <= 0)
+      throw new AppError(400, 'Invalid user id');
+
+    const isAdmin = req.user!.role === 'ADMIN';
+    const isSelf = req.user!.userId === String(id);
+    if (!isAdmin && !isSelf)
+      throw new AppError(403, 'Không thể cập nhật avatar của người dùng khác');
+
+    if (!req.file) throw new AppError(400, 'Chưa chọn file ảnh');
+
+    // Delete old avatar from disk if it exists
+    const existing = await userService.findById(id);
+    if (existing.img) {
+      try { staticFileService.delete(existing.img); } catch { /* ignore */ }
+    }
+
+    const imgUrl = staticFileService.getPath(req.file);
+    const data = await userService.updateAvatar(id, imgUrl);
+
+    sendResponse(res, {
+      message: 'Cập nhật avatar thành công',
+      message_en: 'Avatar updated successfully',
       data,
     });
   } catch (err) {

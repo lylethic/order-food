@@ -1,5 +1,5 @@
-import { orderDal } from '../dal/order.dal.js';
-import { menuItemDal } from '../dal/menuItem.dal.js';
+import { orderProvider } from '../providers/orderProvider.js';
+import { menuItemProvider } from '../providers/menuItemProvider.js';
 import { AppError } from '../utils/AppError.js';
 import { orderEmitter } from '../lib/orderEvents.js';
 import type {
@@ -7,68 +7,20 @@ import type {
   MarkOrderPaidBodyType,
   UpdateStatusBodyType,
 } from '../schemas/validation.js';
-
-export interface OrderItemDto {
-  id: string;
-  name: string;
-  qty: number;
-  price: number;
-  modifications: string[];
-}
-
-export interface OrderDto {
-  id: string;
-  ticketNumber: string;
-  table: string;
-  status: string;
-  total: number;
-  isPaid: boolean;
-  paymentMethod?: string;
-  paidAt?: string;
-  timestamp: string;
-  waitLevel?: string;
-  waitTimeMinutes?: number;
-  items: OrderItemDto[];
-}
-
-export interface OrderCreatedDto {
-  id: string;
-  ticketNumber: string;
-  table: string;
-  status: string;
-  total: number;
-}
-
-export interface OrderStatusDto {
-  id: string;
-  status: string;
-}
-
-export interface OrderSummaryDto {
-  id: string;
-  ticketNumber: string;
-  table: string;
-  status: string;
-  isPaid: boolean;
-  paymentMethod?: string;
-  paidAt?: string;
-  timestamp: string;
-  itemCount: number;
-  total: number;
-}
-
-export interface OrderPaymentDto {
-  id: string;
-  isPaid: boolean;
-  paymentMethod: string;
-  paidAt: string;
-}
+import {
+  OrderCreatedDtoType,
+  OrderDtoType,
+  OrderItemDtoType,
+  OrderPaymentDtoType,
+  OrderStatusDtoType,
+  OrderSummaryDtoType,
+} from '../schemas/order.js';
 
 const STAFF_ROLES = new Set(['admin', 'employee', 'chef']);
 export const isStaffRole = (role: string) =>
   STAFF_ROLES.has(role.toLowerCase());
 
-function formatOrderSummary(order: any): OrderSummaryDto {
+function formatOrderSummary(order: any): OrderSummaryDtoType {
   const items: any[] = order.items ?? [];
   const total =
     order.total != null
@@ -96,7 +48,7 @@ function formatOrderSummary(order: any): OrderSummaryDto {
   };
 }
 
-function formatOrder(order: any): OrderDto {
+function formatOrder(order: any): OrderDtoType {
   const items: any[] = order.items ?? [];
   const total =
     order.total != null
@@ -123,7 +75,7 @@ function formatOrder(order: any): OrderDto {
     waitLevel: order.wait_level ?? undefined,
     waitTimeMinutes: order.wait_time_minutes ?? undefined,
     items: order.items.map(
-      (item: any): OrderItemDto => ({
+      (item: any): OrderItemDtoType => ({
         id: item.id.toString(),
         name: item.name_at_order,
         qty: item.qty,
@@ -139,14 +91,14 @@ function formatOrder(order: any): OrderDto {
  * Handles order querying, creation, and status transitions.
  */
 export const orderService = {
-  async getAll(status?: string): Promise<OrderDto[]> {
-    const rows = await orderDal.findAll(status);
+  async getAll(status?: string): Promise<OrderDtoType[]> {
+    const rows = await orderProvider.findAll(status);
     return rows.map(formatOrder);
   },
 
   /** List all orders placed by the given customer (summary only). */
-  async getByCustomer(customerId: string): Promise<OrderSummaryDto[]> {
-    const rows = await orderDal.findByCustomerId(BigInt(customerId));
+  async getByCustomer(customerId: string): Promise<OrderSummaryDtoType[]> {
+    const rows = await orderProvider.findByCustomerId(BigInt(customerId));
     return rows.map(formatOrderSummary);
   },
 
@@ -158,8 +110,8 @@ export const orderService = {
     orderId: string,
     requesterId: string,
     requesterRole: string,
-  ): Promise<OrderDto> {
-    const order = await orderDal.findById(BigInt(orderId));
+  ): Promise<OrderDtoType> {
+    const order = await orderProvider.findById(BigInt(orderId));
     if (!order) throw new AppError(404, 'Order not found');
 
     if (
@@ -181,9 +133,9 @@ export const orderService = {
   async create(
     dto: CreateOrderBodyType,
     customerId?: string,
-  ): Promise<OrderCreatedDto> {
+  ): Promise<OrderCreatedDtoType> {
     const menuItemIds = dto.items.map((i) => BigInt(i.menuItemId));
-    const menuItems = await menuItemDal.findByIds(menuItemIds);
+    const menuItems = await menuItemProvider.findByIds(menuItemIds);
 
     if (menuItems.length === 0) {
       throw new AppError(422, 'None of the requested menu items were found');
@@ -209,7 +161,7 @@ export const orderService = {
       ),
     );
 
-    const order = await orderDal.create(
+    const order = await orderProvider.create(
       {
         tableNumber: dto.tableNumber,
         customerId: customerId ? BigInt(customerId) : undefined,
@@ -231,8 +183,8 @@ export const orderService = {
   async updateStatus(
     id: string,
     dto: UpdateStatusBodyType,
-  ): Promise<OrderStatusDto> {
-    const order = await orderDal.updateStatus(BigInt(id), dto.status);
+  ): Promise<OrderStatusDtoType> {
+    const order = await orderProvider.updateStatus(BigInt(id), dto.status);
     const result = { id: order.id.toString(), status: order.status };
     orderEmitter.emit('status', {
       eventType: 'status',
@@ -245,8 +197,8 @@ export const orderService = {
   async cancelByCustomer(
     id: string,
     customerId: string,
-  ): Promise<OrderStatusDto> {
-    const order = await orderDal.findById(BigInt(id));
+  ): Promise<OrderStatusDtoType> {
+    const order = await orderProvider.findById(BigInt(id));
     if (!order) throw new AppError(404, 'Order not found');
 
     if (order.customer_id?.toString() !== customerId) {
@@ -257,7 +209,7 @@ export const orderService = {
       throw new AppError(409, 'Order can only be cancelled before processing');
     }
 
-    const updated = await orderDal.updateStatus(BigInt(id), 'Cancelled');
+    const updated = await orderProvider.updateStatus(BigInt(id), 'Cancelled');
     const result = { id: updated.id.toString(), status: updated.status };
     orderEmitter.emit('status', {
       eventType: 'status',
@@ -270,8 +222,8 @@ export const orderService = {
   async markPaid(
     id: string,
     dto: MarkOrderPaidBodyType,
-  ): Promise<OrderPaymentDto> {
-    const order = await orderDal.findById(BigInt(id));
+  ): Promise<OrderPaymentDtoType> {
+    const order = await orderProvider.findById(BigInt(id));
     if (!order) throw new AppError(404, 'Order not found');
     const orderRow = order as any;
 
@@ -284,7 +236,7 @@ export const orderService = {
     }
 
     const paidAt = new Date();
-    const updated = await orderDal.markAsPaid(
+    const updated = await orderProvider.markAsPaid(
       BigInt(id),
       dto.paymentMethod,
       paidAt,

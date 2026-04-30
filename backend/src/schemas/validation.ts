@@ -2,14 +2,14 @@ import { z } from 'zod';
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
 
-export const UserRoleEnum = z.enum(['Admin', 'Employee', 'Chef', 'Customer']);
+export const UserRoleEnum = z.enum(['ADMIN', 'EMPLOYEE', 'CHEF', 'CUSTOMER']);
 
 export const RegisterSchema = z.object({
   email: z.email(),
   password: z.string().min(8, 'Password must be at least 8 characters'),
   username: z.string(),
   name: z.string(),
-  role: UserRoleEnum.optional().default('Customer'),
+  role: UserRoleEnum.optional().default('CUSTOMER'),
   img: z.string().optional(),
 });
 
