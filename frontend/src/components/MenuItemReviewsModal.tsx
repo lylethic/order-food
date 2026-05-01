@@ -453,10 +453,10 @@ export function MenuItemReviewsModal({
                         }`}
                       >
                         {status === ''
-                          ? 'Tat ca'
+                          ? 'Tất cả'
                           : status === 'Visible'
-                            ? 'Hien thi'
-                            : 'Da an'}
+                            ? 'Hiển thị'
+                            : 'Đã ẩn'}
                       </button>
                     ))}
                   </div>
@@ -474,8 +474,8 @@ export function MenuItemReviewsModal({
                     </p>
                     <p className='text-slate-400 text-sm'>
                       {commentScope === 'all'
-                        ? 'Khong co danh gia phu hop voi bo loc hien tai'
-                        : 'Chua co danh gia nao cho mon an nay'}
+                        ? 'Không có đánh gí nào phù hợp với bộ lọc hiện tại'
+                        : 'Chưa có đánh giá'}
                     </p>
                   </div>
                 ) : (

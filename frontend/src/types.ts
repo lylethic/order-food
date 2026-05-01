@@ -107,7 +107,7 @@ export interface User {
   email: string;
   name?: string;
   img?: string | null;
-  role: string;
+  role: string[];
 }
 
 export interface AdminUser {
@@ -120,6 +120,7 @@ export interface AdminUser {
   deleted: boolean;
   created: string;
   updated: string;
+  roles: { id: string; name: string }[];
 }
 
 export interface Role {

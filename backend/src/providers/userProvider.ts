@@ -29,6 +29,12 @@ export const userProvider = {
       orderBy: { id: request.order },
       take: request.limit + 1,
       ...(request.cursor ? { cursor: { id: request.cursor }, skip: 1 } : {}),
+      include: {
+        roles: {
+          where: { deleted: false },
+          include: { role: true },
+        },
+      },
     });
   },
 

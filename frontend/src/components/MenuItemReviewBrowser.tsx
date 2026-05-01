@@ -21,7 +21,7 @@ function EmptyState() {
       <Search className='w-14 h-14 text-slate-200' />
       <p className='text-lg font-extrabold text-slate-600'>Khong co mon an</p>
       <p className='text-slate-400 text-sm'>
-        Khong tim thay mon an phu hop voi danh muc hien tai
+        Không tìm thấy món ăn phù hợp với danh mục hiện tại
       </p>
     </div>
   );
@@ -62,13 +62,13 @@ export function MenuItemReviewBrowser({
   }, [load]);
 
   const categoryOptions = useMemo(
-    () => [{ id: '', name: 'Tat ca' }, ...categories],
+    () => [{ id: '', name: 'Tất cả' }, ...categories],
     [categories],
   );
 
   const selectedCategoryName =
     categoryOptions.find((category) => category.id === activeCategory)?.name ??
-    'Tat ca';
+    'Tất cả';
 
   return (
     <div className='space-y-6'>
@@ -80,7 +80,7 @@ export function MenuItemReviewBrowser({
           </h2>
           <p className='text-slate-400 font-medium text-sm mt-0.5'>
             {subtitle ??
-              'Duyet danh sach mon an va mo tung mon de xem danh gia'}
+              'Duyệt danh sách món ăn và duyệt từng món để xem đánh giá'}
           </p>
         </div>
 
@@ -89,7 +89,7 @@ export function MenuItemReviewBrowser({
           className='flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 font-semibold text-sm transition-all'
         >
           <RefreshCw className='w-4 h-4' />
-          Tai lai
+          Refresh
         </button>
       </div>
 
@@ -112,13 +112,13 @@ export function MenuItemReviewBrowser({
       <div className='flex items-center justify-between gap-3 flex-wrap'>
         <p className='text-sm font-semibold text-slate-400'>
           {loading
-            ? 'Dang tai...'
+            ? 'Loading...'
             : `${items.length} mon an · ${selectedCategoryName}`}
         </p>
         <p className='text-xs font-semibold text-slate-400'>
           {canToggleVisibility
-            ? 'Admin co the an/hien danh gia'
-            : 'Nhan vien co the phan hoi danh gia'}
+            ? 'Admin có thể ẩn/hiện đánh giá'
+            : 'Nhân viên có thể phản hồi đánh giá'}
         </p>
       </div>
 

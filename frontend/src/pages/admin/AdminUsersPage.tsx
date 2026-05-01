@@ -1,6 +1,16 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Plus, Pencil, Trash2, X, Check, Users, ShieldCheck, UserCheck, UserX } from 'lucide-react';
+import {
+  Plus,
+  Pencil,
+  Trash2,
+  X,
+  Check,
+  Users,
+  ShieldCheck,
+  UserCheck,
+  UserX,
+} from 'lucide-react';
 import { useLang } from '../../context/LangContext';
 import { api } from '../../services/api';
 import { Spinner } from '../../components/Spinner';
@@ -31,26 +41,53 @@ function ConfirmDeleteModal({
   const [deleting, setDeleting] = useState(false);
   const handle = async () => {
     setDeleting(true);
-    try { await onConfirm(); onClose(); } catch { setDeleting(false); }
+    try {
+      await onConfirm();
+      onClose();
+    } catch {
+      setDeleting(false);
+    }
   };
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      className='fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4' onClick={onClose}>
-      <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
-        onClick={(e) => e.stopPropagation()} className='bg-white rounded-2xl shadow-xl w-full max-w-sm p-6'>
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className='fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4'
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        onClick={(e) => e.stopPropagation()}
+        className='bg-white rounded-2xl shadow-xl w-full max-w-sm p-6'
+      >
         <div className='flex items-center gap-3 mb-4'>
           <div className='w-10 h-10 rounded-full bg-red-100 flex items-center justify-center'>
             <Trash2 className='w-5 h-5 text-red-600' />
           </div>
           <div>
-            <p className='text-sm font-extrabold text-slate-800'>{t.delete} "{name}"?</p>
+            <p className='text-sm font-extrabold text-slate-800'>
+              {t.delete} "{name}"?
+            </p>
             <p className='text-xs text-slate-400 mt-0.5'>{t.confirmDelete}</p>
           </div>
         </div>
         <div className='flex gap-2'>
-          <button onClick={onClose} className='flex-1 border border-slate-200 text-slate-600 text-sm font-semibold py-2.5 rounded-xl hover:bg-slate-50'>{t.cancel}</button>
-          <button onClick={handle} disabled={deleting} className='flex-1 bg-red-600 text-white text-sm font-bold py-2.5 rounded-xl hover:bg-red-500 disabled:opacity-50 flex items-center justify-center gap-2'>
-            {deleting ? <Spinner size='sm' /> : <Trash2 className='w-4 h-4' />}{t.delete}
+          <button
+            onClick={onClose}
+            className='flex-1 border border-slate-200 text-slate-600 text-sm font-semibold py-2.5 rounded-xl hover:bg-slate-50'
+          >
+            {t.cancel}
+          </button>
+          <button
+            onClick={handle}
+            disabled={deleting}
+            className='flex-1 bg-red-600 text-white text-sm font-bold py-2.5 rounded-xl hover:bg-red-500 disabled:opacity-50 flex items-center justify-center gap-2'
+          >
+            {deleting ? <Spinner size='sm' /> : <Trash2 className='w-4 h-4' />}
+            {t.delete}
           </button>
         </div>
       </motion.div>
@@ -68,7 +105,13 @@ function UserModal({
 }: {
   initial?: AdminUser;
   roles: Role[];
-  onSave: (data: { username: string; email: string; password: string; name: string; active: boolean }) => Promise<void>;
+  onSave: (data: {
+    username: string;
+    email: string;
+    password: string;
+    name: string;
+    active: boolean;
+  }) => Promise<void>;
   onClose: () => void;
 }) {
   const { t } = useLang();
@@ -104,44 +147,88 @@ function UserModal({
   };
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
       className='fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4'
-      onClick={onClose}>
-      <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 40 }}
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ opacity: 0, y: 40 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: 40 }}
         onClick={(e) => e.stopPropagation()}
-        className='bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden'>
+        className='bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden'
+      >
         <div className='flex items-center justify-between px-6 py-4 border-b border-slate-100'>
           <h2 className='text-base font-extrabold text-slate-800'>
             {initial ? t.edit : t.addNew} {t.adminUsers.slice(0, -1)}
           </h2>
-          <button onClick={onClose} className='text-slate-400 hover:text-slate-600'><X className='w-5 h-5' /></button>
+          <button
+            onClick={onClose}
+            className='text-slate-400 hover:text-slate-600'
+          >
+            <X className='w-5 h-5' />
+          </button>
         </div>
 
         <form onSubmit={handleSubmit} className='px-6 py-5 space-y-4'>
           <div className='grid grid-cols-2 gap-3'>
             <div>
-              <label className='block text-xs font-bold text-slate-500 mb-1.5'>{t.username} *</label>
-              <input autoFocus value={form.username} onChange={(e) => setForm((f) => ({ ...f, username: e.target.value }))}
-                className='w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500' />
+              <label className='block text-xs font-bold text-slate-500 mb-1.5'>
+                {t.username} *
+              </label>
+              <input
+                autoFocus
+                value={form.username}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, username: e.target.value }))
+                }
+                className='w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500'
+              />
             </div>
             <div>
-              <label className='block text-xs font-bold text-slate-500 mb-1.5'>{t.name}</label>
-              <input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                className='w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500' />
+              <label className='block text-xs font-bold text-slate-500 mb-1.5'>
+                {t.name}
+              </label>
+              <input
+                value={form.name}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, name: e.target.value }))
+                }
+                className='w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500'
+              />
             </div>
           </div>
 
           {!initial && (
             <>
               <div>
-                <label className='block text-xs font-bold text-slate-500 mb-1.5'>{t.email} *</label>
-                <input type='email' value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
-                  className='w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500' />
+                <label className='block text-xs font-bold text-slate-500 mb-1.5'>
+                  {t.email} *
+                </label>
+                <input
+                  type='email'
+                  value={form.email}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, email: e.target.value }))
+                  }
+                  className='w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500'
+                />
               </div>
               <div>
-                <label className='block text-xs font-bold text-slate-500 mb-1.5'>{t.password} *</label>
-                <input type='password' value={form.password} onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))}
-                  className='w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500' />
+                <label className='block text-xs font-bold text-slate-500 mb-1.5'>
+                  {t.password} *
+                </label>
+                <input
+                  type='password'
+                  value={form.password}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, password: e.target.value }))
+                  }
+                  className='w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500'
+                />
               </div>
             </>
           )}
@@ -153,7 +240,9 @@ function UserModal({
                 onClick={() => setForm((f) => ({ ...f, active: !f.active }))}
                 className={`relative w-10 h-6 rounded-full transition-colors ${form.active ? 'bg-indigo-600' : 'bg-slate-200'}`}
               >
-                <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${form.active ? 'translate-x-4' : 'translate-x-0'}`} />
+                <span
+                  className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${form.active ? 'translate-x-4' : 'translate-x-0'}`}
+                />
               </button>
               <span className='text-sm font-semibold text-slate-700'>
                 {form.active ? t.active : t.inactive}
@@ -164,9 +253,20 @@ function UserModal({
           {error && <p className='text-xs text-red-500'>{error}</p>}
 
           <div className='flex gap-2 pt-1'>
-            <button type='button' onClick={onClose} className='flex-1 border border-slate-200 text-slate-600 text-sm font-semibold py-2.5 rounded-xl hover:bg-slate-50'>{t.cancel}</button>
-            <button type='submit' disabled={saving} className='flex-1 bg-indigo-600 text-white text-sm font-bold py-2.5 rounded-xl hover:bg-indigo-500 disabled:opacity-50 flex items-center justify-center gap-2'>
-              {saving ? <Spinner size='sm' /> : <Check className='w-4 h-4' />}{t.save}
+            <button
+              type='button'
+              onClick={onClose}
+              className='flex-1 border border-slate-200 text-slate-600 text-sm font-semibold py-2.5 rounded-xl hover:bg-slate-50'
+            >
+              {t.cancel}
+            </button>
+            <button
+              type='submit'
+              disabled={saving}
+              className='flex-1 bg-indigo-600 text-white text-sm font-bold py-2.5 rounded-xl hover:bg-indigo-500 disabled:opacity-50 flex items-center justify-center gap-2'
+            >
+              {saving ? <Spinner size='sm' /> : <Check className='w-4 h-4' />}
+              {t.save}
             </button>
           </div>
         </form>
@@ -188,7 +288,9 @@ function RoleModal({
 }) {
   const { t } = useLang();
   const [loadingId, setLoadingId] = useState<string | null>(null);
-  const [assignedIds, setAssignedIds] = useState<Set<string>>(new Set());
+  const [assignedIds, setAssignedIds] = useState<Set<string>>(
+    () => new Set(user.roles.map((r) => r.id)),
+  );
   const [error, setError] = useState('');
 
   const toggle = async (role: Role) => {
@@ -197,7 +299,11 @@ function RoleModal({
     try {
       if (assignedIds.has(role.id)) {
         await api.adminRemoveRole(user.id, role.id);
-        setAssignedIds((prev) => { const s = new Set(prev); s.delete(role.id); return s; });
+        setAssignedIds((prev) => {
+          const s = new Set(prev);
+          s.delete(role.id);
+          return s;
+        });
       } else {
         await api.adminAssignRole(user.id, role.id);
         setAssignedIds((prev) => new Set(prev).add(role.id));
@@ -216,20 +322,33 @@ function RoleModal({
   }, [onClose]);
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      className='fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4' onClick={onClose}>
-      <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
-        onClick={(e) => e.stopPropagation()} className='bg-white rounded-2xl shadow-xl w-full max-w-sm p-6'>
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className='fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4'
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        onClick={(e) => e.stopPropagation()}
+        className='bg-white rounded-2xl shadow-xl w-full max-w-sm p-6'
+      >
         <div className='flex items-center justify-between mb-1'>
-          <h2 className='text-base font-extrabold text-slate-800'>{t.adminRoles}</h2>
-          <button onClick={onClose} className='text-slate-400 hover:text-slate-600'><X className='w-5 h-5' /></button>
+          <h2 className='text-base font-extrabold text-slate-800'>
+            {t.adminRoles}
+          </h2>
+          <button
+            onClick={onClose}
+            className='text-slate-400 hover:text-slate-600'
+          >
+            <X className='w-5 h-5' />
+          </button>
         </div>
         <p className='text-xs text-slate-400 mb-4'>
           {user.name ?? user.username} — {user.email}
-        </p>
-
-        <p className='text-xs text-slate-400 mb-3 italic'>
-          Lưu ý: không thể xem vai trò hiện tại của người dùng qua API này. Dùng nút bên dưới để gán hoặc xóa vai trò.
         </p>
 
         {error && <p className='text-xs text-red-500 mb-3'>{error}</p>}
@@ -239,18 +358,29 @@ function RoleModal({
             const isAssigned = assignedIds.has(role.id);
             const loading = loadingId === role.id;
             return (
-              <div key={role.id} className='flex items-center gap-3 p-3 rounded-xl border border-slate-100 bg-slate-50'>
-                <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${roleBadgeColor(role.name)}`}>
+              <div
+                key={role.id}
+                className='flex items-center gap-3 p-3 rounded-xl border border-slate-100 bg-slate-50'
+              >
+                <span
+                  className={`text-xs font-bold px-2.5 py-1 rounded-full ${roleBadgeColor(role.name)}`}
+                >
                   {role.name}
                 </span>
-                <span className='flex-1 text-xs text-slate-400'>#{role.id}</span>
+                <span className='flex-1 text-xs text-slate-400'>
+                  #{role.id}
+                </span>
                 <div className='flex gap-1.5'>
                   <button
-                    onClick={() => { setAssignedIds(new Set(assignedIds).add(role.id)); toggle(role); }}
+                    onClick={() => toggle(role)}
                     disabled={loading || isAssigned}
                     className='flex items-center gap-1 text-xs font-semibold text-teal-700 bg-teal-50 hover:bg-teal-100 px-2.5 py-1 rounded-lg disabled:opacity-40 transition-colors'
                   >
-                    {loading && !isAssigned ? <Spinner size='sm' /> : <UserCheck className='w-3.5 h-3.5' />}
+                    {loading && !isAssigned ? (
+                      <Spinner size='sm' />
+                    ) : (
+                      <UserCheck className='w-3.5 h-3.5' />
+                    )}
                     {t.assignRole}
                   </button>
                   <button
@@ -258,7 +388,11 @@ function RoleModal({
                     disabled={loading}
                     className='flex items-center gap-1 text-xs font-semibold text-red-700 bg-red-50 hover:bg-red-100 px-2.5 py-1 rounded-lg disabled:opacity-40 transition-colors'
                   >
-                    {loading && isAssigned ? <Spinner size='sm' /> : <UserX className='w-3.5 h-3.5' />}
+                    {loading && isAssigned ? (
+                      <Spinner size='sm' />
+                    ) : (
+                      <UserX className='w-3.5 h-3.5' />
+                    )}
                     {t.removeRole}
                   </button>
                 </div>
@@ -267,7 +401,10 @@ function RoleModal({
           })}
         </div>
 
-        <button onClick={onClose} className='w-full mt-4 border border-slate-200 text-slate-600 text-sm font-semibold py-2.5 rounded-xl hover:bg-slate-50'>
+        <button
+          onClick={onClose}
+          className='w-full mt-4 border border-slate-200 text-slate-600 text-sm font-semibold py-2.5 rounded-xl hover:bg-slate-50'
+        >
           {t.cancel}
         </button>
       </motion.div>
@@ -289,7 +426,10 @@ export default function AdminUsersPage() {
 
   useEffect(() => {
     Promise.all([api.adminGetUsers(), api.getRoles()])
-      .then(([u, r]) => { setUsers(u); setRoles(r); })
+      .then(([u, r]) => {
+        setUsers(u);
+        setRoles(r);
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
@@ -324,7 +464,9 @@ export default function AdminUsersPage() {
         name: data.name || undefined,
         active: data.active,
       });
-      setUsers((prev) => prev.map((u) => (u.id === editTarget.id ? updated : u)));
+      setUsers((prev) =>
+        prev.map((u) => (u.id === editTarget.id ? updated : u)),
+      );
     }
   };
 
@@ -335,7 +477,7 @@ export default function AdminUsersPage() {
   };
 
   return (
-    <div className='px-6 py-8 max-w-5xl mx-auto'>
+    <div className='px-6 py-8 max-w-5xl mt-10 mx-auto w-full'>
       {/* Header */}
       <div className='flex items-center justify-between mb-6'>
         <div className='flex items-center gap-3'>
@@ -343,8 +485,12 @@ export default function AdminUsersPage() {
             <Users className='w-5 h-5 text-teal-600' />
           </div>
           <div>
-            <h1 className='text-xl font-extrabold text-slate-800'>{t.adminUsers}</h1>
-            <p className='text-xs text-slate-400'>{filtered.length} {t.items}</p>
+            <h1 className='text-xl font-extrabold text-slate-800'>
+              {t.adminUsers}
+            </h1>
+            <p className='text-xs text-slate-400'>
+              {filtered.length} {t.items}
+            </p>
           </div>
         </div>
         <button
@@ -368,9 +514,13 @@ export default function AdminUsersPage() {
 
       {/* List */}
       {loading ? (
-        <div className='flex justify-center py-20'><Spinner size='lg' /></div>
+        <div className='flex justify-center py-20'>
+          <Spinner size='lg' />
+        </div>
       ) : filtered.length === 0 ? (
-        <div className='text-center py-20 text-slate-400 text-sm'>{t.noData}</div>
+        <div className='text-center py-20 text-slate-400 text-sm'>
+          {t.noData}
+        </div>
       ) : (
         <div className='space-y-2'>
           <AnimatePresence initial={false}>
@@ -386,7 +536,11 @@ export default function AdminUsersPage() {
                 {/* Avatar */}
                 <div className='w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center shrink-0 overflow-hidden'>
                   {user.img ? (
-                    <img src={`/${user.img}`} alt='' className='w-full h-full object-cover' />
+                    <img
+                      src={`/${user.img}`}
+                      alt=''
+                      className='w-full h-full object-cover'
+                    />
                   ) : (
                     <Users className='w-5 h-5 text-slate-400' />
                   )}
@@ -404,11 +558,25 @@ export default function AdminUsersPage() {
                       </span>
                     )}
                   </div>
-                  <p className='text-xs text-slate-400 truncate'>{user.email}</p>
+                  <div className='flex items-center gap-1.5 mt-0.5 flex-wrap'>
+                    <p className='text-xs text-slate-400 truncate'>
+                      {user.email}
+                    </p>
+                    {user.roles.map((r) => (
+                      <span
+                        key={r.id}
+                        className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${roleBadgeColor(r.name)}`}
+                      >
+                        {r.name}
+                      </span>
+                    ))}
+                  </div>
                 </div>
 
                 {/* Username */}
-                <span className='text-xs text-slate-400 font-mono hidden sm:block shrink-0'>@{user.username}</span>
+                <span className='text-xs text-slate-400 font-mono hidden sm:block shrink-0'>
+                  @{user.username}
+                </span>
 
                 {/* Actions */}
                 <div className='flex items-center gap-1 shrink-0'>

@@ -32,12 +32,24 @@ export const UserRes = z
     update_by: z.bigint().nullable().optional(),
     deleted: z.boolean(),
     active: z.boolean(),
+    roles: z
+      .array(
+        z.object({
+          role: z.object({ id: z.bigint(), name: z.string() }),
+        }),
+      )
+      .optional()
+      .default([]),
   })
   .transform((user) => ({
     ...user,
     id: user.id.toString(),
     create_by: user.create_by?.toString() ?? null,
     update_by: user.update_by?.toString() ?? null,
+    roles: user.roles.map((r) => ({
+      id: r.role.id.toString(),
+      name: r.role.name,
+    })),
   }));
 
 export type UserResType = z.TypeOf<typeof UserRes>;
