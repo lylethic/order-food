@@ -28,7 +28,7 @@ _Customers browse the menu by category and search_
 
 #### Shopping Cart & Place Order
 
-![Customer Cart Order](public/customer_cart_order.png)
+![Customer Cart Order](public/customer_cart_order2.png)
 _Manage shopping cart, enter table number, and place order_
 
 #### Track Order Status
@@ -80,12 +80,12 @@ Administrators have full control to manage the system: menu, categories, users, 
 
 #### Manage Categories
 
-![Admin Categories](public/admin_cate.png)
+![Admin Categories](public/admin_cate2.png)
 _Create, edit, delete menu categories_
 
 #### Manage Menu Items
 
-![Admin Menu Items](public/admin_monAn.png)
+![Admin Menu Items](public/admin_monAn2.png)
 _Manage all menu items: add/edit/delete dishes, upload images, update prices_
 
 ![Admin Menu Items](public/admin_QR_generate.png)
@@ -93,7 +93,7 @@ _Manage QR table codes_
 
 #### Manage Users & Roles
 
-![Admin Users](public/admin_user.png)
+![Admin Users](public/admin_user2.png)
 _Manage employee accounts, assign roles (Admin/Chef/Employee)_
 
 **Features:**
