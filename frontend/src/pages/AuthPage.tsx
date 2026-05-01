@@ -14,6 +14,8 @@ export default function AuthPage() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [phone, setPhone] = useState('');
+  const [username, setUsername] = useState('');
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState<{
@@ -27,6 +29,7 @@ export default function AuthPage() {
     setName('');
     setEmail('');
     setPassword('');
+    setPhone('');
   };
 
   const handleSubmit = async (e: FormEvent) => {
@@ -37,7 +40,7 @@ export default function AuthPage() {
       if (mode === 'login') {
         await login(email, password);
       } else {
-        await register(name, email, password);
+        await register(name, email, password, phone, username);
       }
       // Navigation handled by RequireGuest guard in AppRouter
     } catch (err) {
@@ -161,21 +164,54 @@ export default function AuthPage() {
               className='space-y-4'
             >
               {mode === 'register' && (
-                <div>
-                  <label className='block text-sm font-semibold text-slate-600 mb-1.5'>
-                    {t.fullName}
-                  </label>
-                  <input
-                    type='text'
-                    required
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder='Alex Rivera'
-                    className='w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 transition-all'
-                  />
-                </div>
+                <>
+                  {/* Username */}
+                  <div>
+                    <label className='block text-sm font-semibold text-slate-600 mb-1.5'>
+                      {t.username}
+                    </label>
+                    <input
+                      type='text'
+                      required
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      placeholder='abc_09@'
+                      className='w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 transition-all'
+                    />
+                  </div>
+
+                  <div>
+                    <label className='block text-sm font-semibold text-slate-600 mb-1.5'>
+                      {t.fullName}
+                    </label>
+                    <input
+                      type='text'
+                      required
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder='Alex Rivera'
+                      className='w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 transition-all'
+                    />
+                  </div>
+
+                  {/* Phone number */}
+                  <div>
+                    <label className='block text-sm font-semibold text-slate-600 mb-1.5'>
+                      {t.phone}
+                    </label>
+                    <input
+                      type='text'
+                      required
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      placeholder='090987699'
+                      className='w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 transition-all'
+                    />
+                  </div>
+                </>
               )}
 
+              {/* Email */}
               <div>
                 <label className='block text-sm font-semibold text-slate-600 mb-1.5'>
                   {t.email}

@@ -7,6 +7,7 @@ import {
   LogOut,
   UtensilsCrossed,
   MessageCircle,
+  QrCode,
 } from 'lucide-react';
 import { useAuthContext } from '../context/AuthContext';
 import { useLang } from '../context/LangContext';
@@ -82,6 +83,12 @@ export default function AdminLayout() {
       icon: MessageCircle,
       path: '/admin/comments',
     },
+    {
+      id: 'qr',
+      label: t.adminQR,
+      icon: QrCode,
+      path: '/admin/qr',
+    },
   ];
 
   const activeId = pathname.startsWith('/admin/menu-items')
@@ -90,7 +97,9 @@ export default function AdminLayout() {
       ? 'users'
       : pathname.startsWith('/admin/comments')
         ? 'comments'
-        : 'categories';
+        : pathname.startsWith('/admin/qr')
+          ? 'qr'
+          : 'categories';
 
   const activeNav = navItems.find((item) => item.id === activeId);
   const topTitle = activeNav?.label ?? t.adminPanel;
@@ -147,7 +156,6 @@ export default function AdminLayout() {
               <p className='text-[10px] text-indigo-500 font-semibold'>ADMIN</p>
             </div>
           </div>
-          <LangToggle />
           <button
             onClick={logout}
             className='w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-slate-500 hover:bg-red-50 hover:text-red-600 transition-colors font-medium'

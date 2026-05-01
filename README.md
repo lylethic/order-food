@@ -88,6 +88,9 @@ _Tạo, chỉnh sửa, xóa các danh mục menu_
 ![Admin Menu Items](public/admin_monAn.png)
 _Quản lý toàn bộ menu: thêm/sửa/xóa món, tải ảnh, cập nhật giá_
 
+![Admin Menu Items](public/admin_QR_generate.png)
+_Quản lý mã QR các bàn_
+
 #### Quản Lý Người Dùng & Vai Trò
 
 ![Admin Users](public/admin_user.png)

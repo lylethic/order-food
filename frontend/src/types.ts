@@ -49,6 +49,7 @@ export interface MenuItemDetail extends MenuItem {
 export interface Category {
   id: string;
   name: string;
+  img?: string | null;
 }
 
 export interface OrderItem {
@@ -120,6 +121,7 @@ export interface AdminUser {
   deleted: boolean;
   created: string;
   updated: string;
+  phone: string;
   roles: { id: string; name: string }[];
 }
 

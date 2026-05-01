@@ -2,6 +2,7 @@ import {
   createBrowserRouter,
   RouterProvider,
   Navigate,
+  useSearchParams,
 } from 'react-router-dom';
 import { UtensilsCrossed } from 'lucide-react';
 import { useAuthContext } from '../context/AuthContext';
@@ -18,6 +19,8 @@ import AdminCategoriesPage from '../pages/admin/AdminCategoriesPage';
 import AdminMenuItemsPage from '../pages/admin/AdminMenuItemsPage';
 import AdminUsersPage from '../pages/admin/AdminUsersPage';
 import AdminCommentsPage from '../pages/admin/AdminCommentsPage';
+import AdminQRPage from '../pages/admin/AdminQRPage';
+import QrScanPage from '../pages/QrScanPage';
 
 // ─── Loading screen ───────────────────────────────────────────────────────────
 
@@ -48,14 +51,16 @@ function RootRedirect() {
 /** Wraps the auth page — redirects away if already logged in. */
 function RequireGuest() {
   const { user, isLoading, isAdmin, isStaff } = useAuthContext();
+  const [searchParams] = useSearchParams();
+  // After login, send the user back to where they came from (e.g. /menu after QR scan)
+  const returnTo = searchParams.get('returnTo') ?? '/menu';
+
   if (isLoading) return <LoadingScreen />;
-  if (user)
-    return (
-      <Navigate
-        to={isAdmin ? '/admin/categories' : isStaff ? '/kitchen' : '/menu'}
-        replace
-      />
-    );
+  if (user) {
+    if (isAdmin) return <Navigate to='/admin/categories' replace />;
+    if (isStaff) return <Navigate to='/kitchen' replace />;
+    return <Navigate to={returnTo} replace />;
+  }
   return <AuthPage />;
 }
 
@@ -64,6 +69,7 @@ function RequireGuest() {
 const router = createBrowserRouter([
   { path: '/', element: <RootRedirect /> },
   { path: '/auth', element: <RequireGuest /> },
+  { path: '/scan', element: <QrScanPage /> },
 
   // Customer routes — CustomerLayout enforces its own role guards
   {
@@ -92,6 +98,7 @@ const router = createBrowserRouter([
       { path: '/admin/menu-items', element: <AdminMenuItemsPage /> },
       { path: '/admin/users', element: <AdminUsersPage /> },
       { path: '/admin/comments', element: <AdminCommentsPage /> },
+      { path: '/admin/qr', element: <AdminQRPage /> },
     ],
   },
 

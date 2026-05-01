@@ -8,6 +8,7 @@ import commentsRouter from './comments.js';
 import roleRouter from './role.js';
 import userRouter from './user.js';
 import staticFilesRouter from './staticFiles.js';
+import tablesRouter from './tables.js';
 
 const apiRouter = Router();
 
@@ -23,5 +24,6 @@ apiRouter.use('/', commentsRouter);
 apiRouter.use('/', roleRouter);
 apiRouter.use('/', userRouter);
 apiRouter.use('/', staticFilesRouter);
+apiRouter.use('/', tablesRouter);
 
 export default apiRouter;

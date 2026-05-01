@@ -38,4 +38,8 @@ export const categoryService = {
   async delete(id: number) {
     return categoryProvider.delete(id);
   },
+
+  async updateImg(id: number, img: string) {
+    return categoryProvider.update({ img }, id);
+  },
 };

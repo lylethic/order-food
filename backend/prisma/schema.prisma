@@ -70,6 +70,7 @@ model Category {
   updated_by BigInt?
   deleted    Boolean    @default(false)
   active     Boolean    @default(true)
+  img        String?
   menu_items MenuItem[]
 
   @@map("categories")
