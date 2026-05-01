@@ -87,8 +87,8 @@ export function useAuth() {
 
   return {
     ...state,
-    isStaff: state.user ? STAFF_ROLES.has(state.user.role) : false,
-    isAdmin: state.user?.role === 'ADMIN',
+    isStaff: state.user ? state.user.role.some((r) => STAFF_ROLES.has(r)) : false,
+    isAdmin: state.user ? state.user.role.includes('ADMIN') : false,
     login,
     register,
     logout,

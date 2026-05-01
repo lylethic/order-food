@@ -1,5 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
-import { Bell, MessageCircle, MessageSquareReply, CheckCheck } from 'lucide-react';
+import {
+  Bell,
+  MessageCircle,
+  MessageSquareReply,
+  CheckCheck,
+} from 'lucide-react';
 import { api } from '../services/api';
 import type { Notification } from '../types';
 import type { NotificationCreatedEvent } from '../hooks/useSSE';
@@ -39,7 +44,9 @@ export function NotificationDropdown({ notificationEvent }: Props) {
     if (!notificationEvent) return;
     setNotifications((prev) => {
       // Avoid duplicates
-      const exists = prev.some((n) => n.id === notificationEvent.notification.id);
+      const exists = prev.some(
+        (n) => n.id === notificationEvent.notification.id,
+      );
       if (exists) return prev;
       return [notificationEvent.notification, ...prev];
     });
@@ -48,7 +55,10 @@ export function NotificationDropdown({ notificationEvent }: Props) {
   // Close dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(e.target as Node)
+      ) {
         setOpen(false);
       }
     }
@@ -62,14 +72,20 @@ export function NotificationDropdown({ notificationEvent }: Props) {
 
     // Optimistic update
     setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, isRead: true, readAt: new Date().toISOString() } : n)),
+      prev.map((n) =>
+        n.id === id
+          ? { ...n, isRead: true, readAt: new Date().toISOString() }
+          : n,
+      ),
     );
     try {
       await api.markNotificationRead(id);
     } catch {
       // Revert on error
       setNotifications((prev) =>
-        prev.map((n) => (n.id === id ? { ...n, isRead: false, readAt: null } : n)),
+        prev.map((n) =>
+          n.id === id ? { ...n, isRead: false, readAt: null } : n,
+        ),
       );
     }
   };
@@ -80,13 +96,20 @@ export function NotificationDropdown({ notificationEvent }: Props) {
 
     // Optimistic
     setNotifications((prev) =>
-      prev.map((n) => ({ ...n, isRead: true, readAt: new Date().toISOString() })),
+      prev.map((n) => ({
+        ...n,
+        isRead: true,
+        readAt: new Date().toISOString(),
+      })),
     );
     try {
       await Promise.all(unread.map((n) => api.markNotificationRead(n.id)));
     } catch {
       // If any fail, refresh from server
-      api.getNotifications().then(setNotifications).catch(() => {});
+      api
+        .getNotifications()
+        .then(setNotifications)
+        .catch(() => {});
     }
   };
 
@@ -133,7 +156,9 @@ export function NotificationDropdown({ notificationEvent }: Props) {
           {/* List */}
           <div className='max-h-80 overflow-y-auto'>
             {loading ? (
-              <div className='py-6 text-center text-sm text-slate-400'>Đang tải...</div>
+              <div className='py-6 text-center text-sm text-slate-400'>
+                Loading...
+              </div>
             ) : notifications.length === 0 ? (
               <div className='py-8 text-center'>
                 <Bell className='w-8 h-8 text-slate-200 mx-auto mb-2' />
@@ -155,7 +180,9 @@ export function NotificationDropdown({ notificationEvent }: Props) {
 
                   {/* Text */}
                   <div className='flex-1 min-w-0'>
-                    <p className={`text-sm leading-snug ${!n.isRead ? 'font-semibold text-slate-800' : 'font-medium text-slate-600'}`}>
+                    <p
+                      className={`text-sm leading-snug ${!n.isRead ? 'font-semibold text-slate-800' : 'font-medium text-slate-600'}`}
+                    >
                       {n.title}
                     </p>
                     <p className='text-xs text-slate-500 mt-0.5 line-clamp-2 leading-relaxed'>

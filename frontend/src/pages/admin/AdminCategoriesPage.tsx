@@ -62,14 +62,19 @@ function CategoryModal({
           <h2 className='text-base font-extrabold text-slate-800'>
             {initial ? t.edit : t.addNew} {t.adminCategories.slice(0, -1)}
           </h2>
-          <button onClick={onClose} className='text-slate-400 hover:text-slate-600'>
+          <button
+            onClick={onClose}
+            className='text-slate-400 hover:text-slate-600'
+          >
             <X className='w-5 h-5' />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className='space-y-4'>
           <div>
-            <label className='block text-xs font-bold text-slate-500 mb-1.5'>{t.name}</label>
+            <label className='block text-xs font-bold text-slate-500 mb-1.5'>
+              {t.name}
+            </label>
             <input
               autoFocus
               value={name}
@@ -149,7 +154,9 @@ function ConfirmDeleteModal({
             <Trash2 className='w-5 h-5 text-red-600' />
           </div>
           <div>
-            <p className='text-sm font-extrabold text-slate-800'>{t.delete} "{name}"?</p>
+            <p className='text-sm font-extrabold text-slate-800'>
+              {t.delete} "{name}"?
+            </p>
             <p className='text-xs text-slate-400 mt-0.5'>{t.confirmDelete}</p>
           </div>
         </div>
@@ -193,7 +200,9 @@ export default function AdminCategoriesPage() {
       .finally(() => setLoading(false));
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+  }, []);
 
   const handleSave = async (name: string) => {
     if (editTarget === 'new') {
@@ -201,7 +210,9 @@ export default function AdminCategoriesPage() {
       setCategories((prev) => [created, ...prev]);
     } else if (editTarget) {
       await api.adminUpdateCategory(editTarget.id, name);
-      setCategories((prev) => prev.map((c) => (c.id === editTarget.id ? { ...c, name } : c)));
+      setCategories((prev) =>
+        prev.map((c) => (c.id === editTarget.id ? { ...c, name } : c)),
+      );
     }
   };
 
@@ -212,7 +223,7 @@ export default function AdminCategoriesPage() {
   };
 
   return (
-    <div className='px-6 py-8 max-w-3xl mx-auto'>
+    <div className='px-6 py-8 max-w-3xl mt-10 mx-auto w-full'>
       {/* Header */}
       <div className='flex items-center justify-between mb-6'>
         <div className='flex items-center gap-3'>
@@ -220,8 +231,12 @@ export default function AdminCategoriesPage() {
             <Tag className='w-5 h-5 text-indigo-600' />
           </div>
           <div>
-            <h1 className='text-xl font-extrabold text-slate-800'>{t.adminCategories}</h1>
-            <p className='text-xs text-slate-400'>{categories.length} {t.items}</p>
+            <h1 className='text-xl font-extrabold text-slate-800'>
+              {t.adminCategories}
+            </h1>
+            <p className='text-xs text-slate-400'>
+              {categories.length} {t.items}
+            </p>
           </div>
         </div>
         <button
@@ -239,7 +254,9 @@ export default function AdminCategoriesPage() {
           <Spinner size='lg' />
         </div>
       ) : categories.length === 0 ? (
-        <div className='text-center py-20 text-slate-400 text-sm'>{t.noData}</div>
+        <div className='text-center py-20 text-slate-400 text-sm'>
+          {t.noData}
+        </div>
       ) : (
         <div className='space-y-2'>
           <AnimatePresence initial={false}>
@@ -255,8 +272,12 @@ export default function AdminCategoriesPage() {
                 <div className='w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center shrink-0'>
                   <Tag className='w-4 h-4 text-indigo-500' />
                 </div>
-                <span className='flex-1 text-sm font-semibold text-slate-800'>{cat.name}</span>
-                <span className='text-xs text-slate-300 font-mono'>#{cat.id}</span>
+                <span className='flex-1 text-sm font-semibold text-slate-800'>
+                  {cat.name}
+                </span>
+                <span className='text-xs text-slate-300 font-mono'>
+                  #{cat.id}
+                </span>
                 <div className='flex items-center gap-1.5'>
                   <button
                     onClick={() => setEditTarget(cat)}

@@ -95,17 +95,19 @@ function jsonHeaders(): HeadersInit {
 
 function normalizeUser(raw: Record<string, unknown>): User {
   const role = raw.role;
+  const roles: string[] = Array.isArray(role)
+    ? role.map(String)
+    : typeof role === 'string'
+      ? [role]
+      : (role as Record<string, unknown>)?.name != null
+        ? [String((role as Record<string, unknown>).name)]
+        : ['CUSTOMER'];
   return {
     userId: String(raw.userId ?? raw.id ?? ''),
     email: String(raw.email ?? ''),
     name: raw.name != null ? String(raw.name) : undefined,
     img: raw.img != null ? String(raw.img) : null,
-    role:
-      typeof role === 'string'
-        ? role
-        : (role as Record<string, unknown>)?.name != null
-          ? String((role as Record<string, unknown>).name)
-          : 'Customer',
+    role: roles,
   };
 }
 
@@ -494,6 +496,12 @@ export const api = {
       deleted: Boolean(u.deleted),
       created: String(u.created ?? ''),
       updated: String(u.updated ?? ''),
+      roles: Array.isArray(u.roles)
+        ? (u.roles as { id: string; name: string }[]).map((r) => ({
+            id: String(r.id),
+            name: String(r.name),
+          }))
+        : [],
     }));
   },
 

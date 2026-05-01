@@ -7,9 +7,14 @@ import { sendResponse } from '../utils/response.js';
  */
 export function checkRole(allowedRoles: string[]) {
   return (req: Request, res: Response, next: NextFunction): void => {
-    const role = req.user?.role.toLowerCase();
+    const raw = req.user?.role;
+    const roles = Array.isArray(raw)
+      ? raw.map((r) => r.toLowerCase())
+      : raw
+        ? [raw.toLowerCase()]
+        : [];
 
-    if (!role || !allowedRoles.includes(role)) {
+    if (roles.length === 0 || !roles.some((r) => allowedRoles.includes(r))) {
       sendResponse(res, {
         success: false,
         status_code: 403,

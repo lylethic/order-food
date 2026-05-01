@@ -31,7 +31,7 @@ export function authenticate(
     const payload = jwt.verify(token, process.env.JWT_SECRET!) as {
       userId: string;
       email: string;
-      role: string;
+      role: string | string[];
     };
     req.user = payload;
     next();
@@ -64,7 +64,7 @@ export function optionalAuthenticate(
       ) as {
         userId: string;
         email: string;
-        role: string;
+        role: string | string[];
       };
       req.user = payload;
     } catch {

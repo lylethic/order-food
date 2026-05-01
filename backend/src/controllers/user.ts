@@ -331,7 +331,10 @@ router.put('/users/:id/avatar', authenticate, uploadImage.single('file'), async 
     if (!Number.isInteger(id) || id <= 0)
       throw new AppError(400, 'Invalid user id');
 
-    const isAdmin = req.user!.role === 'ADMIN';
+    const rawRole = req.user!.role;
+    const isAdmin = Array.isArray(rawRole)
+      ? rawRole.includes('ADMIN')
+      : rawRole === 'ADMIN';
     const isSelf = req.user!.userId === String(id);
     if (!isAdmin && !isSelf)
       throw new AppError(403, 'Không thể cập nhật avatar của người dùng khác');

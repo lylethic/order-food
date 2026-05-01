@@ -1,8 +1,20 @@
 import { Outlet, Navigate, useNavigate, useLocation } from 'react-router-dom';
-import { LayoutGrid, Tag, Users, ShieldCheck, LogOut, UtensilsCrossed, MessageCircle } from 'lucide-react';
+import {
+  LayoutGrid,
+  Tag,
+  Users,
+  ShieldCheck,
+  LogOut,
+  UtensilsCrossed,
+  MessageCircle,
+} from 'lucide-react';
 import { useAuthContext } from '../context/AuthContext';
 import { useLang } from '../context/LangContext';
 import { LangToggle } from '../components/LangToggle';
+import { TopBar } from '@/components/TopBar';
+import { NotificationDropdown } from '@/components/NotificationDropdown';
+import { useSSE } from '../hooks/useSSE';
+import type { NotificationCreatedEvent } from '../hooks/useSSE';
 
 // ─── Sidebar link ─────────────────────────────────────────────────────────────
 
@@ -35,20 +47,41 @@ function NavLink({
 // ─── Layout ───────────────────────────────────────────────────────────────────
 
 export default function AdminLayout() {
-  const { user, isAdmin, isLoading, logout } = useAuthContext();
+  const { user, token, isAdmin, isLoading, logout } = useAuthContext();
   const { t } = useLang();
   const navigate = useNavigate();
   const { pathname } = useLocation();
+
+  const lastEvent = useSSE(token);
+  const notificationEvent =
+    lastEvent?.eventType === 'notification.created'
+      ? (lastEvent as NotificationCreatedEvent)
+      : null;
 
   if (isLoading) return null;
   if (!user) return <Navigate to='/auth' replace />;
   if (!isAdmin) return <Navigate to='/menu' replace />;
 
   const navItems = [
-    { id: 'categories', label: t.adminCategories, icon: Tag, path: '/admin/categories' },
-    { id: 'menu-items', label: t.adminMenuItems, icon: UtensilsCrossed, path: '/admin/menu-items' },
+    {
+      id: 'categories',
+      label: t.adminCategories,
+      icon: Tag,
+      path: '/admin/categories',
+    },
+    {
+      id: 'menu-items',
+      label: t.adminMenuItems,
+      icon: UtensilsCrossed,
+      path: '/admin/menu-items',
+    },
     { id: 'users', label: t.adminUsers, icon: Users, path: '/admin/users' },
-    { id: 'comments', label: 'Đánh giá', icon: MessageCircle, path: '/admin/comments' },
+    {
+      id: 'comments',
+      label: 'Đánh giá',
+      icon: MessageCircle,
+      path: '/admin/comments',
+    },
   ];
 
   const activeId = pathname.startsWith('/admin/menu-items')
@@ -58,6 +91,10 @@ export default function AdminLayout() {
       : pathname.startsWith('/admin/comments')
         ? 'comments'
         : 'categories';
+
+  const activeNav = navItems.find((item) => item.id === activeId);
+  const topTitle = activeNav?.label ?? t.adminPanel;
+  const topSubtitle = t.adminPanel;
 
   return (
     <div className='min-h-screen bg-slate-50 flex'>
@@ -69,7 +106,9 @@ export default function AdminLayout() {
             <ShieldCheck className='w-5 h-5 text-white' />
           </div>
           <div>
-            <p className='text-sm font-extrabold text-slate-800'>{t.adminPanel}</p>
+            <p className='text-sm font-extrabold text-slate-800'>
+              {t.adminPanel}
+            </p>
             <p className='text-xs text-slate-400'>Administrator</p>
           </div>
         </div>
@@ -92,13 +131,19 @@ export default function AdminLayout() {
           <div className='flex items-center gap-2 px-1'>
             <div className='w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center shrink-0'>
               {user.img ? (
-                <img src={`/${user.img}`} alt='' className='w-8 h-8 rounded-full object-cover' />
+                <img
+                  src={`/${user.img}`}
+                  alt=''
+                  className='w-8 h-8 rounded-full object-cover'
+                />
               ) : (
                 <Users className='w-4 h-4 text-indigo-600' />
               )}
             </div>
             <div className='flex-1 min-w-0'>
-              <p className='text-xs font-bold text-slate-800 truncate'>{user.name ?? user.email}</p>
+              <p className='text-xs font-bold text-slate-800 truncate'>
+                {user.name ?? user.email}
+              </p>
               <p className='text-[10px] text-indigo-500 font-semibold'>ADMIN</p>
             </div>
           </div>
@@ -120,7 +165,9 @@ export default function AdminLayout() {
           <div className='w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center'>
             <ShieldCheck className='w-4 h-4 text-white' />
           </div>
-          <span className='font-extrabold text-slate-800 text-base flex-1'>{t.adminPanel}</span>
+          <span className='font-extrabold text-slate-800 text-base flex-1'>
+            {t.adminPanel}
+          </span>
           <LangToggle />
         </header>
 
@@ -147,7 +194,15 @@ export default function AdminLayout() {
           </button>
         </nav>
 
-        <main className='flex-1 pb-20 md:pb-0'>
+        <main className='flex-1 flex flex-col'>
+          <TopBar
+            title={topTitle}
+            subtitle={topSubtitle}
+            onLogout={logout}
+            right={
+              <NotificationDropdown notificationEvent={notificationEvent} />
+            }
+          />
           <Outlet />
         </main>
       </div>

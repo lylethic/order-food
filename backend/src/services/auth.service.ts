@@ -50,8 +50,9 @@ export const authService = {
     const role = await roleProvider.findRoleByName(roleName);
     if (role) await roleProvider.assignRole(user.id, role.id);
 
-    const token = generateToken(user.id.toString(), user.email, roleName);
-    return { token, user: toSafeUser(user), role: roleName };
+    const roles = [roleName];
+    const token = generateToken(user.id.toString(), user.email, roles);
+    return { token, user: toSafeUser(user), role: roles };
   },
 
   /**
@@ -66,18 +67,21 @@ export const authService = {
     const valid = await bcrypt.compare(dto.password, user.password);
     if (!valid) throw new AppError(401, 'Invalid email or password');
 
-    const primaryRole = user.roles[0]?.role?.name ?? 'CUSTOMER';
+    const roles = user.roles.map((userRole) => userRole.role.name);
+    const primaryRole = roles.length > 0 ? roles : ['CUSTOMER'];
     const token = generateToken(user.id.toString(), user.email, primaryRole);
     return { token, user: toSafeUser(user), role: primaryRole };
   },
 
   /** Return the profile of the currently authenticated user. */
-  async me(userId: string): Promise<SafeUserType & { role: string }> {
+  async me(userId: string): Promise<SafeUserType & { role: string[] }> {
     const user = await userProvider.findById(Number(userId));
     if (!user) throw new AppError(404, 'User not found');
+
+    const roles = user.roles.map((userRole) => userRole.role.name);
     return {
       ...toSafeUser(user),
-      role: user.roles[0]?.role?.name ?? 'CUSTOMER',
+      role: roles.length > 0 ? roles : ['CUSTOMER'],
     };
   },
 };
