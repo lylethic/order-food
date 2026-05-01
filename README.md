@@ -28,7 +28,7 @@ _Khách hàng duyệt thực đơn theo danh mục và tìm kiếm_
 
 #### Giỏ Hàng & Đặt Món
 
-![Customer Cart Order](public/customer_cart_order.png)
+![Customer Cart Order](public/customer_cart_order2.png)
 _Quản lý giỏ hàng, nhập số bàn và đặt đơn_
 
 #### Theo Dõi Đơn Hàng
@@ -80,12 +80,12 @@ Quản trị viên có toàn quyền quản lý hệ thống: quản lý menu, h
 
 #### Quản Lý Danh Mục
 
-![Admin Categories](public/admin_cate.png)
+![Admin Categories](public/admin_cate2.png)
 _Tạo, chỉnh sửa, xóa các danh mục menu_
 
 #### Quản Lý Món Ăn
 
-![Admin Menu Items](public/admin_monAn.png)
+![Admin Menu Items](public/admin_monAn2.png)
 _Quản lý toàn bộ menu: thêm/sửa/xóa món, tải ảnh, cập nhật giá_
 
 ![Admin Menu Items](public/admin_QR_generate.png)
@@ -93,7 +93,7 @@ _Quản lý mã QR các bàn_
 
 #### Quản Lý Người Dùng & Vai Trò
 
-![Admin Users](public/admin_user.png)
+![Admin Users](public/admin_user2.png)
 _Quản lý tài khoản nhân viên, phân công vai trò (Admin/Chef/Employee)_
 
 **Tính năng:**
