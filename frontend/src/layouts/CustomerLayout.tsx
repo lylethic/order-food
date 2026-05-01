@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { Outlet, Navigate, useNavigate, useLocation } from 'react-router-dom';
-import { UtensilsCrossed, ClipboardList, ShoppingCart } from 'lucide-react';
+import { UtensilsCrossed, ClipboardList, ShoppingCart, ScanQrCode } from 'lucide-react';
 import { useAuthContext } from '../context/AuthContext';
 import { useLang } from '../context/LangContext';
+import { useTableSession } from '../context/TableContext';
 import { useCart } from '../hooks/useCart';
 import { useSSE } from '../hooks/useSSE';
 import type { SSEEvent, StatusEvent, CommentRepliedEvent, NotificationCreatedEvent } from '../hooks/useSSE';
@@ -42,6 +43,7 @@ export interface CustomerOutletContext {
 export default function CustomerLayout() {
   const { user, token, isStaff, isLoading, logout } = useAuthContext();
   const { t } = useLang();
+  const { tableSession } = useTableSession();
   const navigate = useNavigate();
   const { pathname } = useLocation();
 
@@ -54,7 +56,7 @@ export default function CustomerLayout() {
 
   // Role guards
   if (isLoading) return null;
-  if (!user) return <Navigate to='/auth' replace />;
+  if (!user) return <Navigate to={`/auth?returnTo=${encodeURIComponent(pathname)}`} replace />;
   if (isStaff) return <Navigate to='/kitchen' replace />;
 
   // Dispatch SSE events by type
@@ -72,7 +74,11 @@ export default function CustomerLayout() {
 
   const activeTab = pathname.startsWith('/status') ? 'status' : 'menu';
   const topTitle = activeTab === 'status' ? t.orderStatus : t.ourMenu;
-  const topSubtitle = activeTab === 'status' ? t.statusSub : t.menuSub;
+  const topSubtitle = tableSession
+    ? `${t.qrTableBadge} ${tableSession.tableNumber} · ${t.qrVerifiedBadge}`
+    : activeTab === 'status'
+      ? t.statusSub
+      : t.menuSub;
 
   const handlePlaceOrder = async (tableNumber: string) => {
     setPlacing(true);
@@ -138,6 +144,14 @@ export default function CustomerLayout() {
           onLogout={logout}
           right={
             <div className='flex items-center gap-1'>
+              {/* Table badge when QR verified */}
+              {tableSession && (
+                <div className='hidden sm:flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 border border-emerald-200 rounded-full text-emerald-700 text-xs font-semibold'>
+                  <ScanQrCode className='w-3.5 h-3.5' />
+                  {t.qrTableBadge} {tableSession.tableNumber}
+                </div>
+              )}
+
               {/* Notification bell */}
               <NotificationDropdown notificationEvent={notificationEvent} />
 

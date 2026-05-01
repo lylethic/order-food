@@ -88,6 +88,9 @@ _Create, edit, delete menu categories_
 ![Admin Menu Items](public/admin_monAn.png)
 _Manage all menu items: add/edit/delete dishes, upload images, update prices_
 
+![Admin Menu Items](public/admin_QR_generate.png)
+_Manage QR table codes_
+
 #### Manage Users & Roles
 
 ![Admin Users](public/admin_user.png)

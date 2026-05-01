@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ShoppingCart, X, Minus, Plus } from 'lucide-react';
+import { ShoppingCart, X, Minus, Plus, ScanQrCode, CheckCircle } from 'lucide-react';
 import { useLang } from '../context/LangContext';
+import { useTableSession } from '../context/TableContext';
 import { Spinner } from './Spinner';
 import { formatVnd } from '../utils/money';
 import type { CartItem } from '../types';
@@ -24,20 +25,22 @@ export function CartPanel({
   isPlacing,
 }: Props) {
   const { t } = useLang();
-  const [tableNumber, setTableNumber] = useState('');
+  const { tableSession, clearTableSession } = useTableSession();
+  const [tableNumber, setTableNumber] = useState(tableSession?.tableNumber ?? '');
   const [error, setError] = useState('');
 
   const subtotal = cart.reduce((s, c) => s + c.price * c.qty, 0);
   const tax = 0;
 
   const handlePlace = async () => {
-    if (!tableNumber.trim()) {
+    const resolvedTable = tableSession?.tableNumber ?? tableNumber.trim();
+    if (!resolvedTable) {
       setError('Please enter a table number.');
       return;
     }
     setError('');
     try {
-      await onPlaceOrder(tableNumber.trim());
+      await onPlaceOrder(resolvedTable);
     } catch (err) {
       setError((err as Error).message);
     }
@@ -143,18 +146,40 @@ export function CartPanel({
             {/* Footer */}
             <div className='px-6 py-5 border-t border-slate-100 space-y-4'>
               {/* Table number */}
-              <div>
-                <label className='block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5'>
-                  {t.tableNumber}
-                </label>
-                <input
-                  type='text'
-                  value={tableNumber}
-                  onChange={(e) => setTableNumber(e.target.value)}
-                  placeholder={t.tableNumberPlaceholder}
-                  className='w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 transition-all'
-                />
-              </div>
+              {tableSession ? (
+                <div className='flex items-center justify-between px-3 py-2.5 bg-emerald-50 border border-emerald-200 rounded-xl'>
+                  <div className='flex items-center gap-2 text-emerald-700'>
+                    <ScanQrCode className='w-4 h-4 shrink-0' />
+                    <span className='text-sm font-bold'>
+                      {t.qrTableBadge} {tableSession.tableNumber}
+                    </span>
+                    <CheckCircle className='w-3.5 h-3.5' />
+                  </div>
+                  <button
+                    type='button'
+                    onClick={() => {
+                      clearTableSession();
+                      setTableNumber('');
+                    }}
+                    className='text-xs text-emerald-600 hover:text-rose-500 transition-colors font-medium'
+                  >
+                    {t.qrChangeTable}
+                  </button>
+                </div>
+              ) : (
+                <div>
+                  <label className='block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5'>
+                    {t.tableNumber}
+                  </label>
+                  <input
+                    type='text'
+                    value={tableNumber}
+                    onChange={(e) => setTableNumber(e.target.value)}
+                    placeholder={t.tableNumberPlaceholder}
+                    className='w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 transition-all'
+                  />
+                </div>
+              )}
 
               {/* Totals */}
               <div className='space-y-1.5 text-sm'>

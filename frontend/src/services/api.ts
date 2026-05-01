@@ -111,6 +111,14 @@ function normalizeUser(raw: Record<string, unknown>): User {
   };
 }
 
+function normalizeCategory(raw: Record<string, unknown>): Category {
+  return {
+    id: String(raw.id ?? ''),
+    name: String(raw.name ?? ''),
+    img: raw.img != null ? String(raw.img) : null,
+  };
+}
+
 function normalizeMenuItem(raw: Record<string, unknown>): MenuItem {
   const cat = raw.category;
   return {
@@ -224,11 +232,13 @@ export const api = {
     name: string,
     email: string,
     password: string,
+    phone: string,
+    username: string,
   ): Promise<{ token?: string }> {
     const r = await fetch(`${BASE}/api/v1/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, email, password }),
+      body: JSON.stringify({ name, email, password, phone, username }),
     });
     return unwrap<{ token?: string }>(r);
   },
@@ -255,7 +265,8 @@ export const api = {
 
   async getCategories(): Promise<Category[]> {
     const r = await fetch(`${BASE}/api/v1/categories`);
-    return unwrapList<Category>(r);
+    const raw = await unwrapList<Record<string, unknown>>(r);
+    return raw.map(normalizeCategory);
   },
 
   // --- Menu Items ---
@@ -364,7 +375,7 @@ export const api = {
       body: JSON.stringify({ name }),
     });
     const raw = await unwrap<Record<string, unknown>>(r);
-    return { id: String(raw.id ?? ''), name: String(raw.name ?? '') };
+    return normalizeCategory(raw);
   },
 
   async adminUpdateCategory(id: string, name: string): Promise<Category> {
@@ -374,7 +385,19 @@ export const api = {
       body: JSON.stringify({ name }),
     });
     const raw = await unwrap<Record<string, unknown>>(r);
-    return { id: String(raw.id ?? ''), name: String(raw.name ?? '') };
+    return normalizeCategory(raw);
+  },
+
+  async adminUploadCategoryImage(id: string, file: File): Promise<Category> {
+    const form = new FormData();
+    form.append('file', file);
+    const r = await fetch(`${BASE}/api/v1/categories/${id}/img`, {
+      method: 'PUT',
+      headers: authHeaders(),
+      body: form,
+    });
+    const raw = await unwrap<Record<string, unknown>>(r);
+    return normalizeCategory(raw);
   },
 
   async adminDeleteCategory(id: string): Promise<void> {
@@ -496,6 +519,7 @@ export const api = {
       deleted: Boolean(u.deleted),
       created: String(u.created ?? ''),
       updated: String(u.updated ?? ''),
+      phone: String(u.phone ?? ''),
       roles: Array.isArray(u.roles)
         ? (u.roles as { id: string; name: string }[]).map((r) => ({
             id: String(r.id),
@@ -510,6 +534,7 @@ export const api = {
     email: string;
     password: string;
     name?: string;
+    phone: string;
   }): Promise<AdminUser> {
     const r = await fetch(`${BASE}/api/v1/users`, {
       method: 'POST',
@@ -527,6 +552,13 @@ export const api = {
       deleted: Boolean(raw.deleted),
       created: String(raw.created ?? ''),
       updated: String(raw.updated ?? ''),
+      phone: String(raw.phone ?? ''),
+      roles: Array.isArray(raw.roles)
+        ? (raw.roles as { id: string; name: string }[]).map((r) => ({
+            id: String(r.id),
+            name: String(r.name),
+          }))
+        : [],
     };
   },
 
@@ -550,6 +582,13 @@ export const api = {
       deleted: Boolean(raw.deleted),
       created: String(raw.created ?? ''),
       updated: String(raw.updated ?? ''),
+      phone: String(raw.phone ?? ''),
+      roles: Array.isArray(raw.roles)
+        ? (raw.roles as { id: string; name: string }[]).map((r) => ({
+            id: String(r.id),
+            name: String(r.name),
+          }))
+        : [],
     };
   },
 
@@ -665,5 +704,57 @@ export const api = {
       body: JSON.stringify({ status }),
     });
     await unwrap(r);
+  },
+
+  // --- Tables / QR ---
+
+  /**
+   * Public — verifies the HMAC token embedded in a QR code URL.
+   * Returns { valid, tableNumber }.
+   */
+  async verifyTableToken(
+    table: string,
+    sid: string,
+  ): Promise<{ valid: boolean; tableNumber: string | null }> {
+    const params = new URLSearchParams({ table, sid });
+    const r = await fetch(`${BASE}/api/v1/tables/verify?${params}`);
+    return unwrap(r);
+  },
+
+  /**
+   * Admin — batch-generates QR URLs for a numeric range of tables.
+   * Returns an array of { tableNumber, url, token }.
+   */
+  async adminGenerateQrBatch(
+    from: number,
+    to: number,
+  ): Promise<Array<{ tableNumber: string; url: string; token: string }>> {
+    const r = await fetch(`${BASE}/api/v1/tables/qr/batch`, {
+      method: 'POST',
+      headers: jsonHeaders(),
+      body: JSON.stringify({ from, to }),
+    });
+    const raw = await unwrap<{
+      tables: Array<{ tableNumber: string; url: string; token: string }>;
+    }>(r);
+    return raw.tables;
+  },
+
+  /**
+   * Admin — generates a QR URL for a custom list of table numbers
+   * (supports non-numeric names like "VIP-1", "Sân thượng").
+   */
+  async adminGenerateQrList(
+    tables: string[],
+  ): Promise<Array<{ tableNumber: string; url: string; token: string }>> {
+    const r = await fetch(`${BASE}/api/v1/tables/qr/batch`, {
+      method: 'POST',
+      headers: jsonHeaders(),
+      body: JSON.stringify({ tables }),
+    });
+    const raw = await unwrap<{
+      tables: Array<{ tableNumber: string; url: string; token: string }>;
+    }>(r);
+    return raw.tables;
   },
 };

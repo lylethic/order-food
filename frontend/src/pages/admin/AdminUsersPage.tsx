@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Plus,
@@ -10,6 +10,7 @@ import {
   ShieldCheck,
   UserCheck,
   UserX,
+  Camera,
 } from 'lucide-react';
 import { useLang } from '../../context/LangContext';
 import { api } from '../../services/api';
@@ -102,6 +103,7 @@ function UserModal({
   roles,
   onSave,
   onClose,
+  onAvatarUpdated,
 }: {
   initial?: AdminUser;
   roles: Role[];
@@ -113,6 +115,7 @@ function UserModal({
     active: boolean;
   }) => Promise<void>;
   onClose: () => void;
+  onAvatarUpdated?: (imgUrl: string | null) => void;
 }) {
   const { t } = useLang();
   const [form, setForm] = useState({
@@ -124,6 +127,27 @@ function UserModal({
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(
+    initial?.img ? `/${initial.img}` : null,
+  );
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+
+  const handleAvatarChange = async (files: FileList | null) => {
+    if (!files?.[0] || !initial) return;
+    setUploadingAvatar(true);
+    try {
+      const updated = await api.uploadAvatar(initial.id, files[0]);
+      const preview = updated.img ? `/${updated.img}` : null;
+      setAvatarPreview(preview);
+      onAvatarUpdated?.(updated.img ?? null);
+    } catch {
+      /* ignore */
+    } finally {
+      setUploadingAvatar(false);
+      if (avatarInputRef.current) avatarInputRef.current.value = '';
+    }
+  };
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
@@ -174,6 +198,40 @@ function UserModal({
         </div>
 
         <form onSubmit={handleSubmit} className='px-6 py-5 space-y-4'>
+          {/* Avatar upload — edit mode only */}
+          {initial && (
+            <div className='flex justify-center'>
+              <div
+                className='relative w-16 h-16 rounded-full bg-slate-100 cursor-pointer group overflow-hidden ring-2 ring-slate-200 hover:ring-indigo-400 transition-all'
+                onClick={() => avatarInputRef.current?.click()}
+              >
+                {avatarPreview ? (
+                  <img
+                    src={avatarPreview}
+                    alt=''
+                    className='w-full h-full object-cover'
+                  />
+                ) : (
+                  <Users className='w-8 h-8 text-slate-400 absolute inset-0 m-auto' />
+                )}
+                <div className='absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-full'>
+                  {uploadingAvatar ? (
+                    <Spinner size='sm' />
+                  ) : (
+                    <Camera className='w-4 h-4 text-white' />
+                  )}
+                </div>
+              </div>
+              <input
+                ref={avatarInputRef}
+                type='file'
+                accept='image/*'
+                className='hidden'
+                onChange={(e) => handleAvatarChange(e.target.files)}
+              />
+            </div>
+          )}
+
           <div className='grid grid-cols-2 gap-3'>
             <div>
               <label className='block text-xs font-bold text-slate-500 mb-1.5'>
@@ -476,6 +534,12 @@ export default function AdminUsersPage() {
     setUsers((prev) => prev.filter((u) => u.id !== deleteTarget.id));
   };
 
+  const handleAvatarUpdated = (imgUrl: string | null) => {
+    if (!editTarget || editTarget === 'new') return;
+    const id = (editTarget as AdminUser).id;
+    setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, img: imgUrl } : u)));
+  };
+
   return (
     <div className='px-6 py-8 max-w-5xl mt-10 mx-auto w-full'>
       {/* Header */}
@@ -615,6 +679,7 @@ export default function AdminUsersPage() {
             roles={roles}
             onSave={handleSave}
             onClose={() => setEditTarget(null)}
+            onAvatarUpdated={handleAvatarUpdated}
           />
         )}
         {deleteTarget && (

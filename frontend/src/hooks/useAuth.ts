@@ -46,11 +46,23 @@ export function useAuth() {
   }, []);
 
   const register = useCallback(
-    async (name: string, email: string, password: string) => {
+    async (
+      name: string,
+      email: string,
+      password: string,
+      phone: string,
+      username: string,
+    ) => {
       setState((s) => ({ ...s, error: null }));
       try {
         // Attempt registration; some backends return a token directly
-        const result = await api.register(name, email, password);
+        const result = await api.register(
+          name,
+          email,
+          password,
+          phone,
+          username,
+        );
         let token = result?.token;
 
         // If no token was returned, sign in with the new credentials
@@ -87,7 +99,9 @@ export function useAuth() {
 
   return {
     ...state,
-    isStaff: state.user ? state.user.role.some((r) => STAFF_ROLES.has(r)) : false,
+    isStaff: state.user
+      ? state.user.role.some((r) => STAFF_ROLES.has(r))
+      : false,
     isAdmin: state.user ? state.user.role.includes('ADMIN') : false,
     login,
     register,

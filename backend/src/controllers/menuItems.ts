@@ -4,7 +4,7 @@ import { sendResponse, handleRouteError } from '../utils/response.js';
 import { BaseSearchRequest } from '../schemas/search.js';
 import { MenuItemCreateBody, MenuItemUpdateBody } from '../schemas/menuItem.js';
 import { AppError } from '../utils/AppError.js';
-import { uploadImage } from '../services/staticFile.service.js';
+import { uploadMenuItemImage } from '../services/staticFile.service.js';
 
 const router = Router();
 
@@ -211,7 +211,7 @@ router.post('/menuItems', async (_req, res) => {
  *       415:
  *         description: Unsupported file type
  */
-router.post('/menuItems/:id/images', uploadImage.array('files', 10), async (req, res) => {
+router.post('/menuItems/:id/images', uploadMenuItemImage.array('files', 10), async (req, res) => {
   try {
     const id = Number(req.params.id);
     if (!Number.isInteger(id) || id <= 0) throw new AppError(400, 'Invalid menu item id');

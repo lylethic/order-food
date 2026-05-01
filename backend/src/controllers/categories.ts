@@ -4,6 +4,8 @@ import { sendResponse, handleRouteError } from '../utils/response.js';
 import { BaseSearchRequest } from '../schemas/search.js';
 import { isChef } from '../middleware/rbac.js';
 import { authenticate } from '../middleware/auth.js';
+import { staticFileService, uploadCategoryImage } from '../services/staticFile.service.js';
+import { AppError } from '../utils/AppError.js';
 
 const router = Router();
 
@@ -258,6 +260,29 @@ router.get('/categories/:id', async (_req, res) => {
     sendResponse(res, {
       message: 'Lấy danh mục thành công',
       message_en: 'Category retrieved',
+      data,
+    });
+  } catch (err) {
+    handleRouteError(err, res);
+  }
+});
+
+router.put('/categories/:id/img', authenticate, isChef, uploadCategoryImage.single('file'), async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id) || id <= 0) throw new AppError(400, 'Invalid category id');
+    if (!req.file) throw new AppError(400, 'Chưa chọn file ảnh');
+
+    const existing = await categoryService.findById(id);
+    if (existing?.img) {
+      try { staticFileService.delete(existing.img); } catch { /* ignore */ }
+    }
+
+    const imgUrl = staticFileService.getPath(req.file);
+    const data = await categoryService.updateImg(id, imgUrl);
+    sendResponse(res, {
+      message: 'Cập nhật ảnh danh mục thành công',
+      message_en: 'Category image updated successfully',
       data,
     });
   } catch (err) {

@@ -45,63 +45,117 @@ if (!fs.existsSync(UPLOADS_DIR)) {
   fs.mkdirSync(UPLOADS_DIR, { recursive: true });
 }
 
-const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => cb(null, UPLOADS_DIR),
-  filename: (_req, file, cb) => {
-    const ext = path.extname(file.originalname).toLowerCase();
-    const unique = crypto.randomUUID();
-    cb(null, `${unique}${ext}`);
-  },
-});
+/**
+ * Creates a multer DiskStorage engine that saves files into
+ * `uploads/<subfolder>/` (or `uploads/` if no subfolder given).
+ * The destination directory is created automatically if it does not exist.
+ */
+function createStorage(subfolder?: string): multer.StorageEngine {
+  const dest = subfolder ? path.join(UPLOADS_DIR, subfolder) : UPLOADS_DIR;
+  if (!fs.existsSync(dest)) {
+    fs.mkdirSync(dest, { recursive: true });
+  }
+  return multer.diskStorage({
+    destination: (_req, _file, cb) => cb(null, dest),
+    filename: (_req, file, cb) => {
+      const ext = path.extname(file.originalname).toLowerCase();
+      cb(null, `${crypto.randomUUID()}${ext}`);
+    },
+  });
+}
 
-export const upload = multer({
-  storage,
-  limits: { fileSize: MAX_FILE_SIZE_BYTES },
-  fileFilter: (_req, file, cb) => {
-    if (ALLOWED_MIME_TYPES.has(file.mimetype)) {
-      cb(null, true);
-    } else {
-      cb(new AppError(415, `Loại file không được hỗ trợ: ${file.mimetype}`));
-    }
-  },
-});
+/**
+ * Returns a multer instance that accepts any supported file type (max 10 MB).
+ * @param subfolder Optional sub-directory inside `uploads/` (e.g. `'users'`).
+ */
+export function createUploader(subfolder?: string) {
+  return multer({
+    storage: createStorage(subfolder),
+    limits: { fileSize: MAX_FILE_SIZE_BYTES },
+    fileFilter: (_req, file, cb) => {
+      if (ALLOWED_MIME_TYPES.has(file.mimetype)) {
+        cb(null, true);
+      } else {
+        cb(new AppError(415, `Loại file không được hỗ trợ: ${file.mimetype}`));
+      }
+    },
+  });
+}
 
-export const uploadImage = multer({
-  storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB for images
-  fileFilter: (_req, file, cb) => {
-    if (IMAGE_MIME_TYPES.has(file.mimetype)) {
-      cb(null, true);
-    } else {
-      cb(new AppError(415, 'Chỉ chấp nhận file ảnh (jpg, png, gif, webp, svg, bmp)'));
-    }
-  },
-});
+/**
+ * Returns a multer instance that accepts image files only (max 5 MB).
+ * @param subfolder Optional sub-directory inside `uploads/` (e.g. `'users'`).
+ */
+export function createImageUploader(subfolder?: string) {
+  return multer({
+    storage: createStorage(subfolder),
+    limits: { fileSize: 5 * 1024 * 1024 },
+    fileFilter: (_req, file, cb) => {
+      if (IMAGE_MIME_TYPES.has(file.mimetype)) {
+        cb(null, true);
+      } else {
+        cb(new AppError(415, 'Chỉ chấp nhận file ảnh (jpg, png, gif, webp, svg, bmp)'));
+      }
+    },
+  });
+}
+
+// Pre-built uploaders — generic (no subfolder, saves to uploads/)
+export const upload = createUploader();
+export const uploadImage = createImageUploader();
+
+// Pre-built uploaders — per-entity subfolders
+export const uploadUserImage = createImageUploader('users');
+export const uploadCategoryImage = createImageUploader('categories');
+export const uploadMenuItemImage = createImageUploader('menu_items');
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function buildFileUrl(filename: string): string {
+function buildFileUrl(relPath: string): string {
   const port = process.env.PORT || 3001;
   const baseUrl = process.env.BASE_URL || `http://localhost:${port}`;
-  return `${baseUrl}/uploads/${filename}`;
+  return `${baseUrl}/uploads/${relPath}`;
 }
 
-function extractFilename(fileUrl: string): string {
-  // Handles both full URL (http://host/uploads/x.png) and relative path (uploads/x.png)
+/**
+ * Extracts the path segment after `/uploads/` from a full URL or relative path.
+ * Examples:
+ *   http://localhost:3001/uploads/users/uuid.jpg  →  users/uuid.jpg
+ *   uploads/menu_items/uuid.png                   →  menu_items/uuid.png
+ *   uuid.jpg                                      →  uuid.jpg
+ */
+function extractRelativePath(fileUrl: string): string {
   try {
-    return path.basename(new URL(fileUrl).pathname);
+    const urlPath = new URL(fileUrl).pathname; // e.g. /uploads/users/uuid.jpg
+    const prefix = '/uploads/';
+    if (urlPath.startsWith(prefix)) return urlPath.slice(prefix.length);
+    return path.basename(urlPath);
   } catch {
-    return path.basename(fileUrl);
+    const normalized = fileUrl.replace(/\\/g, '/');
+    const prefix = 'uploads/';
+    if (normalized.startsWith(prefix)) return normalized.slice(prefix.length);
+    return path.basename(normalized);
   }
 }
 
-function resolveFilePath(filename: string): string {
-  // Prevent path traversal attacks
-  const resolved = path.resolve(UPLOADS_DIR, filename);
+/**
+ * Resolves a relative path (e.g. `users/uuid.jpg`) to an absolute path
+ * under UPLOADS_DIR, rejecting any path-traversal attempts.
+ */
+function resolveFilePath(relPath: string): string {
+  const resolved = path.resolve(UPLOADS_DIR, relPath);
   if (!resolved.startsWith(UPLOADS_DIR)) {
     throw new AppError(400, 'Đường dẫn file không hợp lệ');
   }
   return resolved;
+}
+
+/**
+ * Returns the path of a multer file relative to UPLOADS_DIR, using forward slashes.
+ * e.g. `users/uuid.jpg` or `uuid.jpg`
+ */
+function fileRelativePath(file: Express.Multer.File): string {
+  return path.relative(UPLOADS_DIR, file.path).replace(/\\/g, '/');
 }
 
 // ─── Service ──────────────────────────────────────────────────────────────────
@@ -109,27 +163,28 @@ function resolveFilePath(filename: string): string {
 export const staticFileService = {
   /**
    * Returns the public URL for an already-uploaded file.
-   * Called after multer has saved the file to disk.
+   * Handles files in any subfolder (e.g. uploads/users/uuid.jpg → http://…/uploads/users/uuid.jpg).
    */
   getUrl(file: Express.Multer.File): string {
-    return buildFileUrl(file.filename);
+    return buildFileUrl(fileRelativePath(file));
   },
 
   /**
-   * Returns only the relative path (e.g. uploads/uuid.png).
-   * Use this when you want to store a portable path instead of a full URL.
+   * Returns the portable relative path for DB storage.
+   * e.g. `uploads/users/uuid.jpg` or `uploads/uuid.jpg`
    */
   getPath(file: Express.Multer.File): string {
-    return `uploads/${file.filename}`;
+    return `uploads/${fileRelativePath(file)}`;
   },
 
   /**
-   * Deletes a file by its public URL.
-   * Returns the deleted URL.
+   * Deletes a file given its public URL or relative path.
+   * Supports subfolders: `http://…/uploads/users/uuid.jpg` or `uploads/users/uuid.jpg`.
+   * Returns the deleted URL/path.
    */
   delete(fileUrl: string): string {
-    const filename = extractFilename(fileUrl);
-    const filePath = resolveFilePath(filename);
+    const relPath = extractRelativePath(fileUrl);
+    const filePath = resolveFilePath(relPath);
 
     if (!fs.existsSync(filePath)) {
       throw new AppError(404, 'File không tồn tại');
@@ -141,12 +196,11 @@ export const staticFileService = {
 
   /**
    * Replaces an existing file with a new upload.
-   * Deletes the old file and returns the new file's URL.
+   * Deletes the old file (silently ignores missing) and returns the new file's URL.
    */
   replace(oldFileUrl: string, newFile: Express.Multer.File): string {
     try {
-      const oldFilename = extractFilename(oldFileUrl);
-      const oldPath = resolveFilePath(oldFilename);
+      const oldPath = resolveFilePath(extractRelativePath(oldFileUrl));
       if (fs.existsSync(oldPath)) {
         fs.unlinkSync(oldPath);
       }
@@ -154,6 +208,6 @@ export const staticFileService = {
       // If the old file doesn't exist or URL is invalid, continue anyway
     }
 
-    return buildFileUrl(newFile.filename);
+    return buildFileUrl(fileRelativePath(newFile));
   },
 };

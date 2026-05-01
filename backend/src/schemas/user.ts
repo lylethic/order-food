@@ -6,6 +6,7 @@ export const UserCreateBody = z.object({
   password: z.string().min(8),
   name: z.string().optional(),
   img: z.string().optional(),
+  phone: z.string().nullable().optional(),
 });
 
 export type UserCreateBodyType = z.TypeOf<typeof UserCreateBody>;
@@ -15,6 +16,7 @@ export const UserUpdateBody = z.object({
   name: z.string().optional(),
   img: z.string().optional(),
   active: z.boolean().optional(),
+  phone: z.string().nullable().optional(),
 });
 
 export type UserUpdateBodyType = z.TypeOf<typeof UserUpdateBody>;
@@ -32,6 +34,7 @@ export const UserRes = z
     update_by: z.bigint().nullable().optional(),
     deleted: z.boolean(),
     active: z.boolean(),
+    phone: z.string().nullable().optional(),
     roles: z
       .array(
         z.object({

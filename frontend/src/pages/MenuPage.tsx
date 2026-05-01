@@ -194,7 +194,7 @@ export default function MenuPage() {
           onUpdateQty={updateQty}
           onClose={() => setDetailId(null)}
           currentUserId={user?.userId ?? null}
-          currentUserRole={user?.role ?? null}
+          currentUserRole={user?.role?.[0] ?? null}
           commentRepliedEvent={commentRepliedEvent}
         />
       )}

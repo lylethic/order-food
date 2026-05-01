@@ -6,7 +6,7 @@ import { AppError } from '../utils/AppError.js';
 import { BaseSearchRequest } from '../schemas/search.js';
 import { UserCreateBody, UserUpdateBody } from '../schemas/user.js';
 import { sendResponse, handleRouteError } from '../utils/response.js';
-import { staticFileService, uploadImage } from '../services/staticFile.service.js';
+import { staticFileService, uploadUserImage } from '../services/staticFile.service.js';
 
 const router = Router();
 
@@ -325,7 +325,7 @@ router.delete('/users/:id', authenticate, isAdmin, async (req, res) => {
  *       415:
  *         description: Unsupported file type — images only
  */
-router.put('/users/:id/avatar', authenticate, uploadImage.single('file'), async (req, res) => {
+router.put('/users/:id/avatar', authenticate, uploadUserImage.single('file'), async (req, res) => {
   try {
     const id = Number(req.params.id);
     if (!Number.isInteger(id) || id <= 0)
