@@ -8,6 +8,7 @@ import {
   UtensilsCrossed,
   MessageCircle,
   QrCode,
+  ClipboardList,
 } from 'lucide-react';
 import { useAuthContext } from '../context/AuthContext';
 import { useLang } from '../context/LangContext';
@@ -89,6 +90,12 @@ export default function AdminLayout() {
       icon: QrCode,
       path: '/admin/qr',
     },
+    {
+      id: 'orders',
+      label: t.adminOrders,
+      icon: ClipboardList,
+      path: '/admin/orders',
+    },
   ];
 
   const activeId = pathname.startsWith('/admin/menu-items')
@@ -99,7 +106,9 @@ export default function AdminLayout() {
         ? 'comments'
         : pathname.startsWith('/admin/qr')
           ? 'qr'
-          : 'categories';
+          : pathname.startsWith('/admin/orders')
+            ? 'orders'
+            : 'categories';
 
   const activeNav = navItems.find((item) => item.id === activeId);
   const topTitle = activeNav?.label ?? t.adminPanel;

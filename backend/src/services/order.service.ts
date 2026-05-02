@@ -17,8 +17,10 @@ import {
 } from '../schemas/order.js';
 
 const STAFF_ROLES = new Set(['admin', 'employee', 'chef']);
-export const isStaffRole = (role: string) =>
-  STAFF_ROLES.has(role.toLowerCase());
+export const isStaffRole = (role: string | string[]) => {
+  const roles = Array.isArray(role) ? role : [role];
+  return roles.some((r) => STAFF_ROLES.has(r.toLowerCase()));
+};
 
 function formatOrderSummary(order: any): OrderSummaryDtoType {
   const items: any[] = order.items ?? [];

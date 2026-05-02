@@ -11,6 +11,13 @@ export const RegisterSchema = z.object({
   name: z.string(),
   role: UserRoleEnum.optional().default('CUSTOMER'),
   img: z.string().optional(),
+  phone: z.string().optional(),
+});
+
+export const GuestRegisterSchema = z.object({
+  name: z.string(),
+  phone: z.string(),
+  is_guest: z.boolean().default(true),
 });
 
 export const LoginSchema = z.object({
@@ -50,6 +57,7 @@ export const MarkOrderPaidSchema = z.object({
 
 // Inferred TypeScript types from schemas
 export type RegisterBodyType = z.infer<typeof RegisterSchema>;
+export type GuestRegisterBodyType = z.infer<typeof GuestRegisterSchema>;
 export type LoginRequest = z.infer<typeof LoginSchema>;
 export type CreateOrderBodyType = z.infer<typeof CreateOrderSchema>;
 export type UpdateStatusBodyType = z.infer<typeof UpdateStatusSchema>;

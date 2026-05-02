@@ -14,12 +14,14 @@ import AuthPage from '../pages/AuthPage';
 import MenuPage from '../pages/MenuPage';
 import MyOrderPage from '../pages/MyOrderPage';
 import KitchenPage from '../pages/KitchenPage';
+import StaffOrdersPage from '../pages/admin/AdminOrdersPage';
 import ServerPage from '../pages/ServerPage';
 import AdminCategoriesPage from '../pages/admin/AdminCategoriesPage';
 import AdminMenuItemsPage from '../pages/admin/AdminMenuItemsPage';
 import AdminUsersPage from '../pages/admin/AdminUsersPage';
 import AdminCommentsPage from '../pages/admin/AdminCommentsPage';
 import AdminQRPage from '../pages/admin/AdminQRPage';
+import AdminOrdersPage from '../pages/admin/AdminOrdersPage';
 import QrScanPage from '../pages/QrScanPage';
 
 // ─── Loading screen ───────────────────────────────────────────────────────────
@@ -43,7 +45,7 @@ function LoadingScreen() {
 function RootRedirect() {
   const { user, isLoading, isAdmin, isStaff } = useAuthContext();
   if (isLoading) return <LoadingScreen />;
-  if (!user) return <Navigate to='/auth' replace />;
+  if (!user) return <Navigate to='/menu' replace />;
   if (isAdmin) return <Navigate to='/admin/categories' replace />;
   return <Navigate to={isStaff ? '/kitchen' : '/menu'} replace />;
 }
@@ -86,6 +88,7 @@ const router = createBrowserRouter([
     children: [
       { path: '/kitchen', element: <KitchenPage /> },
       { path: '/server', element: <ServerPage /> },
+      { path: '/orders', element: <StaffOrdersPage /> },
     ],
   },
 
@@ -99,6 +102,7 @@ const router = createBrowserRouter([
       { path: '/admin/users', element: <AdminUsersPage /> },
       { path: '/admin/comments', element: <AdminCommentsPage /> },
       { path: '/admin/qr', element: <AdminQRPage /> },
+      { path: '/admin/orders', element: <AdminOrdersPage /> },
     ],
   },
 

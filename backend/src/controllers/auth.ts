@@ -1,7 +1,11 @@
 import { Router } from 'express';
 import { authService } from '../services/auth.service.js';
 import { authenticate } from '../middleware/auth.js';
-import { RegisterSchema, LoginSchema } from '../schemas/validation.js';
+import {
+  RegisterSchema,
+  LoginSchema,
+  GuestRegisterSchema,
+} from '../schemas/validation.js';
 import { sendResponse, handleRouteError } from '../utils/response.js';
 
 const router = Router();
@@ -47,6 +51,43 @@ router.post('/auth/register', async (req, res) => {
   try {
     const dto = RegisterSchema.parse(req.body);
     const result = await authService.register(dto);
+    sendResponse(res, {
+      message: 'Đăng ký tài khoản thành công',
+      message_en: 'Account registered successfully',
+      data: result,
+    });
+  } catch (err) {
+    handleRouteError(err, res);
+  }
+});
+
+/**
+ * @swagger
+ * /api/v1/auth/guestRegister:
+ *   post:
+ *     summary: Register a new guest user account
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/GuestRegisterRequest'
+ *           example:
+ *             name: Ngọc Linh
+ *             phone: '0999999888'
+ *     responses:
+ *       200:
+ *         description: Account created — returns JWT + user profile
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/AuthResponse'
+ */
+router.post('/auth/guestRegister', async (req, res) => {
+  try {
+    const dto = GuestRegisterSchema.parse(req.body);
+    const result = await authService.guestRegister(dto);
     sendResponse(res, {
       message: 'Đăng ký tài khoản thành công',
       message_en: 'Account registered successfully',

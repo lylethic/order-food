@@ -60,12 +60,22 @@ const options: swaggerJSDoc.Options = {
             password: { type: 'string', minLength: 8, example: 'Aa@123123' },
             username: { type: 'string', minLength: 3, example: 'chef_rivera' },
             name: { type: 'string', example: 'Chef Rivera' },
+            phone: '0908998988',
             role: {
               type: 'string',
               enum: ['ADMIN', 'EMPLOYEE', 'CHEF', 'CUSTOMER'],
               default: 'CUSTOMER',
               example: 'CHEF',
             },
+          },
+        },
+
+        GuestRegisterRequest: {
+          type: 'object',
+          required: ['phone', 'name'],
+          properties: {
+            name: { type: 'string', example: 'Chef Rivera' },
+            phone: { type: 'string', example: '099999999' },
           },
         },
 

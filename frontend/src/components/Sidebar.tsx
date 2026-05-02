@@ -75,7 +75,7 @@ function Avatar({ user }: { user: UserType }) {
 export function Sidebar({ items, active, onChange, user, onLogout }: Props) {
   const { t } = useLang();
   return (
-    <aside className='hidden md:flex w-64 bg-white border-r border-slate-100 flex-col fixed h-full z-40'>
+    <aside className='hidden md:flex w-64 bg-white border-r border-slate-100 flex-col fixed h-full z-40 shadow'>
       {/* Logo */}
       <div className='p-7 flex items-center gap-3 border-b border-slate-50'>
         <div className='w-9 h-9 bg-indigo-600 rounded-xl flex items-center justify-center shadow-md shadow-indigo-100'>
@@ -115,7 +115,9 @@ export function Sidebar({ items, active, onChange, user, onLogout }: Props) {
             <p className='text-sm font-bold text-slate-800 truncate'>
               {user.name || user.email}
             </p>
-            <p className='text-xs text-slate-400 font-medium'>{Array.isArray(user.role) ? user.role.join(', ') : user.role}</p>
+            <p className='text-xs text-slate-400 font-medium'>
+              {Array.isArray(user.role) ? user.role.join(', ') : user.role}
+            </p>
           </div>
           <button
             onClick={onLogout}

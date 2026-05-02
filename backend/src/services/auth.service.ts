@@ -2,7 +2,11 @@ import bcrypt from 'bcryptjs';
 import { userProvider } from '../providers/userProvider.js';
 import { roleProvider } from '../providers/roleProvider.js';
 import { AppError } from '../utils/AppError.js';
-import type { RegisterBodyType, LoginRequest } from '../schemas/validation.js';
+import type {
+  RegisterBodyType,
+  LoginRequest,
+  GuestRegisterBodyType,
+} from '../schemas/validation.js';
 import { AuthResultType, SafeUserType } from '../schemas/auth.js';
 import { generateToken } from '../utils/authUtils.js';
 
@@ -55,6 +59,18 @@ export const authService = {
     return { token, user: toSafeUser(user), role: roles };
   },
 
+  /** Guest register — creates a guest user and returns a JWT */
+  async guestRegister(dto: GuestRegisterBodyType): Promise<AuthResultType> {
+    const user = await userProvider.createGuest({
+      name: dto.name,
+      phone: dto.phone,
+      is_guest: true,
+    });
+    const roles = ['CUSTOMER'];
+    const token = generateToken(user.id.toString(), user.email ?? '', roles);
+    return { token, user: toSafeUser(user), role: roles };
+  },
+
   /**
    * 1. Find user by email
    * 2. Compare bcrypt hash (same error message for both cases → prevents user enumeration)
@@ -67,7 +83,7 @@ export const authService = {
     const valid = await bcrypt.compare(dto.password, user.password);
     if (!valid) throw new AppError(401, 'Invalid email or password');
 
-    const roles = user.roles.map((userRole) => userRole.role.name);
+    const roles = user.roles.map((userRole: any) => userRole.role.name);
     const primaryRole = roles.length > 0 ? roles : ['CUSTOMER'];
     const token = generateToken(user.id.toString(), user.email, primaryRole);
     return { token, user: toSafeUser(user), role: primaryRole };
@@ -78,7 +94,7 @@ export const authService = {
     const user = await userProvider.findById(Number(userId));
     if (!user) throw new AppError(404, 'User not found');
 
-    const roles = user.roles.map((userRole) => userRole.role.name);
+    const roles = user.roles.map((userRole: any) => userRole.role.name);
     return {
       ...toSafeUser(user),
       role: roles.length > 0 ? roles : ['CUSTOMER'],

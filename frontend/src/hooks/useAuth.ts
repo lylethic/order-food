@@ -83,6 +83,20 @@ export function useAuth() {
     [],
   );
 
+  const guestLogin = useCallback(async (name: string, phone: string) => {
+    setState((s) => ({ ...s, error: null }));
+    try {
+      const result = await api.guestRegister(name, phone);
+      tokenStore.set(result.token);
+      const user = await api.me();
+      setState({ user, token: result.token, isLoading: false, error: null });
+    } catch (err) {
+      const message = (err as Error).message;
+      setState((s) => ({ ...s, error: message }));
+      throw err;
+    }
+  }, []);
+
   const logout = useCallback(() => {
     tokenStore.clear();
     setState({ user: null, token: null, isLoading: false, error: null });
@@ -105,6 +119,7 @@ export function useAuth() {
     isAdmin: state.user ? state.user.role.includes('ADMIN') : false,
     login,
     register,
+    guestLogin,
     logout,
     updateUser,
   };

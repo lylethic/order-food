@@ -6,7 +6,10 @@ import { AppError } from '../utils/AppError.js';
 import { BaseSearchRequest } from '../schemas/search.js';
 import { UserCreateBody, UserUpdateBody } from '../schemas/user.js';
 import { sendResponse, handleRouteError } from '../utils/response.js';
-import { staticFileService, uploadUserImage } from '../services/staticFile.service.js';
+import {
+  staticFileService,
+  uploadUserImage,
+} from '../services/staticFile.service.js';
 
 const router = Router();
 
@@ -174,6 +177,55 @@ router.get('/users/:id', authenticate, async (req, res) => {
 
 /**
  * @swagger
+ * /api/v1/users/getPhone/{phone}:
+ *   get:
+ *     summary: Get a user by phone
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     description: Returns one user by numeric id. Admin only.
+ *     parameters:
+ *       - in: path
+ *         name: phone
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: User's phone
+ *     responses:
+ *       200:
+ *         description: User retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/User'
+ *       400:
+ *         description: Invalid user id
+ *       401:
+ *         description: Missing or invalid token
+ *       403:
+ *         description: Forbidden for non-admin users
+ *       404:
+ *         description: User not found
+ */
+router.get('/users/getPhone/:phone', authenticate, async (req, res) => {
+  try {
+    const phone = req.params.phone;
+    if (!phone) throw new AppError(400, 'Invalid user phone');
+
+    const data = await userService.findByPhone(phone);
+
+    sendResponse(res, {
+      message: 'Lấy thông tin người dùng thành công',
+      message_en: 'User retrieved successfully',
+      data,
+    });
+  } catch (err) {
+    handleRouteError(err, res);
+  }
+});
+
+/**
+ * @swagger
  * /api/v1/users/{id}:
  *   patch:
  *     summary: Update a user
@@ -325,39 +377,51 @@ router.delete('/users/:id', authenticate, isAdmin, async (req, res) => {
  *       415:
  *         description: Unsupported file type — images only
  */
-router.put('/users/:id/avatar', authenticate, uploadUserImage.single('file'), async (req, res) => {
-  try {
-    const id = Number(req.params.id);
-    if (!Number.isInteger(id) || id <= 0)
-      throw new AppError(400, 'Invalid user id');
+router.put(
+  '/users/:id/avatar',
+  authenticate,
+  uploadUserImage.single('file'),
+  async (req, res) => {
+    try {
+      const id = Number(req.params.id);
+      if (!Number.isInteger(id) || id <= 0)
+        throw new AppError(400, 'Invalid user id');
 
-    const rawRole = req.user!.role;
-    const isAdmin = Array.isArray(rawRole)
-      ? rawRole.includes('ADMIN')
-      : rawRole === 'ADMIN';
-    const isSelf = req.user!.userId === String(id);
-    if (!isAdmin && !isSelf)
-      throw new AppError(403, 'Không thể cập nhật avatar của người dùng khác');
+      const rawRole = req.user!.role;
+      const isAdmin = Array.isArray(rawRole)
+        ? rawRole.includes('ADMIN')
+        : rawRole === 'ADMIN';
+      const isSelf = req.user!.userId === String(id);
+      if (!isAdmin && !isSelf)
+        throw new AppError(
+          403,
+          'Không thể cập nhật avatar của người dùng khác',
+        );
 
-    if (!req.file) throw new AppError(400, 'Chưa chọn file ảnh');
+      if (!req.file) throw new AppError(400, 'Chưa chọn file ảnh');
 
-    // Delete old avatar from disk if it exists
-    const existing = await userService.findById(id);
-    if (existing.img) {
-      try { staticFileService.delete(existing.img); } catch { /* ignore */ }
+      // Delete old avatar from disk if it exists
+      const existing = await userService.findById(id);
+      if (existing.img) {
+        try {
+          staticFileService.delete(existing.img);
+        } catch {
+          /* ignore */
+        }
+      }
+
+      const imgUrl = staticFileService.getPath(req.file);
+      const data = await userService.updateAvatar(id, imgUrl);
+
+      sendResponse(res, {
+        message: 'Cập nhật avatar thành công',
+        message_en: 'Avatar updated successfully',
+        data,
+      });
+    } catch (err) {
+      handleRouteError(err, res);
     }
-
-    const imgUrl = staticFileService.getPath(req.file);
-    const data = await userService.updateAvatar(id, imgUrl);
-
-    sendResponse(res, {
-      message: 'Cập nhật avatar thành công',
-      message_en: 'Avatar updated successfully',
-      data,
-    });
-  } catch (err) {
-    handleRouteError(err, res);
-  }
-});
+  },
+);
 
 export default router;
