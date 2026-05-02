@@ -12,8 +12,9 @@ interface Props {
   onClose: () => void;
   onUpdateQty: (id: string, qty: number) => void;
   onRemove: (id: string) => void;
-  onPlaceOrder: (tableNumber: string) => Promise<void>;
+  onPlaceOrder: (tableNumber: string, guestName?: string, guestPhone?: string) => Promise<void>;
   isPlacing: boolean;
+  isGuest?: boolean;
 }
 
 export function CartPanel({
@@ -23,10 +24,13 @@ export function CartPanel({
   onRemove,
   onPlaceOrder,
   isPlacing,
+  isGuest = false,
 }: Props) {
   const { t } = useLang();
   const { tableSession, clearTableSession } = useTableSession();
   const [tableNumber, setTableNumber] = useState(tableSession?.tableNumber ?? '');
+  const [guestName, setGuestName] = useState('');
+  const [guestPhone, setGuestPhone] = useState('');
   const [error, setError] = useState('');
 
   const subtotal = cart.reduce((s, c) => s + c.price * c.qty, 0);
@@ -35,12 +39,16 @@ export function CartPanel({
   const handlePlace = async () => {
     const resolvedTable = tableSession?.tableNumber ?? tableNumber.trim();
     if (!resolvedTable) {
-      setError('Please enter a table number.');
+      setError(t.tableNumber + ' ' + t.tableNumberPlaceholder);
       return;
+    }
+    if (isGuest) {
+      if (!guestName.trim()) { setError(t.guestName); return; }
+      if (!guestPhone.trim()) { setError(t.guestPhone); return; }
     }
     setError('');
     try {
-      await onPlaceOrder(resolvedTable);
+      await onPlaceOrder(resolvedTable, isGuest ? guestName.trim() : undefined, isGuest ? guestPhone.trim() : undefined);
     } catch (err) {
       setError((err as Error).message);
     }
@@ -177,6 +185,28 @@ export function CartPanel({
                     onChange={(e) => setTableNumber(e.target.value)}
                     placeholder={t.tableNumberPlaceholder}
                     className='w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 transition-all'
+                  />
+                </div>
+              )}
+
+              {/* Guest info fields */}
+              {isGuest && (
+                <div className='space-y-3 p-3 bg-amber-50 border border-amber-200 rounded-xl'>
+                  <p className='text-xs font-bold text-amber-700 uppercase tracking-wider'>{t.guestCheckoutTitle}</p>
+                  <p className='text-xs text-amber-600'>{t.guestCheckoutSub}</p>
+                  <input
+                    type='text'
+                    value={guestName}
+                    onChange={(e) => setGuestName(e.target.value)}
+                    placeholder={t.guestNamePlaceholder}
+                    className='w-full px-3 py-2 border border-amber-200 rounded-lg text-sm text-slate-800 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-400/40 focus:border-amber-400 bg-white transition-all'
+                  />
+                  <input
+                    type='tel'
+                    value={guestPhone}
+                    onChange={(e) => setGuestPhone(e.target.value)}
+                    placeholder={t.guestPhonePlaceholder}
+                    className='w-full px-3 py-2 border border-amber-200 rounded-lg text-sm text-slate-800 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-400/40 focus:border-amber-400 bg-white transition-all'
                   />
                 </div>
               )}

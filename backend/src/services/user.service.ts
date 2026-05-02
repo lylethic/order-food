@@ -35,6 +35,11 @@ export const userService = {
     return UserRes.parse(result);
   },
 
+  async findByPhone(phone: string) {
+    var result = await userProvider.findByPhone(phone);
+    return UserRes.parse(result);
+  },
+
   async delete(id: number) {
     var user = await userProvider.findById(id);
     if (!user) throw new AppError(404, 'User not found');
@@ -50,7 +55,7 @@ export const userService = {
     const nextCursor =
       hasNextPage && items.length > 0 ? items[items.length - 1].id : null;
     return {
-      data: items.map((user) => UserRes.parse(user)),
+      data: items.map((user: any) => UserRes.parse(user)),
       limit,
       nextCursor,
       hasNextPage,

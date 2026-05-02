@@ -1,5 +1,5 @@
 import { Outlet, Navigate, useNavigate, useLocation } from 'react-router-dom';
-import { ChefHat, Truck } from 'lucide-react';
+import { ChefHat, Truck, ClipboardList } from 'lucide-react';
 import { useAuthContext } from '../context/AuthContext';
 import { useLang } from '../context/LangContext';
 import { useSSE } from '../hooks/useSSE';
@@ -47,11 +47,26 @@ export default function StaffLayout() {
   const navItems: NavItem[] = [
     { id: 'kitchen', label: t.kitchen, icon: ChefHat },
     { id: 'server', label: t.server, icon: Truck },
+    { id: 'orders', label: t.adminOrders, icon: ClipboardList },
   ];
 
-  const activeTab = pathname.startsWith('/server') ? 'server' : 'kitchen';
-  const topTitle = activeTab === 'server' ? t.deliveryStation : t.chefDashboard;
-  const topSubtitle = activeTab === 'server' ? t.serverSub : t.kitchenSub;
+  const activeTab = pathname.startsWith('/server')
+    ? 'server'
+    : pathname.startsWith('/orders')
+      ? 'orders'
+      : 'kitchen';
+  const topTitle =
+    activeTab === 'server'
+      ? t.deliveryStation
+      : activeTab === 'orders'
+        ? t.adminOrdersTitle
+        : t.chefDashboard;
+  const topSubtitle =
+    activeTab === 'server'
+      ? t.serverSub
+      : activeTab === 'orders'
+        ? t.adminOrdersSub
+        : t.kitchenSub;
 
   const outletCtx: StaffOutletContext = { lastEvent: toStatusEvent(lastEvent) };
 
@@ -60,7 +75,7 @@ export default function StaffLayout() {
       <Sidebar
         items={navItems}
         active={activeTab}
-        onChange={(id) => navigate(`/${id}`)}
+        onChange={(id) => navigate(id === 'orders' ? '/orders' : `/${id}`)}
         user={user}
         onLogout={logout}
       />
@@ -81,7 +96,7 @@ export default function StaffLayout() {
       <BottomNav
         items={navItems}
         active={activeTab}
-        onChange={(id) => navigate(`/${id}`)}
+        onChange={(id) => navigate(id === 'orders' ? '/orders' : `/${id}`)}
       />
     </div>
   );

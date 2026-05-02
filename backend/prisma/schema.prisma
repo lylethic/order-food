@@ -25,8 +25,8 @@ model Role {
 model User {
   id                        BigInt                      @id @default(autoincrement())
   username                  String?                     @unique
-  email                     String                      @unique
-  password                  String
+  email                     String?                     @unique
+  password                  String?
   name                      String?
   img                       String?
   created                   DateTime                    @default(now())
@@ -35,6 +35,8 @@ model User {
   updated_by                BigInt?
   deleted                   Boolean                     @default(false)
   active                    Boolean                     @default(true)
+  phone                     String?                     @db.VarChar(10)
+  is_guest                  Boolean?
   menu_item_comment_replies menu_item_comment_replies[]
   menu_item_comments        menu_item_comments[]
   notifications             notifications[]

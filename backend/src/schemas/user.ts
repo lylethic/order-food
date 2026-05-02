@@ -24,8 +24,8 @@ export type UserUpdateBodyType = z.TypeOf<typeof UserUpdateBody>;
 export const UserRes = z
   .object({
     id: z.bigint(),
-    username: z.string(),
-    email: z.email(),
+    username: z.string().nullable(),
+    email: z.email().nullable(),
     name: z.string().nullable(),
     img: z.string().nullable().optional(),
     created: z.date(),
@@ -35,6 +35,7 @@ export const UserRes = z
     deleted: z.boolean(),
     active: z.boolean(),
     phone: z.string().nullable().optional(),
+    is_guest: z.boolean().nullable(),
     roles: z
       .array(
         z.object({

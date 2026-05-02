@@ -243,6 +243,15 @@ export const api = {
     return unwrap<{ token?: string }>(r);
   },
 
+  async guestRegister(name: string, phone: string): Promise<{ token: string; user: Record<string, unknown>; role: string[] }> {
+    const r = await fetch(`${BASE}/api/v1/auth/guestRegister`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, phone }),
+    });
+    return unwrap(r);
+  },
+
   async me(): Promise<User> {
     const r = await fetch(`${BASE}/api/v1/auth/me`, { headers: authHeaders() });
     const raw = await unwrap<Record<string, unknown>>(r);

@@ -5,10 +5,12 @@ import { useAuthContext } from '../context/AuthContext';
 import { useLang } from '../context/LangContext';
 import { Spinner } from '../components/Spinner';
 import { LangToggle } from '../components/LangToggle';
+import { useNavigate } from 'react-router-dom';
 
 export default function AuthPage() {
   const { login, register } = useAuthContext();
   const { t } = useLang();
+  const navigate = useNavigate();
 
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [name, setName] = useState('');
@@ -272,7 +274,19 @@ export default function AuthPage() {
             </motion.form>
           </AnimatePresence>
 
-          <div className='mt-6 flex justify-center'>
+          <div className='mt-6 flex flex-col items-center gap-3'>
+            <div className='w-full flex items-center gap-3'>
+              <div className='flex-1 h-px bg-slate-200' />
+              <span className='text-xs text-slate-400 font-medium'>or</span>
+              <div className='flex-1 h-px bg-slate-200' />
+            </div>
+            <button
+              type='button'
+              onClick={() => navigate('/menu')}
+              className='w-full py-3 rounded-xl border border-slate-200 text-slate-500 text-sm font-semibold hover:bg-slate-50 transition-all'
+            >
+              {t.continueAsGuest}
+            </button>
             <LangToggle />
           </div>
         </div>

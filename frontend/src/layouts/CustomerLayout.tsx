@@ -41,7 +41,7 @@ export interface CustomerOutletContext {
 // ─── Layout ───────────────────────────────────────────────────────────────────
 
 export default function CustomerLayout() {
-  const { user, token, isStaff, isLoading, logout } = useAuthContext();
+  const { user, token, isStaff, isLoading, logout, guestLogin } = useAuthContext();
   const { t } = useLang();
   const { tableSession } = useTableSession();
   const navigate = useNavigate();
@@ -56,8 +56,9 @@ export default function CustomerLayout() {
 
   // Role guards
   if (isLoading) return null;
-  if (!user) return <Navigate to={`/auth?returnTo=${encodeURIComponent(pathname)}`} replace />;
   if (isStaff) return <Navigate to='/kitchen' replace />;
+
+  const isGuest = !user;
 
   // Dispatch SSE events by type
   const commentRepliedEvent =
@@ -80,9 +81,12 @@ export default function CustomerLayout() {
       ? t.statusSub
       : t.menuSub;
 
-  const handlePlaceOrder = async (tableNumber: string) => {
+  const handlePlaceOrder = async (tableNumber: string, guestName?: string, guestPhone?: string) => {
     setPlacing(true);
     try {
+      if (isGuest && guestName && guestPhone) {
+        await guestLogin(guestName, guestPhone);
+      }
       const order = await api.createOrder({
         tableNumber,
         items: cart.map((c) => ({
@@ -133,8 +137,8 @@ export default function CustomerLayout() {
         items={navItems}
         active={activeTab}
         onChange={(id) => navigate(`/${id}`)}
-        user={user}
-        onLogout={logout}
+        user={user ?? { userId: '', email: '', name: t.guestUser, img: null, role: ['CUSTOMER'] }}
+        onLogout={isGuest ? () => navigate('/auth') : logout}
       />
 
       <div className='flex-1 md:ml-64 flex flex-col'>
@@ -190,6 +194,7 @@ export default function CustomerLayout() {
           onRemove={removeItem}
           onPlaceOrder={handlePlaceOrder}
           isPlacing={placing}
+          isGuest={isGuest}
         />
       )}
     </div>
