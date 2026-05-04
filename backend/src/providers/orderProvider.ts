@@ -1,5 +1,7 @@
 import { prisma } from '../lib/prisma.js';
 import { CreateOrderBodyType } from '../schemas/order.js';
+import { BaseSearchRequestType } from '../schemas/search.js';
+import parseFilterString from '../utils/filterParser.js';
 
 /**
  * Data Access Layer — Order
@@ -9,20 +11,75 @@ export const orderProvider = {
   async findById(id: bigint) {
     return prisma.order.findFirst({
       where: { id, deleted: false },
-      include: { items: { where: { deleted: false } } },
+      include: {
+        items: {
+          where: { deleted: false },
+          include: {
+            menu_item: {
+              include: {
+                menu_item_images: {
+                  where: { is_primary: true },
+                  orderBy: [{ display_order: 'asc' }],
+                  take: 1,
+                },
+              },
+            },
+          },
+        },
+      },
     });
   },
 
   /** Return all active orders, optionally filtered by status. */
-  async findAll(status?: string) {
-    return prisma.order.findMany({
-      where: {
-        deleted: false,
-        active: true,
-        ...(status ? { status } : {}),
+  async findAll(request: BaseSearchRequestType) {
+    const where = parseFilterString(request.search, {
+      allowedFields: [
+        'id',
+        'customer_id',
+        'ticket_number',
+        'table_number',
+        'status',
+        'wait_level',
+        'is_paid',
+        'payment_method',
+        'paid_at',
+      ],
+      fieldTypes: {
+        id: 'number',
+        customer_id: 'number',
+        ticket_number: 'string',
+        table_number: 'string',
+        status: 'string',
+        wait_level: 'string',
+        is_paid: 'boolean',
+        payment_method: 'string',
+        paid_at: 'date',
       },
-      include: { items: { where: { deleted: false } } },
-      orderBy: { created: 'desc' },
+      defaultSearchFields: ['status'],
+      defaultDeleted: true,
+    });
+
+    return prisma.order.findMany({
+      where,
+      orderBy: { id: request.order },
+      take: request.limit + 1,
+      ...(request.cursor ? { cursor: { id: request.cursor }, skip: 1 } : {}),
+      include: {
+        items: {
+          where: { deleted: false },
+          include: {
+            menu_item: {
+              include: {
+                menu_item_images: {
+                  where: { is_primary: true },
+                  orderBy: [{ display_order: 'asc' }],
+                  take: 1,
+                },
+              },
+            },
+          },
+        },
+      },
     });
   },
 
@@ -50,11 +107,61 @@ export const orderProvider = {
   },
 
   /** Return all orders placed by a specific customer, newest first. */
-  async findByCustomerId(customerId: bigint) {
+  async findByCustomerId(request: BaseSearchRequestType) {
+    const where = parseFilterString(request.search, {
+      allowedFields: [
+        'id',
+        'customer_id',
+        'ticket_number',
+        'table_number',
+        'status',
+        'wait_level',
+        'is_paid',
+        'payment_method',
+        'paid_at',
+      ],
+      fieldTypes: {
+        id: 'number',
+        customer_id: 'number',
+        ticket_number: 'string',
+        table_number: 'string',
+        status: 'string',
+        wait_level: 'string',
+        is_paid: 'boolean',
+        payment_method: 'string',
+        paid_at: 'date',
+      },
+      defaultSearchFields: ['status'],
+      defaultDeleted: true,
+    });
+
+    // If controller/service supplied customer_id directly, apply it as a filter.
+    const suppliedCustomerId = (request as any).customer_id;
+    if (suppliedCustomerId != null) {
+      // Prisma expects BigInt for the customer_id column
+      (where as any).customer_id = BigInt(suppliedCustomerId);
+    }
+
     return prisma.order.findMany({
-      where: { customer_id: customerId, deleted: false },
-      include: { items: { where: { deleted: false } } },
-      orderBy: { created: 'desc' },
+      where,
+      orderBy: { id: request.order },
+      take: request.limit + 1,
+      ...(request.cursor ? { cursor: { id: request.cursor }, skip: 1 } : {}),
+      include: {
+        items: {
+          include: {
+            menu_item: {
+              include: {
+                menu_item_images: {
+                  where: { is_primary: true },
+                  orderBy: [{ display_order: 'asc' }],
+                  take: 1,
+                },
+              },
+            },
+          },
+        },
+      },
     });
   },
 

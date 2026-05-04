@@ -1,17 +1,28 @@
 import { useState } from 'react';
 import { Outlet, Navigate, useNavigate, useLocation } from 'react-router-dom';
-import { UtensilsCrossed, ClipboardList, ShoppingCart, ScanQrCode } from 'lucide-react';
+import {
+  UtensilsCrossed,
+  ClipboardList,
+  ShoppingCart,
+  ScanQrCode,
+} from 'lucide-react';
 import { useAuthContext } from '../context/AuthContext';
 import { useLang } from '../context/LangContext';
 import { useTableSession } from '../context/TableContext';
 import { useCart } from '../hooks/useCart';
 import { useSSE } from '../hooks/useSSE';
-import type { SSEEvent, StatusEvent, CommentRepliedEvent, NotificationCreatedEvent } from '../hooks/useSSE';
+import type {
+  SSEEvent,
+  StatusEvent,
+  CommentRepliedEvent,
+  NotificationCreatedEvent,
+} from '../hooks/useSSE';
 
 function toStatusEvent(event: SSEEvent | null): StatusEvent | null {
   if (!event) return null;
   const t = event.eventType;
-  if (t === 'status' || t === 'payment' || t === undefined) return event as StatusEvent;
+  if (t === 'status' || t === 'payment' || t === undefined)
+    return event as StatusEvent;
   return null;
 }
 import { api } from '../services/api';
@@ -41,7 +52,8 @@ export interface CustomerOutletContext {
 // ─── Layout ───────────────────────────────────────────────────────────────────
 
 export default function CustomerLayout() {
-  const { user, token, isStaff, isLoading, logout, guestLogin } = useAuthContext();
+  const { user, token, isStaff, isLoading, logout, guestLogin } =
+    useAuthContext();
   const { t } = useLang();
   const { tableSession } = useTableSession();
   const navigate = useNavigate();
@@ -62,7 +74,9 @@ export default function CustomerLayout() {
 
   // Dispatch SSE events by type
   const commentRepliedEvent =
-    lastEvent?.eventType === 'comment.replied' ? (lastEvent as CommentRepliedEvent) : null;
+    lastEvent?.eventType === 'comment.replied'
+      ? (lastEvent as CommentRepliedEvent)
+      : null;
   const notificationEvent =
     lastEvent?.eventType === 'notification.created'
       ? (lastEvent as NotificationCreatedEvent)
@@ -81,7 +95,11 @@ export default function CustomerLayout() {
       ? t.statusSub
       : t.menuSub;
 
-  const handlePlaceOrder = async (tableNumber: string, guestName?: string, guestPhone?: string) => {
+  const handlePlaceOrder = async (
+    tableNumber: string,
+    guestName?: string,
+    guestPhone?: string,
+  ) => {
     setPlacing(true);
     try {
       if (isGuest && guestName && guestPhone) {
@@ -137,7 +155,15 @@ export default function CustomerLayout() {
         items={navItems}
         active={activeTab}
         onChange={(id) => navigate(`/${id}`)}
-        user={user ?? { userId: '', email: '', name: t.guestUser, img: null, role: ['CUSTOMER'] }}
+        user={
+          user ?? {
+            userId: '',
+            email: '',
+            name: t.guestUser,
+            img: null,
+            role: ['GUEST'],
+          }
+        }
         onLogout={isGuest ? () => navigate('/auth') : logout}
       />
 

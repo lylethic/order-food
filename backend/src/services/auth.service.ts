@@ -55,7 +55,7 @@ export const authService = {
     if (role) await roleProvider.assignRole(user.id, role.id);
 
     const roles = [roleName];
-    const token = generateToken(user.id.toString(), user.email, roles);
+    const token = generateToken(user.id.toString(), user.email!, roles);
     return { token, user: toSafeUser(user), role: roles };
   },
 
@@ -66,7 +66,7 @@ export const authService = {
       phone: dto.phone,
       is_guest: true,
     });
-    const roles = ['CUSTOMER'];
+    const roles = ['GUEST'];
     const token = generateToken(user.id.toString(), user.email ?? '', roles);
     return { token, user: toSafeUser(user), role: roles };
   },
@@ -80,12 +80,12 @@ export const authService = {
     const user = await userProvider.findByEmail(dto.email);
     if (!user) throw new AppError(401, 'Invalid email or password');
 
-    const valid = await bcrypt.compare(dto.password, user.password);
+    const valid = await bcrypt.compare(dto.password, user.password!);
     if (!valid) throw new AppError(401, 'Invalid email or password');
 
     const roles = user.roles.map((userRole: any) => userRole.role.name);
     const primaryRole = roles.length > 0 ? roles : ['CUSTOMER'];
-    const token = generateToken(user.id.toString(), user.email, primaryRole);
+    const token = generateToken(user.id.toString(), user.email!, primaryRole);
     return { token, user: toSafeUser(user), role: primaryRole };
   },
 

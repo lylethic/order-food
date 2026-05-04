@@ -29,7 +29,13 @@ import type {
 
 // ─── Mini StarRating ──────────────────────────────────────────────────────────
 
-function StarPicker({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+function StarPicker({
+  value,
+  onChange,
+}: {
+  value: number;
+  onChange: (v: number) => void;
+}) {
   const [hovered, setHovered] = useState(0);
   return (
     <div className='flex gap-0.5'>
@@ -44,7 +50,9 @@ function StarPicker({ value, onChange }: { value: number; onChange: (v: number) 
         >
           <Star
             className={`w-5 h-5 transition-colors ${
-              (hovered || value) >= s ? 'text-amber-400 fill-amber-400' : 'text-slate-200'
+              (hovered || value) >= s
+                ? 'text-amber-400 fill-amber-400'
+                : 'text-slate-200'
             }`}
           />
         </button>
@@ -55,7 +63,13 @@ function StarPicker({ value, onChange }: { value: number; onChange: (v: number) 
 
 // ─── Rating Panel ─────────────────────────────────────────────────────────────
 
-function RatingPanel({ items, orderId }: { items: OrderItem[]; orderId: string }) {
+function RatingPanel({
+  items,
+  orderId,
+}: {
+  items: OrderItem[];
+  orderId: string;
+}) {
   const rateableItems = items.filter((i) => i.menuItemId);
   const [ratings, setRatings] = useState<Record<string, number>>({});
   const [comments, setComments] = useState<Record<string, string>>({});
@@ -67,7 +81,10 @@ function RatingPanel({ items, orderId }: { items: OrderItem[]; orderId: string }
     if (!item.menuItemId) return;
     const content = comments[item.id]?.trim();
     if (!content) {
-      setErrors((e) => ({ ...e, [item.id]: 'Vui lòng nhập nội dung đánh giá' }));
+      setErrors((e) => ({
+        ...e,
+        [item.id]: 'Vui lòng nhập nội dung đánh giá',
+      }));
       return;
     }
     setErrors((e) => ({ ...e, [item.id]: '' }));
@@ -96,7 +113,10 @@ function RatingPanel({ items, orderId }: { items: OrderItem[]; orderId: string }
 
       <div className='space-y-3'>
         {rateableItems.map((item) => (
-          <div key={item.id} className='bg-white rounded-xl border border-slate-100 p-3'>
+          <div
+            key={item.id}
+            className='bg-white rounded-xl border border-slate-100 p-3'
+          >
             <p className='font-bold text-slate-800 text-sm mb-2'>{item.name}</p>
 
             {submitted[item.id] ? (
@@ -345,11 +365,11 @@ export default function MyOrderPage() {
         </div>
       </div>
 
-      {error && (
+      {/* {error && (
         <div className='mb-6 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-600'>
           {error}
         </div>
-      )}
+      )} */}
 
       {loadingList ? (
         <div className='flex justify-center py-20'>
@@ -524,8 +544,12 @@ export default function MyOrderPage() {
                 </div>
 
                 {/* Rating panel — show after delivery */}
-                {(selectedOrder.status === 'Delivered' || selectedOrder.isPaid) && (
-                  <RatingPanel items={selectedOrder.items} orderId={selectedOrder.id} />
+                {(selectedOrder.status === 'Delivered' ||
+                  selectedOrder.isPaid) && (
+                  <RatingPanel
+                    items={selectedOrder.items}
+                    orderId={selectedOrder.id}
+                  />
                 )}
 
                 {selectedOrder.status === 'Received' && (

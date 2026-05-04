@@ -22,6 +22,7 @@ export const OrderItemDto = z.object({
   id: z.string(),
   menuItemId: z.string().optional(),
   name: z.string(),
+  image: z.string().nullable().optional(),
   qty: z.number(),
   price: z.number(),
   modifications: z.array(z.string()),

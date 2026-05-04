@@ -63,7 +63,7 @@ const options: swaggerJSDoc.Options = {
             phone: '0908998988',
             role: {
               type: 'string',
-              enum: ['ADMIN', 'EMPLOYEE', 'CHEF', 'CUSTOMER'],
+              enum: ['ADMIN', 'EMPLOYEE', 'CHEF', 'CUSTOMER', 'GUEST'],
               default: 'CUSTOMER',
               example: 'CHEF',
             },
@@ -117,7 +117,7 @@ const options: swaggerJSDoc.Options = {
             user: { $ref: '#/components/schemas/SafeUser' },
             role: {
               type: 'string',
-              enum: ['ADMIN', 'EMPLOYEE', 'CHEF', 'CUSTOMER'],
+              enum: ['ADMIN', 'EMPLOYEE', 'CHEF', 'CUSTOMER', 'GUEST'],
               example: 'CHEF',
             },
           },
