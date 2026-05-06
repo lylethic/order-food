@@ -2,7 +2,6 @@ import z from 'zod';
 
 // ---- Request Bodies ----
 
-// Restaurant register body (includes phone & username)
 export const RegisterBody = z
   .object({
     name: z.string().trim().min(2, 'Họ tên tối thiểu 2 ký tự').max(256),
@@ -24,7 +23,6 @@ export const RegisterBody = z
 
 export type RegisterBodyType = z.TypeOf<typeof RegisterBody>;
 
-// Guest register body (name + phone only)
 export const GuestRegisterBody = z.object({
   name: z.string().trim().min(1, 'Tên là bắt buộc').max(100),
   phone: z.string().trim().min(9, 'Số điện thoại không hợp lệ').max(15),
@@ -41,6 +39,7 @@ export const LoginBody = z
 export type LoginBodyType = z.TypeOf<typeof LoginBody>;
 
 // ---- Response Types ----
+
 export const AuthUser = z.object({
   id: z.string(),
   fullname: z.string().optional(),
@@ -55,8 +54,9 @@ export type AuthUserType = z.TypeOf<typeof AuthUser>;
 
 export const AuthResponseData = z.object({
   token: z.string(),
+  refreshToken: z.string().optional(),
+  expiresIn: z.number().optional(),
   user: AuthUser,
-  // backend returns role at the top level of data, not inside user
   role: z.union([z.string(), z.array(z.string())]).optional(),
 });
 
@@ -72,7 +72,6 @@ export const LoginRes = z.object({
 export type LoginResType = z.TypeOf<typeof LoginRes>;
 export type RegisterResType = LoginResType;
 
-// Legacy – kept so http.ts can still resolve the type for the token interceptor
 export const SlideSessionBody = z.object({}).strict();
 export type SlideSessionBodyType = z.TypeOf<typeof SlideSessionBody>;
 export type SlideSessionResType = LoginResType;

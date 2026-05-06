@@ -65,7 +65,7 @@ export default function RoleModal({ user, roles, onClose }: Props) {
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className='rounded-2xl shadow-xl w-full max-w-sm p-6'
+        className='rounded-2xl shadow-xl w-full max-w-sm p-6 bg-white'
       >
         <div className='flex items-center justify-between mb-1'>
           <h2 className='text-base font-extrabold text-foreground'>

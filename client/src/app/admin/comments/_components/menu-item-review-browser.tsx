@@ -11,6 +11,8 @@ import type {
   CategoryItemType,
   MenuItemType,
 } from '@/schemaValidations/menu.schema';
+import Image from 'next/image';
+import envConfig from '@/config';
 
 interface Props {
   title: string;
@@ -150,10 +152,13 @@ export default function MenuItemReviewBrowser({
                 >
                   <div className='aspect-[4/3] overflow-hidden m-3 rounded-[20px] bg-muted relative'>
                     {item.image ? (
-                      <img
-                        src={`/${item.image}`}
+                      <Image
+                        src={`${envConfig.NEXT_PUBLIC_API_ENDPOINT}/${item.image}`}
                         alt={item.name}
+                        width={64}
+                        height={64}
                         className='w-full h-full object-cover group-hover:scale-105 transition-transform duration-700'
+                        loading='lazy'
                       />
                     ) : (
                       <div className='w-full h-full flex items-center justify-center'>
@@ -163,7 +168,7 @@ export default function MenuItemReviewBrowser({
                     <div className='absolute top-3 left-3 flex gap-2 flex-wrap'>
                       {item.category && (
                         <span className='text-[11px] font-bold text-indigo-700 backdrop-blur px-2.5 py-1 rounded-full shadow-sm'>
-                          {item.category}
+                          {item.categoryId}
                         </span>
                       )}
                       {commentCount > 0 && (

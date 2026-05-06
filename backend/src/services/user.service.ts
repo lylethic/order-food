@@ -9,7 +9,7 @@ import {
 } from '../schemas/user';
 import {
   BaseListResType,
-  CategoryBaseSearchRequestType,
+  MenuItemCategoryBaseSearchRequestType,
 } from '../schemas/search';
 import { roleProvider } from '../providers/roleProvider';
 
@@ -51,7 +51,7 @@ export const userService = {
   },
 
   async findAll(
-    request: CategoryBaseSearchRequestType,
+    request: MenuItemCategoryBaseSearchRequestType,
   ): Promise<BaseListResType> {
     const limit = request.limit;
     const users = await userProvider.findAll(request);

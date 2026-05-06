@@ -182,7 +182,7 @@ export default function InvoiceModal({ data, onClose }: Props) {
 
   return (
     <div className='fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm'>
-      <div className='rounded-[28px] shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden'>
+      <div className='rounded-[28px] shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden bg-white'>
         <div className='flex items-center justify-between px-6 pt-6 pb-4 border-b border-border shrink-0'>
           <div>
             <h2 className='text-lg font-extrabold text-foreground'>
@@ -228,7 +228,9 @@ export default function InvoiceModal({ data, onClose }: Props) {
                   <span className='text-muted-foreground'>
                     {isVi ? 'Bàn' : 'Table'}
                   </span>
-                  <span className='font-bold text-foreground'>{data.table}</span>
+                  <span className='font-bold text-foreground'>
+                    {data.table}
+                  </span>
                 </div>
                 <div className='flex justify-between text-xs'>
                   <span className='text-muted-foreground'>
@@ -316,7 +318,10 @@ export default function InvoiceModal({ data, onClose }: Props) {
                       <td className='px-3 py-2.5'>
                         <p className='font-bold text-foreground'>{item.name}</p>
                         {(item.modifications ?? []).map((m) => (
-                          <p key={m} className='text-muted-foreground text-[10px]'>
+                          <p
+                            key={m}
+                            className='text-muted-foreground text-[10px]'
+                          >
                             {m}
                           </p>
                         ))}

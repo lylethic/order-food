@@ -1,62 +1,37 @@
 'use client';
 
 import authApiRequest from '@/apiRequests/auth';
+import { getCookie } from '@/lib/cookieUtils';
 import { useEffect } from 'react';
-import { differenceInMinutes } from 'date-fns';
 
-const CHECK_INTERVAL_MS = 1000 * 60 * 30;
-const REFRESH_THRESHOLD_MINUTES = 30;
-
-type RefreshSessionPayload = {
-  token?: string;
-  expiresAt?: string | Date;
-};
-
-const getRefreshSessionPayload = (payload: any): RefreshSessionPayload => {
-  if (payload?.responseData) {
-    return payload.responseData;
-  }
-  return payload ?? {};
-};
+// Check every 2 minutes; refresh if < 5 minutes left on the access token
+const CHECK_INTERVAL_MS = 2 * 60 * 1000;
+const REFRESH_THRESHOLD_MS = 5 * 60 * 1000;
 
 export default function SlideSession() {
   useEffect(() => {
-    const checkAndRefreshSession = async () => {
-      const sessionToken = localStorage.getItem('sessionToken');
-      const sessionTokenExpiresAt = localStorage.getItem(
-        'sessionTokenExpiresAt',
-      );
+    const checkAndRefresh = async () => {
+      const expiresAtStr = getCookie('accessTokenExpiresAt');
+      if (!expiresAtStr) return;
 
-      if (!sessionToken || !sessionTokenExpiresAt) return;
-
-      const expiresAt = new Date(sessionTokenExpiresAt);
+      const expiresAt = new Date(expiresAtStr);
       if (Number.isNaN(expiresAt.getTime())) return;
 
-      const now = new Date();
-      const remainingMinutes = differenceInMinutes(expiresAt, now);
+      const remaining = expiresAt.getTime() - Date.now();
+      if (remaining > REFRESH_THRESHOLD_MS) return;
 
-      if (remainingMinutes > REFRESH_THRESHOLD_MINUTES) return;
-
-      const res = await authApiRequest.slideSessionFromNextClientToNextServer();
-      const payload = getRefreshSessionPayload(res.payload);
-
-      if (payload.token) {
-        localStorage.setItem('sessionToken', payload.token);
-      }
-
-      if (payload.expiresAt) {
-        localStorage.setItem(
-          'sessionTokenExpiresAt',
-          new Date(payload.expiresAt).toISOString(),
-        );
+      try {
+        await authApiRequest.slideSessionFromNextClientToNextServer();
+        // Cookies are updated by the server — no client-side state needed
+      } catch {
+        // Session expired or token reuse: middleware / next request will redirect to login
       }
     };
 
-    checkAndRefreshSession();
-
-    const interval = setInterval(checkAndRefreshSession, CHECK_INTERVAL_MS);
-
+    checkAndRefresh();
+    const interval = setInterval(checkAndRefresh, CHECK_INTERVAL_MS);
     return () => clearInterval(interval);
   }, []);
+
   return null;
 }

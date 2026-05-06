@@ -5,7 +5,11 @@ import { X, Upload, ImageOff, Star } from 'lucide-react';
 import { useAppContext } from '@/app/app-provider';
 import menuItemApiRequest from '@/apiRequests/menu-item';
 import Spinner from '@/components/restaurant/spinner';
-import type { MenuItemImageType, MenuItemDetailType } from '@/schemaValidations/menu.schema';
+import type {
+  MenuItemImageType,
+  MenuItemDetailType,
+} from '@/schemaValidations/menu.schema';
+import Image from 'next/image';
 
 interface Props {
   itemId: string;
@@ -23,7 +27,11 @@ export default function ImageManager({ itemId, images, onChange }: Props) {
     if (!files || files.length === 0) return;
     setUploading(true);
     try {
-      const res = await menuItemApiRequest.uploadImages(itemId, Array.from(files), 0);
+      const res = await menuItemApiRequest.uploadImages(
+        itemId,
+        Array.from(files),
+        0,
+      );
       onChange(res.payload.data as MenuItemDetailType);
     } catch {
       /* ignore */
@@ -55,7 +63,11 @@ export default function ImageManager({ itemId, images, onChange }: Props) {
           disabled={uploading}
           className='flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-500 disabled:opacity-50'
         >
-          {uploading ? <Spinner size='sm' /> : <Upload className='w-3.5 h-3.5' />}
+          {uploading ? (
+            <Spinner size='sm' />
+          ) : (
+            <Upload className='w-3.5 h-3.5' />
+          )}
           {t.uploadImages}
         </button>
         <input
@@ -76,10 +88,12 @@ export default function ImageManager({ itemId, images, onChange }: Props) {
         <div className='flex gap-2 flex-wrap'>
           {images.map((img) => (
             <div key={img.id} className='relative group'>
-              <img
+              <Image
                 src={`/${img.image_url}`}
-                alt=''
-                className={`w-20 h-20 object-cover rounded-xl border-2 ${img.is_primary ? 'border-indigo-500' : 'border-transparent'}`}
+                alt={itemId}
+                className={`w-20 h-20 object-fill rounded-xl border-2 ${img.is_primary ? 'border-indigo-500' : 'border-transparent'}`}
+                loading='lazy'
+                unoptimized
               />
               {img.is_primary && (
                 <span className='absolute top-1 left-1 bg-indigo-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md flex items-center gap-0.5'>
@@ -92,7 +106,11 @@ export default function ImageManager({ itemId, images, onChange }: Props) {
                 disabled={deletingId === img.id}
                 className='absolute top-1 right-1 w-5 h-5 bg-red-600 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50'
               >
-                {deletingId === img.id ? <Spinner size='sm' /> : <X className='w-3 h-3' />}
+                {deletingId === img.id ? (
+                  <Spinner size='sm' />
+                ) : (
+                  <X className='w-3 h-3' />
+                )}
               </button>
             </div>
           ))}

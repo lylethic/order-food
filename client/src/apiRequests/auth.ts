@@ -32,37 +32,30 @@ const authApiRequest = {
 
   me: () => http.get<MeRes>('api/v1/auth/me'),
 
-  /** Persist token to HttpOnly cookie via Next.js API route */
-  auth: (body: { sessionToken: string; expiresAt: string; role?: string }) =>
-    http.post('/api/auth', body, { baseUrl: '' }),
+  /** Persist tokens to cookies via Next.js API route */
+  auth: (body: {
+    accessToken: string;
+    refreshToken?: string;
+    expiresAt?: string;
+    refreshTokenExpiresAt?: string;
+    role?: string | string[];
+  }) => http.post('/api/auth', body, { baseUrl: '' }),
 
-  /** Called from client → Next.js API route → clears cookie */
-  logoutFromNextClientToNextServer: (
-    force?: boolean,
-    signal?: AbortSignal,
-  ) =>
+  /** Client → Next.js route → clears cookies */
+  logoutFromNextClientToNextServer: (force?: boolean, signal?: AbortSignal) =>
     http.post('/api/auth/logout', { force }, { baseUrl: '', signal }),
 
-  /**
-   * Called from Next.js server route → backend.
-   * The new backend does not have an explicit logout endpoint;
-   * the cookie is cleared by the Next.js route handler directly.
-   */
-  logoutFromNextServerToServer: (_sessionToken: string) =>
-    Promise.resolve({ payload: { message: 'Logged out', success: true } }),
+  /** Next.js server → Express backend: revoke refresh token */
+  logoutFromNextServerToServer: async (refreshToken: string) => {
+    await fetch(`${process.env.NEXT_PUBLIC_API_ENDPOINT}/api/v1/auth/logout`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refreshToken }),
+    });
+    return { payload: { message: 'Logged out', success: true } };
+  },
 
-  /**
-   * The new backend uses stateless JWT — no refresh-token support.
-   * These stubs exist to satisfy callers in legacy route handlers.
-   */
-  slideSessionFromNextServerToServer: (
-    _sessionToken: string,
-    _refreshToken: string,
-  ) =>
-    Promise.resolve({
-      payload: { message: 'No refresh support', success: false },
-    }),
-
+  /** Client → Next.js slide-session route (triggers server-side refresh) */
   slideSessionFromNextClientToNextServer: () =>
     http.post('/api/auth/slide-session', {}, { baseUrl: '' }),
 };

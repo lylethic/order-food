@@ -96,9 +96,18 @@ function formatOrder(order: any): OrderDtoType {
  * Handles order querying, creation, and status transitions.
  */
 export const orderService = {
-  async getAll(request: BaseSearchRequestType): Promise<OrderDtoType[]> {
+  async getAll(request: BaseSearchRequestType): Promise<BaseListResType> {
+    const limit = request.limit;
     const rows = await orderProvider.findAll(request);
-    return rows.map(formatOrder);
+    const hasNextPage = rows.length > limit;
+    const items = hasNextPage ? rows.slice(0, limit) : rows;
+    const nextCursor = hasNextPage ? items[items.length - 1].id : null;
+    return {
+      data: items.map(formatOrder),
+      limit,
+      nextCursor,
+      hasNextPage,
+    };
   },
 
   /** List all orders placed by the given customer (summary only). */

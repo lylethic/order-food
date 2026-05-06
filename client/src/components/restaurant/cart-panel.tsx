@@ -87,7 +87,7 @@ export default function CartPanel({
       />
 
       {/* Panel */}
-      <div className='fixed right-0 top-0 bottom-0 w-full max-w-md z-50 flex flex-col shadow-2xl translate-x-0 transition-transform'>
+      <div className='fixed right-0 top-0 bottom-0 w-full max-w-md z-50 flex flex-col shadow-2xl translate-x-0 transition-transform bg-white'>
         {/* Header */}
         <div className='flex items-center justify-between px-6 py-5 border-b border-border'>
           <div className='flex items-center gap-2'>

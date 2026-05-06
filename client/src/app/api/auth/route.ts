@@ -1,57 +1,73 @@
 import { NextResponse } from 'next/server';
 
+const SECURE = process.env.NODE_ENV === 'production';
+
 export async function POST(request: Request) {
   const body = await request.json();
 
-  const sessionToken = body.sessionToken as string;
-  const expiresAt = body.expiresAt as string;
-  // role can arrive as a string or array — normalise to a single uppercase string
+  const accessToken = body.accessToken as string;
+  const refreshToken = body.refreshToken as string | undefined;
+  const expiresAt = body.expiresAt as string | undefined;
+  const refreshTokenExpiresAt = body.refreshTokenExpiresAt as string | undefined;
   const rawRole = body.role;
   const role = (
     Array.isArray(rawRole) ? String(rawRole[0] ?? '') : String(rawRole ?? '')
   ).toUpperCase();
 
-  if (!sessionToken) {
-    return NextResponse.json(
-      { message: 'Could not authenticate user' },
-      { status: 400 },
-    );
+  if (!accessToken) {
+    return NextResponse.json({ message: 'Could not authenticate user' }, { status: 400 });
   }
 
-  // Use a safe expiry fallback if expiresAt is missing/invalid
-  const expires = expiresAt ? new Date(expiresAt) : new Date(Date.now() + 86_400_000);
+  const accessExpires = expiresAt ? new Date(expiresAt) : new Date(Date.now() + 15 * 60 * 1000);
+  const refreshExpires = refreshTokenExpiresAt
+    ? new Date(refreshTokenExpiresAt)
+    : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
 
   const res = NextResponse.json(body, { status: 200 });
 
+  // Access token — NOT httpOnly so the browser JS can read it for Authorization header
   res.cookies.set({
-    name: 'sessionToken',
-    value: sessionToken,
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    name: 'accessToken',
+    value: accessToken,
+    httpOnly: false,
+    secure: SECURE,
     sameSite: 'lax',
     path: '/',
-    expires,
+    expires: accessExpires,
   });
 
+  // Expiry timestamp — readable by JS and middleware
+  res.cookies.set({
+    name: 'accessTokenExpiresAt',
+    value: accessExpires.toISOString(),
+    httpOnly: false,
+    secure: SECURE,
+    sameSite: 'lax',
+    path: '/',
+    expires: accessExpires,
+  });
+
+  // Role — readable by JS for client-side routing
   res.cookies.set({
     name: 'role',
     value: role,
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    httpOnly: false,
+    secure: SECURE,
     sameSite: 'lax',
     path: '/',
-    expires,
+    expires: accessExpires,
   });
 
-  if (expiresAt) {
+  // Refresh token — httpOnly, only Next.js server can read it
+  if (refreshToken) {
     res.cookies.set({
-      name: 'expiresAt',
-      value: expiresAt,
+      name: 'refreshToken',
+      value: refreshToken,
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: SECURE,
       sameSite: 'lax',
       path: '/',
-      expires,
+      expires: refreshExpires,
     });
   }
 

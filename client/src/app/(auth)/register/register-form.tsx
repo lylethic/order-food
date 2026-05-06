@@ -47,10 +47,10 @@ const RegisterForm = () => {
     try {
       const { confirmPassword: _c, ...body } = values;
       const result = await authApiRequest.register(body);
-      const { token, user } = result.payload.data;
+      const { token, expiresIn, user } = result.payload.data;
 
-      const expiresAt = localStorage.getItem('sessionTokenExpiresAt') ?? '';
-      await authApiRequest.auth({ sessionToken: token, expiresAt, role: user.roleId });
+      const expiresAt = new Date(Date.now() + (expiresIn ?? 900) * 1000).toISOString();
+      await authApiRequest.auth({ accessToken: token, expiresAt, role: user.roleId });
 
       setUser(user);
       toast({ description: result.payload.message_en ?? result.payload.message });

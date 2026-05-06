@@ -9,7 +9,7 @@ export const BaseSearchRequest = z.object({
 
 export type BaseSearchRequestType = z.TypeOf<typeof BaseSearchRequest>;
 
-export const CategoryBaseSearchRequest = z.object({
+export const MenuItemCategoryBaseSearchRequest = z.object({
   search: z.string().optional(),
   limit: z.coerce.number().min(1).max(100).default(10),
   cursor: z.coerce.bigint().optional(),
@@ -17,8 +17,8 @@ export const CategoryBaseSearchRequest = z.object({
   categoryId: z.coerce.number().optional(),
 });
 
-export type CategoryBaseSearchRequestType = z.TypeOf<
-  typeof CategoryBaseSearchRequest
+export type MenuItemCategoryBaseSearchRequestType = z.TypeOf<
+  typeof MenuItemCategoryBaseSearchRequest
 >;
 
 export const BaseListRes = z.object({

@@ -11,6 +11,8 @@ import RoleModal from './_components/role-modal';
 import ConfirmDeleteModal from './_components/confirm-delete-modal';
 import type { AdminUserType } from '@/schemaValidations/user.schema';
 import type { RestaurantRoleType } from '@/schemaValidations/role.schema';
+import Image from 'next/image';
+import envConfig from '@/config';
 
 function roleBadgeColor(name: string) {
   const n = name.toUpperCase();
@@ -152,10 +154,13 @@ export default function AdminUsersPage() {
             >
               <div className='w-10 h-10 rounded-full bg-muted flex items-center justify-center shrink-0 overflow-hidden'>
                 {user.img ? (
-                  <img
-                    src={`/${user.img}`}
+                  <Image
+                    src={`${envConfig.NEXT_PUBLIC_API_ENDPOINT}/${user.img}`}
                     alt=''
-                    className='w-full h-full object-cover'
+                    width={24}
+                    height={24}
+                    className='w-full h-full object-cover shrink-0'
+                    loading='lazy'
                   />
                 ) : (
                   <Users className='w-5 h-5 text-muted-foreground' />

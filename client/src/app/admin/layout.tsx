@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter, usePathname } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import {
   Tag,
   Users,
@@ -10,11 +11,12 @@ import {
   MessageCircle,
   QrCode,
   ClipboardList,
+  Menu,
+  X,
 } from 'lucide-react';
 import { useAppContext } from '@/app/app-provider';
 import { useSSE } from '@/hooks/useSSE';
 import type { NotificationCreatedEvent } from '@/hooks/useSSE';
-import LangToggle from '@/components/restaurant/lang-toggle';
 import TopBar from '@/components/restaurant/top-bar';
 import NotificationDropdown from '@/components/restaurant/notification-dropdown';
 import Link from 'next/link';
@@ -27,10 +29,19 @@ interface AdminNavItem {
   href: string;
 }
 
-function NavLink({ item, active }: { item: AdminNavItem; active: boolean }) {
+function NavLink({
+  item,
+  active,
+  onClick,
+}: {
+  item: AdminNavItem;
+  active: boolean;
+  onClick?: () => void;
+}) {
   return (
     <Link
       href={item.href}
+      onClick={onClick}
       className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
         active
           ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200'
@@ -50,6 +61,9 @@ export default function AdminDashboardLayout({
 }) {
   const router = useRouter();
   const pathname = usePathname();
+
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+
   const { user, isAdmin, isChef, isEmployee, t, logout, token } =
     useAppContext();
 
@@ -59,23 +73,28 @@ export default function AdminDashboardLayout({
       ? (lastEvent as NotificationCreatedEvent)
       : null;
 
-  // Guards
-  if (!user) {
-    router.replace('/login');
-    return null;
-  }
-  if (!isAdmin) {
-    if (isChef) {
-      router.replace('/kitchen');
-      return null;
+  useEffect(() => {
+    if (!user) {
+      router.replace('/login');
+      return;
     }
-    if (isEmployee) {
-      router.replace('/server');
-      return null;
+
+    if (!isAdmin) {
+      if (isChef) {
+        router.replace('/kitchen');
+      } else if (isEmployee) {
+        router.replace('/server');
+      } else {
+        router.replace('/menu');
+      }
     }
-    router.replace('/menu');
-    return null;
-  }
+  }, [user, isAdmin, isChef, isEmployee, router]);
+
+  useEffect(() => {
+    setMobileSidebarOpen(false);
+  }, [pathname]);
+
+  if (!user || !isAdmin) return null;
 
   const navItems: AdminNavItem[] = [
     {
@@ -90,14 +109,24 @@ export default function AdminDashboardLayout({
       icon: UtensilsCrossed,
       href: '/admin/menu-items',
     },
-    { id: 'users', label: t.adminUsers, icon: Users, href: '/admin/users' },
+    {
+      id: 'users',
+      label: t.adminUsers,
+      icon: Users,
+      href: '/admin/users',
+    },
     {
       id: 'comments',
       label: 'Đánh giá',
       icon: MessageCircle,
       href: '/admin/comments',
     },
-    { id: 'qr', label: t.adminQR, icon: QrCode, href: '/admin/qr' },
+    {
+      id: 'qr',
+      label: t.adminQR,
+      icon: QrCode,
+      href: '/admin/qr',
+    },
     {
       id: 'orders',
       label: t.adminOrders,
@@ -127,15 +156,16 @@ export default function AdminDashboardLayout({
   return (
     <div className='min-h-screen flex'>
       {/* Desktop sidebar */}
-      <aside className='hidden md:flex fixed inset-y-0 left-0 w-64 flex-col border-r border-border shadow-sm z-30'>
+      <aside className='hidden md:flex fixed inset-y-0 left-0 w-64 flex-col border-r border-border shadow-sm z-30 bg-background'>
         {/* Logo */}
         <div className='flex items-center gap-3 px-6 py-5 border-b border-border'>
           <div className='w-9 h-9 bg-indigo-600 rounded-xl flex items-center justify-center shadow'>
             <ShieldCheck className='w-5 h-5 text-white' />
           </div>
+
           <div>
             <p className='text-sm font-extrabold'>{t.adminPanel}</p>
-            <p className='text-xs'>Administrator</p>
+            <p className='text-xs text-muted-foreground'>Administrator</p>
           </div>
         </div>
 
@@ -160,12 +190,15 @@ export default function AdminDashboardLayout({
                 <Users className='w-4 h-4 text-indigo-600' />
               )}
             </div>
+
             <div className='flex-1 min-w-0'>
               <p className='text-xs font-bold truncate'>{displayName}</p>
               <p className='text-[10px] text-indigo-500 font-semibold'>ADMIN</p>
             </div>
+
             <ModeToggle />
           </div>
+
           <button
             onClick={logout}
             className='w-full flex items-center justify-end gap-2 px-3 py-2 rounded-lg text-sm hover:bg-red-50 hover:text-red-600 transition-colors font-medium'
@@ -179,38 +212,114 @@ export default function AdminDashboardLayout({
       {/* Main content */}
       <div className='flex-1 md:ml-64 flex flex-col min-h-screen'>
         {/* Mobile header */}
-        <header className='md:hidden sticky top-0 z-20 border-b border-border px-4 py-3 flex items-center gap-3'>
+        <header className='md:hidden sticky top-0 z-40 border-b border-border bg-background px-4 py-3 flex items-center gap-3'>
+          <button
+            type='button'
+            onClick={() => setMobileSidebarOpen(true)}
+            className='w-9 h-9 rounded-lg flex items-center justify-center hover:bg-accent transition-colors'
+            aria-label='Open menu'
+          >
+            <Menu className='w-5 h-5' />
+          </button>
+
           <div className='w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center'>
             <ShieldCheck className='w-4 h-4 text-white' />
           </div>
-          <span className='font-extrabold text-base flex-1'>
+
+          <span className='font-extrabold text-base flex-1 truncate'>
             {t.adminPanel}
           </span>
-          <LangToggle />
         </header>
 
-        {/* Mobile bottom nav */}
-        <nav className='md:hidden fixed bottom-0 inset-x-0 z-30 border-t border-border flex'>
-          {navItems.map((item) => (
-            <Link
-              key={item.id}
-              href={item.href}
-              className={`flex-1 flex flex-col items-center gap-1 py-2.5 text-[10px] font-bold transition-colors ${
-                activeId === item.id ? 'text-indigo-600' : ''
-              }`}
-            >
-              <item.icon className='w-5 h-5' />
-              {item.label}
-            </Link>
-          ))}
-          <button
-            onClick={logout}
-            className='flex-1 flex flex-col items-center gap-1 py-2.5 text-[10px] font-bold '
-          >
-            <LogOut className='w-5 h-5' />
-            {t.logout}
-          </button>
-        </nav>
+        {/* Mobile sidebar drawer */}
+        {mobileSidebarOpen && (
+          <div className='md:hidden fixed inset-0 z-50'>
+            {/* Overlay */}
+            <div
+              className='absolute inset-0 bg-black/50'
+              onClick={() => setMobileSidebarOpen(false)}
+            />
+
+            {/* Sidebar */}
+            <aside className='absolute left-0 top-0 h-full w-72 max-w-[85vw] bg-background border-r border-border shadow-xl flex flex-col'>
+              {/* Drawer header */}
+              <div className='flex items-center justify-between px-5 py-4 border-b border-border'>
+                <div className='flex items-center gap-3 min-w-0'>
+                  <div className='w-9 h-9 bg-indigo-600 rounded-xl flex items-center justify-center shadow shrink-0'>
+                    <ShieldCheck className='w-5 h-5 text-white' />
+                  </div>
+
+                  <div className='min-w-0'>
+                    <p className='text-sm font-extrabold truncate'>
+                      {t.adminPanel}
+                    </p>
+                    <p className='text-xs text-muted-foreground'>
+                      Administrator
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type='button'
+                  onClick={() => setMobileSidebarOpen(false)}
+                  className='w-9 h-9 rounded-lg flex items-center justify-center hover:bg-accent transition-colors shrink-0'
+                  aria-label='Close menu'
+                >
+                  <X className='w-5 h-5' />
+                </button>
+              </div>
+
+              {/* Drawer nav */}
+              <nav className='flex-1 px-3 py-4 flex flex-col gap-1 overflow-y-auto'>
+                {navItems.map((item) => (
+                  <NavLink
+                    key={item.id}
+                    item={item}
+                    active={activeId === item.id}
+                    onClick={() => setMobileSidebarOpen(false)}
+                  />
+                ))}
+              </nav>
+
+              {/* Drawer footer */}
+              <div className='px-4 py-4 border-t border-border space-y-3'>
+                <div className='flex items-center gap-2 px-1'>
+                  <div className='w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center shrink-0'>
+                    {user.img ? (
+                      <img
+                        src={`/${user.img}`}
+                        alt=''
+                        className='w-8 h-8 rounded-full object-cover'
+                      />
+                    ) : (
+                      <Users className='w-4 h-4 text-indigo-600' />
+                    )}
+                  </div>
+
+                  <div className='flex-1 min-w-0'>
+                    <p className='text-xs font-bold truncate'>{displayName}</p>
+                    <p className='text-[10px] text-indigo-500 font-semibold'>
+                      ADMIN
+                    </p>
+                  </div>
+
+                  <ModeToggle />
+                </div>
+
+                <button
+                  onClick={() => {
+                    setMobileSidebarOpen(false);
+                    logout();
+                  }}
+                  className='w-full flex items-center justify-end gap-2 px-3 py-2 rounded-lg text-sm hover:bg-red-50 hover:text-red-600 transition-colors font-medium'
+                >
+                  {t.logout}
+                  <LogOut className='w-4 h-4' />
+                </button>
+              </div>
+            </aside>
+          </div>
+        )}
 
         <main className='flex-1 flex flex-col'>
           <TopBar
@@ -220,7 +329,8 @@ export default function AdminDashboardLayout({
               <NotificationDropdown notificationEvent={notificationEvent} />
             }
           />
-          <div className='flex-1 overflow-y-auto overflow-x-hidden p-4 pt-20 pb-16 md:pb-4'>
+
+          <div className='flex-1 overflow-y-auto overflow-x-hidden p-4 pt-20'>
             {children}
           </div>
         </main>

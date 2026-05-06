@@ -37,10 +37,12 @@ model User {
   active                    Boolean                     @default(true)
   phone                     String?                     @db.VarChar(10)
   is_guest                  Boolean?
+  token_version             Int                         @default(0)
   menu_item_comment_replies menu_item_comment_replies[]
   menu_item_comments        menu_item_comments[]
   notifications             notifications[]
   orders                    Order[]
+  refresh_tokens            RefreshToken[]
   roles                     UserRole[]
 
   @@index([id], map: "idx_users_active", where: raw("((deleted = false) AND (active = true))"))
@@ -211,4 +213,24 @@ model menu_item_comments {
 
   @@index([customer_id], map: "idx_menu_item_comments_customer_id")
   @@index([menu_item_id], map: "idx_menu_item_comments_menu_item_id")
+}
+
+model RefreshToken {
+  id             BigInt    @id @default(autoincrement())
+  user_id        BigInt
+  token          String    @unique
+  token_family   String
+  device_info    String?
+  ip_address     String?   @db.VarChar(45)
+  expires_at     DateTime
+  revoked        Boolean   @default(false)
+  revoked_at     DateTime?
+  revoked_reason String?   @db.VarChar(50)
+  created        DateTime  @default(now())
+  user           User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+  @@index([token_family])
+  @@index([expires_at])
+  @@map("refresh_tokens")
 }

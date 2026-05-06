@@ -1,88 +1,84 @@
-import authApiRequest from '@/apiRequests/auth';
-import { HttpError } from '@/lib/http';
 import { cookies } from 'next/headers';
+import { NextResponse } from 'next/server';
 
-const getRefreshSessionPayload = (payload: any) => {
-  if (payload?.responseData) {
-    return payload.responseData;
-  }
-  return payload ?? {};
-};
+const SECURE = process.env.NODE_ENV === 'production';
 
 export async function POST() {
   const cookieStore = await cookies();
-  const sessionToken = cookieStore.get('sessionToken');
   const refreshToken = cookieStore.get('refreshToken');
 
-  if (!sessionToken || !refreshToken) {
-    return Response.json(
-      { message: 'Không nhận được token để làm mới phiên đăng nhập' },
+  if (!refreshToken) {
+    return NextResponse.json({ message: 'No refresh token' }, { status: 200 });
+  }
+
+  try {
+    const backendRes = await fetch(
+      `${process.env.NEXT_PUBLIC_API_ENDPOINT}/api/v1/auth/refresh`,
       {
-        status: 401,
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refreshToken: refreshToken.value }),
       },
     );
-  }
-  try {
-    const res = await authApiRequest.slideSessionFromNextServerToServer(
-      sessionToken.value,
-      refreshToken.value,
-    );
-    const payload = getRefreshSessionPayload(res.payload);
 
-    if (!payload.token || !payload.expiresAt) {
-      return Response.json(
-        { message: 'Refresh token response is missing token data' },
-        {
-          status: 500,
-        },
-      );
+    if (!backendRes.ok) {
+      // Refresh failed (expired / reuse detected) — force logout
+      const res = NextResponse.json({ message: 'Session expired' }, { status: 401 });
+      for (const name of ['accessToken', 'accessTokenExpiresAt', 'refreshToken', 'role']) {
+        res.cookies.set({ name, value: '', path: '/', maxAge: 0 });
+      }
+      return res;
     }
 
-    const response = Response.json(res.payload, {
-      status: 200,
-    });
+    const json = await backendRes.json();
+    const { accessToken, refreshToken: newRefreshToken, expiresIn } = json.data ?? json;
 
-    const headers = new Headers(response.headers);
-    const expiresAt = new Date(payload.expiresAt);
-    headers.append(
-      'Set-Cookie',
-      `sessionToken=${payload.token}; Path=/; HttpOnly; Expires=${expiresAt.toUTCString()}; SameSite=Lax; Secure`,
-    );
-    headers.append(
-      'Set-Cookie',
-      `sessionTokenExpiresAt=${expiresAt.toISOString()}; Path=/; HttpOnly; Expires=${expiresAt.toUTCString()}; SameSite=Lax; Secure`,
-    );
-
-    if (payload.refreshToken && payload.refreshTokenExpiresAt) {
-      const refreshTokenExpiresAt = new Date(payload.refreshTokenExpiresAt);
-      headers.append(
-        'Set-Cookie',
-        `refreshToken=${payload.refreshToken}; Path=/; HttpOnly; Expires=${refreshTokenExpiresAt.toUTCString()}; SameSite=Lax; Secure`,
-      );
-      headers.append(
-        'Set-Cookie',
-        `refreshTokenExpiresAt=${refreshTokenExpiresAt.toISOString()}; Path=/; HttpOnly; Expires=${refreshTokenExpiresAt.toUTCString()}; SameSite=Lax; Secure`,
-      );
+    if (!accessToken) {
+      return NextResponse.json({ message: 'Invalid refresh response' }, { status: 500 });
     }
 
-    return new Response(response.body, {
-      status: response.status,
-      headers,
+    const accessExpires = new Date(Date.now() + (expiresIn ?? 900) * 1000);
+    const refreshExpires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+
+    const res = NextResponse.json(
+      { accessToken, expiresAt: accessExpires.toISOString() },
+      { status: 200 },
+    );
+
+    res.cookies.set({
+      name: 'accessToken',
+      value: accessToken,
+      httpOnly: false,
+      secure: SECURE,
+      sameSite: 'lax',
+      path: '/',
+      expires: accessExpires,
     });
-  } catch (error) {
-    if (error instanceof HttpError) {
-      return Response.json(error.payload, {
-        status: error.status,
+
+    res.cookies.set({
+      name: 'accessTokenExpiresAt',
+      value: accessExpires.toISOString(),
+      httpOnly: false,
+      secure: SECURE,
+      sameSite: 'lax',
+      path: '/',
+      expires: accessExpires,
+    });
+
+    if (newRefreshToken) {
+      res.cookies.set({
+        name: 'refreshToken',
+        value: newRefreshToken,
+        httpOnly: true,
+        secure: SECURE,
+        sameSite: 'lax',
+        path: '/',
+        expires: refreshExpires,
       });
-    } else {
-      return Response.json(
-        {
-          message: 'Lỗi không xác định',
-        },
-        {
-          status: 500,
-        },
-      );
     }
+
+    return res;
+  } catch {
+    return NextResponse.json({ message: 'Lỗi không xác định' }, { status: 500 });
   }
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import {
   UtensilsCrossed,
@@ -50,7 +50,6 @@ export default function CustomerLayout({
     isAdmin,
     isChef,
     isEmployee,
-    isStaff,
     t,
     cart,
     clearCart,
@@ -62,21 +61,30 @@ export default function CustomerLayout({
 
   const [cartOpen, setCartOpen] = useState(false);
   const [placing, setPlacing] = useState(false);
-  const [placedOrder, setPlacedOrder] = useState<PlacedOrderType | null>(null);
+  const [placedOrder, setPlacedOrderState] = useState<PlacedOrderType | null>(null);
 
-  // Redirect staff to their home page
-  if (isAdmin) {
-    router.replace('/admin/categories');
-    return null;
-  }
-  if (isChef) {
-    router.replace('/kitchen');
-    return null;
-  }
-  if (isEmployee) {
-    router.replace('/server');
-    return null;
-  }
+  // Hydrate placedOrder from sessionStorage on mount
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem('placedOrder');
+      if (raw) setPlacedOrderState(JSON.parse(raw) as PlacedOrderType);
+    } catch {}
+  }, []);
+
+  const setPlacedOrder = (order: PlacedOrderType | null) => {
+    setPlacedOrderState(order);
+    try {
+      if (order) sessionStorage.setItem('placedOrder', JSON.stringify(order));
+      else sessionStorage.removeItem('placedOrder');
+    } catch {}
+  };
+
+  // Redirect staff to their home page (in effect to avoid side effects during render)
+  useEffect(() => {
+    if (isAdmin) router.replace('/admin/categories');
+    else if (isChef) router.replace('/kitchen');
+    else if (isEmployee) router.replace('/server');
+  }, [isAdmin, isChef, isEmployee, router]);
 
   const isGuest = !user;
 
@@ -119,12 +127,17 @@ export default function CustomerLayout({
           phone: guestPhone,
         });
         const { token: guestToken, user: guestUser } = guestRes.payload.data;
-        const expiresAt =
-          typeof window !== 'undefined'
-            ? (localStorage.getItem('sessionTokenExpiresAt') ?? '')
-            : '';
+
+        // Decode JWT expiry from token payload (fallback 15 min)
+        let expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
+        try {
+          const b64 = guestToken.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+          const decoded = JSON.parse(atob(b64)) as { exp?: number };
+          if (decoded.exp) expiresAt = new Date(decoded.exp * 1000).toISOString();
+        } catch { /* use fallback */ }
+
         await authApiRequest.auth({
-          sessionToken: guestToken,
+          accessToken: guestToken,
           expiresAt,
           role: Array.isArray(guestUser.role)
             ? String(guestUser.role[0])
@@ -162,9 +175,7 @@ export default function CustomerLayout({
   const onCancelOrder = async () => {
     if (!placedOrder) return;
     await orderApiRequest.cancel(placedOrder.id);
-    setPlacedOrder((p) =>
-      p ? { ...p, status: 'Cancelled' as OrderStatusType } : null,
-    );
+    setPlacedOrder({ ...placedOrder, status: 'Cancelled' as OrderStatusType });
   };
 
   const cartCount = cart.reduce((s, c) => s + c.qty, 0);

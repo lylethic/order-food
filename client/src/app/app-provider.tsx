@@ -148,7 +148,9 @@ export default function AppProvider({
   }, []);
 
   const token =
-    typeof window !== 'undefined' ? localStorage.getItem('sessionToken') : null;
+    typeof window !== 'undefined'
+      ? (document.cookie.match(/(?:^|; )accessToken=([^;]*)/))?.[1] ?? null
+      : null;
 
   const isAuthenticated = Boolean(user);
   const roles = getRoles(user);
@@ -160,10 +162,7 @@ export default function AppProvider({
   const logout = useCallback(() => {
     setUser(null);
     if (typeof window !== 'undefined') {
-      localStorage.removeItem('sessionToken');
-      localStorage.removeItem('sessionTokenExpiresAt');
       localStorage.removeItem('user');
-      // Clear HttpOnly cookies via Next.js API route
       fetch('/api/auth/logout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

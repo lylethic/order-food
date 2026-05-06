@@ -11,8 +11,16 @@ import {
 const orderApiRequest = {
   // ── Staff / Admin ──────────────────────────────────────────────────────────
 
-  list: (params?: { status?: string }) =>
-    http.get<OrderListResType>('api/v1/orders', { params }),
+  list: (params?: BaseSearchParams & { status?: string; is_paid?: boolean }) => {
+    const { status, is_paid, ...rest } = params ?? {};
+    const filters: string[] = [];
+    if (status) filters.push(`status=${status}`);
+    if (is_paid !== undefined) filters.push(`is_paid=${is_paid}`);
+    const search = filters.length ? filters.join(',') : rest.search;
+    return http.get<OrderListResType>('api/v1/orders', {
+      params: { limit: 10, ...rest, ...(search ? { search } : {}) },
+    });
+  },
 
   getById: (id: string, token?: string) =>
     http.get<OrderDetailResType>(`api/v1/orders/${id}`),

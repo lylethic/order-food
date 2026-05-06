@@ -24,8 +24,6 @@ export default function ButtonLogout() {
     } finally {
       setUser(null)
       router.refresh()
-      localStorage.removeItem('sessionToken')
-      localStorage.removeItem('sessionTokenExpiresAt')
     }
   }
   return (

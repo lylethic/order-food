@@ -63,7 +63,7 @@ export const MenuItem = z.object({
   description: z.string(),
   price: z.number(),
   image: z.string().optional(),
-  category: z.string().optional(),
+  category: z.union([z.string(), z.object({ id: z.string(), name: z.string() })]).optional().nullable(),
   categoryId: z.string().optional(),
   isAvailable: z.boolean().optional(),
   rating: z.number().optional(),

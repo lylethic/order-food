@@ -21,6 +21,7 @@ import { useState } from 'react';
 import { useAppContext } from '@/app/app-provider';
 
 const LoginForm = () => {
+  const { t } = useAppContext();
   const [loading, setLoading] = useState(false);
   const { setUser } = useAppContext();
   const { toast } = useToast();
@@ -39,8 +40,8 @@ const LoginForm = () => {
     setLoading(true);
     try {
       const result = await authApiRequest.login(values);
-      // backend returns: { token, user: {id,email,name,...}, role: ['CHEF'] }
-      const { token, user, role: rawRole } = result.payload.data;
+      // backend returns: { token, refreshToken, expiresIn, user, role }
+      const { token, refreshToken, expiresIn, user, role: rawRole } = result.payload.data;
 
       // Normalise to string array
       const roleArray: string[] = Array.isArray(rawRole)
@@ -50,24 +51,34 @@ const LoginForm = () => {
           : [];
       const rolePrimary = roleArray[0] ?? 'CUSTOMER';
 
-      // Persist token + role into HttpOnly cookies
-      const expiresAt = localStorage.getItem('sessionTokenExpiresAt') ?? '';
-      await authApiRequest.auth({ sessionToken: token, expiresAt, role: rolePrimary });
+      // Compute expiry from expiresIn (seconds) returned by backend
+      const expiresAt = new Date(Date.now() + (expiresIn ?? 900) * 1000).toISOString();
+      const refreshTokenExpiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+
+      // Persist tokens into cookies via Next.js API route
+      await authApiRequest.auth({
+        accessToken: token,
+        refreshToken,
+        expiresAt,
+        refreshTokenExpiresAt,
+        role: rolePrimary,
+      });
 
       // Store user with role so app-provider can derive isChef/isEmployee
       setUser({ ...user, role: roleArray });
 
-      toast({ description: result.payload.message_en ?? result.payload.message });
+      toast({
+        description: result.payload.message_en ?? result.payload.message,
+      });
 
       const roles = roleArray.map((r) => r.toUpperCase());
-      const dest =
-        roles.includes('ADMIN')
-          ? '/admin/categories'
-          : roles.includes('CHEF')
-            ? '/kitchen'
-            : roles.includes('EMPLOYEE')
-              ? '/server'
-              : '/menu';
+      const dest = roles.includes('ADMIN')
+        ? '/admin/categories'
+        : roles.includes('CHEF')
+          ? '/kitchen'
+          : roles.includes('EMPLOYEE')
+            ? '/server'
+            : '/menu';
       router.push(dest);
       router.refresh();
     } catch (error: any) {
@@ -117,6 +128,21 @@ const LoginForm = () => {
         >
           {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
         </Button>
+
+        <div className='mt-6 flex flex-col items-center gap-3'>
+          <div className='w-full flex items-center gap-3'>
+            <div className='flex-1 h-px bg-slate-200' />
+            <span className='text-xs text-slate-400 font-medium'>or</span>
+            <div className='flex-1 h-px bg-slate-200' />
+          </div>
+          <button
+            type='button'
+            onClick={() => router.push('/menu')}
+            className='w-full py-3 rounded-xl border border-slate-200 text-slate-500 text-sm font-semibold hover:bg-slate-50 transition-all'
+          >
+            {t.continueAsGuest}
+          </button>
+        </div>
       </form>
     </Form>
   );

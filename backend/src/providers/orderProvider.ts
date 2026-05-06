@@ -57,6 +57,7 @@ export const orderProvider = {
       },
       defaultSearchFields: ['status'],
       defaultDeleted: true,
+      nullableBooleanFields: ['is_paid'],
     });
 
     return prisma.order.findMany({

@@ -24,7 +24,9 @@ export default function TopBar({ title, subtitle, right }: Props) {
         )}
       </div>
       <div className='flex items-center gap-3'>
-        <LangToggle />
+        <div className='hidden md:block'>
+          <LangToggle />
+        </div>
         {right}
         <button
           onClick={logout}

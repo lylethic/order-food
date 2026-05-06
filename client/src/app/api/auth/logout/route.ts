@@ -1,39 +1,49 @@
-import authApiRequest from '@/apiRequests/auth';
-import { HttpError } from '@/lib/http';
 import { cookies } from 'next/headers';
+import { NextResponse } from 'next/server';
 
-const CLEAR_COOKIES =
-  'sessionToken=; Path=/; HttpOnly; Max-Age=0, ' +
-  'role=; Path=/; HttpOnly; Max-Age=0, ' +
-  'expiresAt=; Path=/; HttpOnly; Max-Age=0';
+const COOKIE_NAMES = ['accessToken', 'accessTokenExpiresAt', 'refreshToken', 'role'];
+
+function clearAuthCookies(res: NextResponse) {
+  for (const name of COOKIE_NAMES) {
+    res.cookies.set({ name, value: '', path: '/', maxAge: 0 });
+  }
+  return res;
+}
 
 export async function POST(request: Request) {
-  const res = await request.json();
-  const force = res.force as boolean | undefined;
+  const body = await request.json().catch(() => ({}));
+  const force = body.force as boolean | undefined;
 
   if (force) {
-    return Response.json(
-      { message: 'Buộc đăng xuất thành công' },
-      { status: 200, headers: { 'Set-Cookie': CLEAR_COOKIES } },
+    return clearAuthCookies(
+      NextResponse.json({ message: 'Buộc đăng xuất thành công' }, { status: 200 }),
     );
   }
 
   const cookieStore = await cookies();
-  const sessionToken = cookieStore.get('sessionToken');
-  if (!sessionToken) {
-    return Response.json({ message: 'Không nhận được session token' }, { status: 401 });
+  const accessToken = cookieStore.get('accessToken');
+  const refreshToken = cookieStore.get('refreshToken');
+
+  if (!accessToken) {
+    return clearAuthCookies(
+      NextResponse.json({ message: 'Không nhận được access token' }, { status: 200 }),
+    );
   }
 
-  try {
-    const result = await authApiRequest.logoutFromNextServerToServer(sessionToken.value);
-    return Response.json(result.payload, {
-      status: 200,
-      headers: { 'Set-Cookie': CLEAR_COOKIES },
-    });
-  } catch (error) {
-    if (error instanceof HttpError) {
-      return Response.json(error.payload, { status: error.status });
+  // Tell the Express backend to revoke the refresh token
+  if (refreshToken) {
+    try {
+      await fetch(`${process.env.NEXT_PUBLIC_API_ENDPOINT}/api/v1/auth/logout`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refreshToken: refreshToken.value }),
+      });
+    } catch {
+      // Even if backend call fails, clear cookies locally
     }
-    return Response.json({ message: 'Lỗi không xác định' }, { status: 500 });
   }
+
+  return clearAuthCookies(
+    NextResponse.json({ message: 'Đăng xuất thành công' }, { status: 200 }),
+  );
 }

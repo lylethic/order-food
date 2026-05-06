@@ -123,6 +123,94 @@ const options: swaggerJSDoc.Options = {
           },
         },
 
+        LoginResponse: {
+          type: 'object',
+          description: 'Returned by POST /auth/login. Contains both access and refresh tokens.',
+          properties: {
+            token: {
+              type: 'string',
+              description: 'Short-lived access token (15 min). Use as Authorization: Bearer {token}.',
+              example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+            },
+            refreshToken: {
+              type: 'string',
+              description: 'Long-lived refresh token (30 days). Also set as httpOnly cookie.',
+              example: 'a3f8c2d1e4b5...',
+            },
+            expiresIn: {
+              type: 'integer',
+              description: 'Access token lifetime in seconds.',
+              example: 900,
+            },
+            user: { $ref: '#/components/schemas/SafeUser' },
+            role: {
+              type: 'array',
+              items: { type: 'string' },
+              example: ['CHEF'],
+            },
+          },
+        },
+
+        TokenPairResponse: {
+          type: 'object',
+          description: 'New access token + rotated refresh token.',
+          properties: {
+            accessToken: {
+              type: 'string',
+              description: 'New short-lived access token (15 min).',
+              example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+            },
+            refreshToken: {
+              type: 'string',
+              description: 'New refresh token. Previous token is now revoked.',
+              example: 'b9e7a1c3d2f6...',
+            },
+            expiresIn: {
+              type: 'integer',
+              description: 'Access token lifetime in seconds.',
+              example: 900,
+            },
+          },
+        },
+
+        RefreshRequest: {
+          type: 'object',
+          description: 'Only needed for non-browser clients that cannot use cookies.',
+          properties: {
+            refreshToken: {
+              type: 'string',
+              description: 'Raw refresh token received from login or previous refresh.',
+              example: 'a3f8c2d1e4b5...',
+            },
+          },
+        },
+
+        ChangePasswordRequest: {
+          type: 'object',
+          required: ['currentPassword', 'newPassword'],
+          properties: {
+            currentPassword: {
+              type: 'string',
+              description: 'The user\'s existing password.',
+              example: 'OldPass@123',
+            },
+            newPassword: {
+              type: 'string',
+              minLength: 8,
+              description: 'New password — minimum 8 characters.',
+              example: 'NewPass@456',
+            },
+          },
+        },
+
+        MessageResponse: {
+          type: 'object',
+          properties: {
+            message: { type: 'string', example: 'Logged out' },
+            message_en: { type: 'string', example: 'Logged out' },
+          },
+        },
+
         MeResponse: {
           allOf: [
             { $ref: '#/components/schemas/SafeUser' },

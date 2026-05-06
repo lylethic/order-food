@@ -20,6 +20,8 @@ import type {
   MenuItemType,
   MenuItemDetailType,
 } from '@/schemaValidations/menu.schema';
+import Image from 'next/image';
+import envConfig from '@/config';
 
 type CommentScope = 'all' | 'visible';
 
@@ -302,7 +304,7 @@ export default function MenuItemReviewsModal({
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className='relative w-full sm:max-w-3xl rounded-t-3xl sm:rounded-3xl overflow-hidden shadow-2xl max-h-[92vh] flex flex-col'
+        className='relative w-full sm:max-w-3xl rounded-t-3xl sm:rounded-3xl overflow-hidden shadow-2xl max-h-[92vh] flex flex-col bg-white'
       >
         <button
           onClick={onClose}
@@ -322,12 +324,15 @@ export default function MenuItemReviewsModal({
         ) : (
           <>
             <div className='grid md:grid-cols-[1.2fr_0.8fr] gap-0 border-b border-border'>
-              <div className='aspect-[4/3] bg-muted'>
+              <div className='relative aspect-[4/3] bg-muted'>
                 {imageUrl ? (
-                  <img
-                    src={`/${imageUrl}`}
+                  <Image
+                    src={`${envConfig.NEXT_PUBLIC_API_ENDPOINT}/${imageUrl}`}
                     alt={detail.name}
-                    className='w-full h-full object-cover'
+                    width={200}
+                    height={200}
+                    className='w-full h-full rounded-lg object-cover flex-shrink-0'
+                    loading='lazy'
                   />
                 ) : (
                   <div className='w-full h-full flex flex-col items-center justify-center bg-muted text-muted-foreground gap-2'>
@@ -341,7 +346,9 @@ export default function MenuItemReviewsModal({
                   <div className='flex items-center gap-2 flex-wrap'>
                     {detail.category && (
                       <span className='text-xs font-bold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full'>
-                        {detail.category}
+                        {typeof detail.category === 'object'
+                          ? detail.category.name
+                          : detail.category}
                       </span>
                     )}
                     {detail.tag && (

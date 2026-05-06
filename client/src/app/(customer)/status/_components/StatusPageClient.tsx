@@ -46,6 +46,11 @@ export default function StatusPageClient() {
   useEffect(() => {
     if (lastEvent && placedOrder && lastEvent.orderId === placedOrder.id) {
       setStatus(lastEvent.status as OrderStatusType);
+      // Keep sessionStorage in sync so status survives remounts
+      try {
+        const updated = { ...placedOrder, status: lastEvent.status };
+        sessionStorage.setItem('placedOrder', JSON.stringify(updated));
+      } catch {}
     }
   }, [lastEvent, placedOrder]);
 

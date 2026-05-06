@@ -6,10 +6,18 @@ import {
   UpdateCategoryBodyType,
 } from '@/schemaValidations/menu.schema';
 
-type SimpleRes = { success: boolean; statusCode: number; message: string; data: any };
+type SimpleRes = {
+  success: boolean;
+  statusCode: number;
+  message: string;
+  data: any;
+};
 
 const categoryApiRequest = {
-  list: () => http.get<CategoryListResType>('api/v1/categories'),
+  list: () =>
+    http.get<CategoryListResType>('api/v1/categories', {
+      cache: 'no-store',
+    }),
 
   getById: (id: string) => http.get<CategoryResType>(`api/v1/categories/${id}`),
 

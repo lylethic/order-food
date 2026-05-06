@@ -13,8 +13,8 @@ export default function LoginPage() {
         </span>
       </div>
 
-      <div className='w-full max-w-sm backdrop-blur border border-white/10 rounded-3xl p-8 shadow-2xl'>
-        <h2 className='text-xl font-extrabold text-white text-center mb-1'>
+      <div className='w-full max-w-sm backdrop-blur border border-white/10 rounded-3xl p-8 shadow-2xl bg-slate-200'>
+        <h2 className='text-xl font-extrabold text-black text-center mb-1'>
           Đăng nhập
         </h2>
         <p className='text-sm text-center mb-6'>Chào mừng trở lại!</p>

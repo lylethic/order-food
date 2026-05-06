@@ -146,7 +146,7 @@ export default function NotificationDropdown({ notificationEvent }: Props) {
       </button>
 
       {open && (
-        <div className='absolute right-0 top-full mt-2 w-80 rounded-2xl shadow-xl border border-border z-50 overflow-hidden'>
+        <div className='absolute right-0 top-full mt-2 w-80 rounded-2xl shadow-xl border border-border z-50 overflow-hidden bg-white'>
           <div className='flex items-center justify-between px-4 py-3 border-b border-border'>
             <h3 className='text-sm font-bold text-foreground'>
               Thông báo
@@ -175,7 +175,9 @@ export default function NotificationDropdown({ notificationEvent }: Props) {
             ) : notifications.length === 0 ? (
               <div className='py-8 text-center'>
                 <Bell className='w-8 h-8 text-muted-foreground mx-auto mb-2' />
-                <p className='text-sm text-muted-foreground'>Không có thông báo</p>
+                <p className='text-sm text-muted-foreground'>
+                  Không có thông báo
+                </p>
               </div>
             ) : (
               notifications.map((n) => (

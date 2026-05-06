@@ -6,6 +6,8 @@ import { useAppContext } from '@/app/app-provider';
 import userApiRequest from '@/apiRequests/user';
 import Spinner from '@/components/restaurant/spinner';
 import type { AdminUserType } from '@/schemaValidations/user.schema';
+import Image from 'next/image';
+import envConfig from '@/config';
 
 interface SaveData {
   username: string;
@@ -91,7 +93,7 @@ export default function UserModal({
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className='w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden'
+        className='w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden bg-white'
       >
         <div className='flex items-center justify-between px-6 py-4 border-b border-border'>
           <h2 className='text-base font-extrabold text-foreground'>
@@ -113,10 +115,13 @@ export default function UserModal({
                 onClick={() => avatarInputRef.current?.click()}
               >
                 {avatarPreview ? (
-                  <img
-                    src={avatarPreview}
+                  <Image
+                    src={`${envConfig.NEXT_PUBLIC_API_ENDPOINT}${avatarPreview}`}
+                    width={24}
+                    height={24}
                     alt=''
-                    className='w-full h-full object-cover'
+                    className='w-full h-full rounded-lg object-cover flex-shrink-0'
+                    loading='lazy'
                   />
                 ) : (
                   <Users className='w-8 h-8 text-muted-foreground absolute inset-0 m-auto' />

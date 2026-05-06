@@ -24,6 +24,7 @@ const STATUS_TABS: (OrderStatusType | 'All')[] = [
 
 export default function AdminOrdersPage() {
   const { t } = useAppContext();
+  const [nextCursor, setNextCursor] = useState<number | string | null>(null);
   const [activeStatus, setActiveStatus] = useState<OrderStatusType | 'All'>(
     'All',
   );
@@ -32,21 +33,46 @@ export default function AdminOrdersPage() {
   const [error, setError] = useState('');
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError('');
-    try {
-      const res = await orderApiRequest.list(
-        activeStatus === 'All' ? undefined : { status: activeStatus },
-      );
-      const data = res.payload.data;
-      setOrders(Array.isArray(data) ? data : ((data as any)?.data ?? []));
-    } catch (err) {
-      setError((err as Error).message);
-    } finally {
-      setLoading(false);
-    }
-  }, [activeStatus]);
+  const load = useCallback(
+    async (cursor?: number | string | null) => {
+      setLoading(true);
+      setError('');
+
+      try {
+        const params =
+          activeStatus === 'All'
+            ? {
+                limit: 20,
+                cursor: cursor ?? undefined,
+              }
+            : {
+                search: `status=${activeStatus}`,
+                limit: 20,
+                cursor: cursor ?? undefined,
+              };
+
+        const res = await orderApiRequest.list(params);
+        const payload = res.payload.data as any;
+
+        const list = Array.isArray(payload) ? payload : (payload?.data ?? []);
+
+        setOrders((prev) => {
+          if (cursor) {
+            return [...prev, ...list];
+          }
+
+          return list;
+        });
+
+        setNextCursor(payload?.hasNextPage ? payload?.nextCursor : null);
+      } catch (err) {
+        setError((err as Error).message);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [activeStatus],
+  );
 
   useEffect(() => {
     load();
@@ -54,17 +80,6 @@ export default function AdminOrdersPage() {
 
   return (
     <div className='flex-1 p-6 space-y-6 mt-12'>
-      <div className='flex items-center justify-end'>
-        <button
-          onClick={load}
-          disabled={loading}
-          className='flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-muted-foreground border border-border rounded-xl hover:bg-accent transition-all disabled:opacity-50'
-        >
-          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-          {t.ordersRefresh}
-        </button>
-      </div>
-
       <div className='flex flex-wrap gap-2'>
         {STATUS_TABS.map((s) => (
           <button
@@ -182,6 +197,17 @@ export default function AdminOrdersPage() {
               </div>
             );
           })}
+          {nextCursor && (
+            <div className='flex justify-center pt-4'>
+              <button
+                onClick={() => load(nextCursor)}
+                disabled={loading}
+                className='px-4 py-2 rounded-xl border border-border text-sm font-bold hover:bg-accent disabled:opacity-50'
+              >
+                Load more
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>

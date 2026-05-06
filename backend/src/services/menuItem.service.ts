@@ -7,7 +7,11 @@ import {
   MenuItemRes,
   MenuItemUpdateBodyType,
 } from '../schemas/menuItem.js';
-import { BaseListResType, BaseSearchRequestType } from '../schemas/search.js';
+import {
+  BaseListResType,
+  BaseSearchRequestType,
+  MenuItemCategoryBaseSearchRequestType,
+} from '../schemas/search.js';
 import { AppError } from '../utils/AppError.js';
 import { staticFileService } from './staticFile.service.js';
 
@@ -16,7 +20,9 @@ import { staticFileService } from './staticFile.service.js';
  * Maps raw Prisma rows to the API response shape.
  */
 export const menuItemService = {
-  async getAll(request: BaseSearchRequestType): Promise<BaseListResType> {
+  async getAll(
+    request: MenuItemCategoryBaseSearchRequestType,
+  ): Promise<BaseListResType> {
     const limit = request.limit;
     const rows = await menuItemProvider.findAll(request);
 

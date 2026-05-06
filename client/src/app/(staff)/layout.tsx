@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter, usePathname } from 'next/navigation';
+import { useEffect } from 'react';
 import { ChefHat, Truck, ClipboardList } from 'lucide-react';
 import { useAppContext } from '@/app/app-provider';
 import { useSSE } from '@/hooks/useSSE';
@@ -43,29 +44,31 @@ export default function StaffLayout({
   const lastEvent = useSSE(token);
 
   // Auth guard
-  if (!user) {
-    router.replace('/login');
-    return null;
-  }
-  if (!isStaff) {
-    router.replace('/menu');
-    return null;
-  }
+  useEffect(() => {
+    if (!user) {
+      router.replace('/login');
+      return;
+    }
+    if (!isStaff) {
+      router.replace('/menu');
+      return;
+    }
+    // Page-level role guard: CHEF can't access /server or /orders
+    if (
+      isChef &&
+      !isAdmin &&
+      (pathname.startsWith('/server') || pathname.startsWith('/orders'))
+    ) {
+      router.replace('/kitchen');
+      return;
+    }
+    // EMPLOYEE can't access /kitchen
+    if (isEmployee && !isAdmin && pathname.startsWith('/kitchen')) {
+      router.replace('/server');
+    }
+  }, [user, isStaff, isChef, isEmployee, isAdmin, pathname, router]);
 
-  // Page-level role guard: CHEF can't access /server or /orders
-  if (
-    isChef &&
-    !isAdmin &&
-    (pathname.startsWith('/server') || pathname.startsWith('/orders'))
-  ) {
-    router.replace('/kitchen');
-    return null;
-  }
-  // EMPLOYEE can't access /kitchen
-  if (isEmployee && !isAdmin && pathname.startsWith('/kitchen')) {
-    router.replace('/server');
-    return null;
-  }
+  if (!user || !isStaff) return null;
 
   const notificationEvent =
     lastEvent?.eventType === 'notification.created'

@@ -6,6 +6,8 @@ import { useAppContext } from '@/app/app-provider';
 import categoryApiRequest from '@/apiRequests/category';
 import Spinner from '@/components/restaurant/spinner';
 import type { CategoryItemType } from '@/schemaValidations/menu.schema';
+import Image from 'next/image';
+import envConfig from '@/config';
 
 interface Props {
   initial?: CategoryItemType;
@@ -13,6 +15,14 @@ interface Props {
   onClose: () => void;
   onImgUpdated?: (imgUrl: string | null) => void;
 }
+
+const getImageUrl = (img?: string | null) => {
+  if (!img) return null;
+
+  if (img.startsWith('http')) return img;
+
+  return `${envConfig.NEXT_PUBLIC_API_ENDPOINT}/${img.replace(/^\/+/, '')}`;
+};
 
 export default function CategoryModal({
   initial,
@@ -26,7 +36,7 @@ export default function CategoryModal({
   const [error, setError] = useState('');
   const imgInputRef = useRef<HTMLInputElement>(null);
   const [imgPreview, setImgPreview] = useState<string | null>(
-    initial?.img ? `/${initial.img}` : null,
+    getImageUrl(initial?.img),
   );
   const [uploadingImg, setUploadingImg] = useState(false);
 
@@ -43,7 +53,7 @@ export default function CategoryModal({
       const res = await categoryApiRequest.uploadImage(initial.id, files[0]);
       const updated = res.payload.data as Record<string, unknown>;
       const img = updated.img != null ? String(updated.img) : null;
-      setImgPreview(img ? `/${img}` : null);
+      setImgPreview(getImageUrl(img));
       onImgUpdated?.(img);
     } catch {
       /* ignore */
@@ -75,7 +85,7 @@ export default function CategoryModal({
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className='rounded-2xl shadow-xl w-full max-w-sm p-6'
+        className='rounded-2xl shadow-xl w-full max-w-md p-6 bg-white'
       >
         <div className='flex items-center justify-between mb-5'>
           <h2 className='text-base font-extrabold'>
@@ -104,14 +114,16 @@ export default function CategoryModal({
                 {t.uploadImages}
               </label>
               <div
-                className='w-full h-28 rounded-xl border-2 border-dashed border-border flex items-center justify-center cursor-pointer group overflow-hidden relative hover:border-indigo-400 transition-colors'
+                className='relative w-full h-[50vh] rounded-xl border-2 border-dashed border-border flex items-center justify-center cursor-pointer group overflow-hidden relative hover:border-indigo-400 transition-colors'
                 onClick={() => imgInputRef.current?.click()}
               >
                 {imgPreview ? (
-                  <img
+                  <Image
                     src={imgPreview}
-                    alt=''
-                    className='w-full h-full object-cover'
+                    alt='Image'
+                    fill
+                    unoptimized
+                    className='object-cover group-hover:scale-105 transition-transform duration-700'
                   />
                 ) : (
                   <div className='flex flex-col items-center gap-1.5'>

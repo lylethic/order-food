@@ -1,7 +1,10 @@
 import { MenuItemUpdateBodyType } from '../schemas/menuItem';
 import { prisma } from '../lib/prisma.js';
 import { MenuItemCreateBodyType } from '../schemas/menuItem.js';
-import { BaseSearchRequestType } from '../schemas/search.js';
+import {
+  BaseSearchRequestType,
+  MenuItemCategoryBaseSearchRequestType,
+} from '../schemas/search.js';
 import parseFilterString from '../utils/filterParser.js';
 
 /**
@@ -9,7 +12,7 @@ import parseFilterString from '../utils/filterParser.js';
  */
 export const menuItemProvider = {
   /** Return all active menu items, optionally filtered by category name. */
-  async findAll(request: BaseSearchRequestType) {
+  async findAll(request: MenuItemCategoryBaseSearchRequestType) {
     const where = parseFilterString(request.search, {
       allowedFields: [
         'id',

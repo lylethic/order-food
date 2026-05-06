@@ -420,7 +420,7 @@ export default function MenuItemDetailModal({
                 </div>
               )}
 
-              <div className='flex-1 overflow-y-auto px-5 pt-4 pb-6 space-y-5'>
+              <div className='flex-1 overflow-y-auto px-5 pt-4 pb-6 space-y-5 bg-white'>
                 <div className='flex items-center gap-2 flex-wrap'>
                   {detail.category && (
                     <span className='text-xs font-bold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full'>

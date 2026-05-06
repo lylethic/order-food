@@ -46,7 +46,7 @@ export async function generateMetadata(
 
 export default async function StatusPage({ params, searchParams }: Props) {
   const cookieStore = await cookies();
-  const token = cookieStore.get('sessionToken');
+  const token = cookieStore.get('accessToken');
   if (!token) return;
   let result = null;
   try {

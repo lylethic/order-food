@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 import path from 'path';
 import { setupSwagger } from './swagger.js';
 import { sendResponse } from './utils/response.js';
@@ -33,6 +34,7 @@ app.use(
   }),
 );
 app.use(express.json());
+app.use(cookieParser());
 
 // Serve uploaded static files at /uploads/*
 app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
