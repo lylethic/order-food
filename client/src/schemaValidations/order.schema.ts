@@ -72,6 +72,7 @@ export type OrderDetailType = z.TypeOf<typeof OrderDetail>;
 // ── Full Order (kitchen / server view) ───────────────────────────────────────
 
 export const Order = OrderDetail.extend({
+  createdAt: z.string().optional(),
   waitLevel: z.enum(['Low', 'Medium', 'High']).optional(),
   waitTimeMinutes: z.number().optional(),
 });

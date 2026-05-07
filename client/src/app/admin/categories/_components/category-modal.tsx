@@ -88,7 +88,7 @@ export default function CategoryModal({
         className='rounded-2xl shadow-xl w-full max-w-md p-6 bg-white'
       >
         <div className='flex items-center justify-between mb-5'>
-          <h2 className='text-base font-extrabold'>
+          <h2 className='text-base font-extrabold text-black'>
             {initial ? t.edit : t.addNew} danh mục
           </h2>
           <button onClick={onClose} className='hover:text-muted-foreground'>
@@ -98,7 +98,9 @@ export default function CategoryModal({
 
         <form onSubmit={handleSubmit} className='space-y-4'>
           <div>
-            <label className='block text-xs font-bold mb-1.5'>{t.name}</label>
+            <label className='block text-xs text-black font-bold mb-1.5'>
+              {t.name}
+            </label>
             <input
               autoFocus
               value={name}
@@ -114,7 +116,7 @@ export default function CategoryModal({
                 {t.uploadImages}
               </label>
               <div
-                className='relative w-full h-[50vh] rounded-xl border-2 border-dashed border-border flex items-center justify-center cursor-pointer group overflow-hidden relative hover:border-indigo-400 transition-colors'
+                className='w-full h-[50vh] rounded-xl border-2 border-dashed border-border flex items-center justify-center cursor-pointer group overflow-hidden relative hover:border-indigo-400 transition-colors'
                 onClick={() => imgInputRef.current?.click()}
               >
                 {imgPreview ? (
@@ -128,7 +130,7 @@ export default function CategoryModal({
                 ) : (
                   <div className='flex flex-col items-center gap-1.5'>
                     <ImageOff className='w-7 h-7' />
-                    <span className='text-xs'>Chưa có ảnh</span>
+                    <span className='text-xs text-black'>Chưa có ảnh</span>
                   </div>
                 )}
                 <div className='absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity'>
@@ -155,14 +157,14 @@ export default function CategoryModal({
             <button
               type='button'
               onClick={onClose}
-              className='flex-1 border border-border text-sm font-semibold py-2.5 rounded-xl hover:bg-accent transition-colors'
+              className='flex-1 border border-border text-sm font-semibold py-2.5 rounded-xl hover:bg-accent transition-colors text-black'
             >
               {t.cancel}
             </button>
             <button
               type='submit'
               disabled={saving || !name.trim()}
-              className='flex-1 bg-indigo-600 text-white text-sm font-bold py-2.5 rounded-xl hover:bg-indigo-500 disabled:opacity-50 transition-colors flex items-center justify-center gap-2'
+              className='flex-1 bg-indigo-600 text-white text-sm font-bold py-2.5 rounded-xl hover:bg-indigo-500 disabled:opacity-50 transition-colors flex items-center justify-center gap-2 cursor-pointer'
             >
               {saving ? <Spinner size='sm' /> : <Check className='w-4 h-4' />}
               {t.save}

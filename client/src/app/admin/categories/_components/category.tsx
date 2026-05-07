@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { Plus, Pencil, Trash2, Tag } from 'lucide-react';
 import { useAppContext } from '@/app/app-provider';
 import categoryApiRequest from '@/apiRequests/category';
 import Spinner from '@/components/restaurant/spinner';
+import LoadMoreButton from '@/components/restaurant/load-more-button';
 import type { CategoryItemType } from '@/schemaValidations/menu.schema';
 import CategoryModal from './category-modal';
 import ConfirmDeleteModal from './confirm-delete-modal';
@@ -14,6 +15,9 @@ export default function AdminCategories() {
   const { t } = useAppContext();
   const [categories, setCategories] = useState<CategoryItemType[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [nextCursor, setNextCursor] = useState<string | number | null>(null);
+  const [hasNextPage, setHasNextPage] = useState(false);
   const [editTarget, setEditTarget] = useState<CategoryItemType | null | 'new'>(
     null,
   );
@@ -21,23 +25,45 @@ export default function AdminCategories() {
     null,
   );
 
-  const load = async () => {
-    console.log('GET /categories called');
+  const load = useCallback(async () => {
     setLoading(true);
-    await categoryApiRequest
-      .list()
-      .then((res) => {
-        const data = res.payload.data;
-        const raw = Array.isArray(data) ? data : ((data as any)?.data ?? []);
-        setCategories(raw as CategoryItemType[]);
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  };
+    setNextCursor(null);
+    setHasNextPage(false);
+    try {
+      const res = await categoryApiRequest.list();
+      const data = res.payload.data;
+      const payload = data as any;
+      const raw = Array.isArray(data) ? data : (payload?.data ?? []);
+      setCategories(raw as CategoryItemType[]);
+      setHasNextPage(payload?.hasNextPage ?? false);
+      setNextCursor(payload?.hasNextPage ? payload?.nextCursor : null);
+    } catch {
+      // keep empty
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const loadMore = useCallback(async () => {
+    if (!nextCursor || loadingMore) return;
+    setLoadingMore(true);
+    try {
+      const res = await categoryApiRequest.list({ cursor: nextCursor });
+      const payload = res.payload.data as any;
+      const raw = Array.isArray(payload) ? payload : (payload?.data ?? []);
+      setCategories((prev) => [...prev, ...(raw as CategoryItemType[])]);
+      setHasNextPage(payload?.hasNextPage ?? false);
+      setNextCursor(payload?.hasNextPage ? payload?.nextCursor : null);
+    } catch {
+      // keep existing
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [nextCursor, loadingMore]);
 
   useEffect(() => {
     load();
-  }, []);
+  }, [load]);
 
   const handleSave = async (name: string) => {
     if (editTarget === 'new') {
@@ -77,6 +103,7 @@ export default function AdminCategories() {
             <h1 className='text-xl font-extrabold'>{t.adminCategories}</h1>
             <p className='text-xs'>
               {categories.length} {t.items}
+              {hasNextPage && '+'}
             </p>
           </div>
         </div>
@@ -136,6 +163,10 @@ export default function AdminCategories() {
               </div>
             </div>
           ))}
+
+          {hasNextPage && (
+            <LoadMoreButton onClick={loadMore} loading={loadingMore} />
+          )}
         </div>
       )}
 

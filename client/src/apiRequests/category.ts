@@ -14,9 +14,10 @@ type SimpleRes = {
 };
 
 const categoryApiRequest = {
-  list: () =>
+  list: (params?: { limit?: number; cursor?: string | number }) =>
     http.get<CategoryListResType>('api/v1/categories', {
       cache: 'no-store',
+      params: { limit: 20, ...params },
     }),
 
   getById: (id: string) => http.get<CategoryResType>(`api/v1/categories/${id}`),

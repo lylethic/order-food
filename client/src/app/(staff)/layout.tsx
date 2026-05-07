@@ -2,7 +2,7 @@
 
 import { useRouter, usePathname } from 'next/navigation';
 import { useEffect } from 'react';
-import { ChefHat, Truck, ClipboardList } from 'lucide-react';
+import { ChefHat, Truck, ClipboardList, BarChart2 } from 'lucide-react';
 import { useAppContext } from '@/app/app-provider';
 import { useSSE } from '@/hooks/useSSE';
 import type { StatusEvent, NotificationCreatedEvent } from '@/hooks/useSSE';
@@ -85,12 +85,18 @@ export default function StaffLayout({
       href: '/orders',
       icon: ClipboardList,
     },
+    {
+      id: 'dashboard',
+      label: t.dashboardNav,
+      href: '/dashboard',
+      icon: BarChart2,
+    },
   ];
 
   const navItems = isAdmin
     ? allNavItems
     : isChef
-      ? allNavItems.filter((n) => n.id === 'kitchen')
+      ? allNavItems.filter((n) => n.id === 'kitchen' || n.id === 'dashboard')
       : isEmployee
         ? allNavItems.filter((n) => n.id !== 'kitchen')
         : allNavItems;
@@ -106,23 +112,29 @@ export default function StaffLayout({
     ? 'server'
     : pathname.startsWith('/orders')
       ? 'orders'
-      : 'kitchen';
+      : pathname.startsWith('/dashboard')
+        ? 'dashboard'
+        : 'kitchen';
 
   const topTitle =
     activeId === 'server'
       ? t.deliveryStation
       : activeId === 'orders'
         ? t.adminOrdersTitle
-        : isEmployee
-          ? t.deliveryStation
-          : t.chefDashboard;
+        : activeId === 'dashboard'
+          ? t.dashboardNav
+          : isEmployee
+            ? t.deliveryStation
+            : t.chefDashboard;
 
   const topSubtitle =
     activeId === 'server'
       ? t.serverSub
       : activeId === 'orders'
         ? t.adminOrdersSub
-        : t.kitchenSub;
+        : activeId === 'dashboard'
+          ? t.dashboardSub
+          : t.kitchenSub;
 
   // Sidebar/BottomNav visual variant per role
   const variant: SidebarVariant =

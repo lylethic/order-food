@@ -13,12 +13,12 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { LoginBody, LoginBodyType } from '@/schemaValidations/auth.schema';
-import { useToast } from '@/components/ui/use-toast';
 import authApiRequest from '@/apiRequests/auth';
 import { useRouter } from 'next/navigation';
 import { handleErrorApi } from '@/lib/utils';
 import { useState } from 'react';
 import { useAppContext } from '@/app/app-provider';
+import { useToast } from '@/hooks/use-toast';
 
 const LoginForm = () => {
   const { t } = useAppContext();
@@ -41,7 +41,13 @@ const LoginForm = () => {
     try {
       const result = await authApiRequest.login(values);
       // backend returns: { token, refreshToken, expiresIn, user, role }
-      const { token, refreshToken, expiresIn, user, role: rawRole } = result.payload.data;
+      const {
+        token,
+        refreshToken,
+        expiresIn,
+        user,
+        role: rawRole,
+      } = result.payload.data;
 
       // Normalise to string array
       const roleArray: string[] = Array.isArray(rawRole)
@@ -52,8 +58,12 @@ const LoginForm = () => {
       const rolePrimary = roleArray[0] ?? 'CUSTOMER';
 
       // Compute expiry from expiresIn (seconds) returned by backend
-      const expiresAt = new Date(Date.now() + (expiresIn ?? 900) * 1000).toISOString();
-      const refreshTokenExpiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+      const expiresAt = new Date(
+        Date.now() + (expiresIn ?? 900) * 1000,
+      ).toISOString();
+      const refreshTokenExpiresAt = new Date(
+        Date.now() + 30 * 24 * 60 * 60 * 1000,
+      ).toISOString();
 
       // Persist tokens into cookies via Next.js API route
       await authApiRequest.auth({
@@ -70,6 +80,7 @@ const LoginForm = () => {
       toast({
         description: result.payload.message_en ?? result.payload.message,
       });
+      console.log(result);
 
       const roles = roleArray.map((r) => r.toUpperCase());
       const dest = roles.includes('ADMIN')

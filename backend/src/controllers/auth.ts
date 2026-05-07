@@ -167,7 +167,16 @@ router.post('/auth/login', async (req, res) => {
       data: { ...rest, refreshToken },
     });
   } catch (err) {
-    handleRouteError(err, res);
+    res.status(422).json({
+      success: false,
+      status_code: 422,
+      message: 'Email hoặc password không đúng',
+      message_en: 'Invalid email or password',
+      data: null,
+      errors: [
+        { field: 'password', message: 'Email hoặc password không đúng' },
+      ],
+    });
   }
 });
 
@@ -214,9 +223,15 @@ router.post('/auth/login', async (req, res) => {
  */
 router.post('/auth/refresh', async (req, res) => {
   try {
-    const rawToken: string = req.cookies?.refreshToken ?? req.body?.refreshToken;
+    const rawToken: string =
+      req.cookies?.refreshToken ?? req.body?.refreshToken;
     if (!rawToken) {
-      sendResponse(res, { success: false, status_code: 401, message: 'Refresh token required', errors: [] });
+      sendResponse(res, {
+        success: false,
+        status_code: 401,
+        message: 'Refresh token required',
+        errors: [],
+      });
       return;
     }
     const result = await authService.refresh(rawToken, {
@@ -264,10 +279,14 @@ router.post('/auth/refresh', async (req, res) => {
  */
 router.post('/auth/logout', async (req, res) => {
   try {
-    const rawToken: string = req.cookies?.refreshToken ?? req.body?.refreshToken ?? '';
+    const rawToken: string =
+      req.cookies?.refreshToken ?? req.body?.refreshToken ?? '';
     await authService.logout(rawToken);
     res.clearCookie('refreshToken', { path: '/api/v1/auth' });
-    sendResponse(res, { message: 'Đăng xuất thành công', message_en: 'Logged out' });
+    sendResponse(res, {
+      message: 'Đăng xuất thành công',
+      message_en: 'Logged out',
+    });
   } catch (err) {
     handleRouteError(err, res);
   }
@@ -305,7 +324,10 @@ router.post('/auth/logout-all', authenticate, async (req, res) => {
   try {
     await authService.logoutAll(BigInt(req.user!.userId));
     res.clearCookie('refreshToken', { path: '/api/v1/auth' });
-    sendResponse(res, { message: 'Tất cả phiên đã bị thu hồi', message_en: 'All sessions revoked' });
+    sendResponse(res, {
+      message: 'Tất cả phiên đã bị thu hồi',
+      message_en: 'All sessions revoked',
+    });
   } catch (err) {
     handleRouteError(err, res);
   }
@@ -358,12 +380,17 @@ const ChangePasswordSchema = z.object({
  */
 router.post('/auth/change-password', authenticate, async (req, res) => {
   try {
-    const { currentPassword, newPassword } = ChangePasswordSchema.parse(req.body);
+    const { currentPassword, newPassword } = ChangePasswordSchema.parse(
+      req.body,
+    );
     const result = await authService.changePassword(
       BigInt(req.user!.userId),
       currentPassword,
       newPassword,
-      { headers: req.headers as Record<string, string | string[] | undefined>, ip: req.ip },
+      {
+        headers: req.headers as Record<string, string | string[] | undefined>,
+        ip: req.ip,
+      },
     );
     res.cookie('refreshToken', result.refreshToken, {
       httpOnly: true,
@@ -372,7 +399,11 @@ router.post('/auth/change-password', authenticate, async (req, res) => {
       path: '/api/v1/auth',
       maxAge: 30 * 24 * 60 * 60 * 1000,
     });
-    sendResponse(res, { message: 'Đổi mật khẩu thành công', message_en: 'Password changed', data: result });
+    sendResponse(res, {
+      message: 'Đổi mật khẩu thành công',
+      message_en: 'Password changed',
+      data: result,
+    });
   } catch (err) {
     handleRouteError(err, res);
   }

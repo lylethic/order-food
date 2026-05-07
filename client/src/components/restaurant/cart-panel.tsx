@@ -13,6 +13,8 @@ import { useAppContext } from '@/app/app-provider';
 import { formatVnd } from '@/lib/money';
 import Spinner from './spinner';
 import type { CartItemType } from '@/schemaValidations/order.schema';
+import Image from 'next/image';
+import envConfig from '@/config';
 
 interface Props {
   onClose: () => void;
@@ -118,14 +120,17 @@ export default function CartPanel({
               {cart.map((item: CartItemType) => (
                 <div
                   key={item.menuItemId}
-                  className='flex items-center gap-3 p-3 rounded-2xl border border-border'
+                  className='relative flex items-center gap-3 p-3 rounded-2xl border border-border'
                 >
                   {item.image && (
                     <div className='w-14 h-14 rounded-xl overflow-hidden shrink-0 border border-border'>
-                      <img
-                        src={item.image}
+                      <Image
+                        src={`${envConfig.NEXT_PUBLIC_API_ENDPOINT}/${item.image}`}
                         alt={item.name}
-                        className='w-full h-full object-cover'
+                        width={24}
+                        height={24}
+                        className='w-full h-full object-cover shrink-0'
+                        loading='lazy'
                       />
                     </div>
                   )}

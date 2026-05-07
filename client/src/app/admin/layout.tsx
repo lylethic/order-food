@@ -11,6 +11,7 @@ import {
   MessageCircle,
   QrCode,
   ClipboardList,
+  BarChart2,
   Menu,
   X,
 } from 'lucide-react';
@@ -133,6 +134,12 @@ export default function AdminDashboardLayout({
       icon: ClipboardList,
       href: '/admin/orders',
     },
+    {
+      id: 'statistic',
+      label: t.dashboardNav,
+      icon: BarChart2,
+      href: '/admin/statistic',
+    },
   ];
 
   const activeId = pathname.startsWith('/admin/menu-items')
@@ -145,7 +152,9 @@ export default function AdminDashboardLayout({
           ? 'qr'
           : pathname.startsWith('/admin/orders')
             ? 'orders'
-            : 'categories';
+            : pathname.startsWith('/admin/statistic')
+              ? 'statistic'
+              : 'categories';
 
   const activeNav = navItems.find((item) => item.id === activeId);
   const topTitle = activeNav?.label ?? t.adminPanel;

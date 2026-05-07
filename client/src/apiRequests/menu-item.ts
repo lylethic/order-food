@@ -18,6 +18,7 @@ const menuItemApiRequest = {
     search?: string;
     categoryId?: string | number;
     limit?: number;
+    cursor?: string | number;
     order?: 'asc' | 'desc';
   }) =>
     http.get<MenuItemListResType>('api/v1/menuItems', {

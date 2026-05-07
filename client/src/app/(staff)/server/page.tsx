@@ -53,8 +53,8 @@ export default function ServerPage() {
   const loadOrders = useCallback(async () => {
     try {
       const [readyRes, deliveredRes] = await Promise.all([
-        orderApiRequest.list({ status: 'Ready' }),
-        orderApiRequest.list({ status: 'Delivered' }),
+        orderApiRequest.list({ status: 'Ready', is_paid: false }),
+        orderApiRequest.list({ status: 'Delivered', is_paid: false }),
       ]);
       const readyData = readyRes.payload.data;
       const deliveredData = deliveredRes.payload.data;
@@ -116,6 +116,7 @@ export default function ServerPage() {
     setPayingOrderId(orderId);
     try {
       const res = await orderApiRequest.markPaid(orderId, { paymentMethod });
+      await orderApiRequest.updateStatus(orderId, { status: 'Received' });
       const result = res.payload.data as any;
       const paidOrder = unpaidOrders.find((o) => o.id === orderId);
       if (paidOrder) {

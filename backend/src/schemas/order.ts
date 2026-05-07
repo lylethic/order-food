@@ -39,6 +39,7 @@ export const OrderDto = z.object({
   paymentMethod: z.string().optional(),
   paidAt: z.string().optional(),
   timestamp: z.string(),
+  createdAt: z.string().optional(),
   waitLevel: z.string().optional(),
   waitTimeMinutes: z.number().optional(),
   items: z.array(OrderItemDto),

@@ -98,7 +98,7 @@ export default function MenuItemModal({
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className='w-full sm:max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl max-h-[92vh] flex flex-col overflow-hidden'
+        className='w-full sm:max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl max-h-[92vh] flex flex-col overflow-hidden bg-white'
       >
         <div className='flex items-center justify-between px-6 py-4 border-b border-border shrink-0'>
           <h2 className='text-base font-extrabold text-foreground'>

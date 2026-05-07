@@ -91,6 +91,8 @@ export default function ImageManager({ itemId, images, onChange }: Props) {
               <Image
                 src={`/${img.image_url}`}
                 alt={itemId}
+                width={120}
+                height={120}
                 className={`w-20 h-20 object-fill rounded-xl border-2 ${img.is_primary ? 'border-indigo-500' : 'border-transparent'}`}
                 loading='lazy'
                 unoptimized

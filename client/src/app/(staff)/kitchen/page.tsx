@@ -2,17 +2,36 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ClipboardList } from 'lucide-react';
+import { ClipboardList, Clock } from 'lucide-react';
 import { useAppContext } from '@/app/app-provider';
 import { useStaffLayout } from '@/contexts/staff-layout-context';
 import orderApiRequest from '@/apiRequests/order';
 import Spinner from '@/components/restaurant/spinner';
 import StatusBadge from '@/components/restaurant/status-badge';
 import MenuItemReviewBrowser from '@/app/admin/comments/_components/menu-item-review-browser';
+import { computeWaitInfo, WAIT_LEVEL_STYLE, type WaitInfo } from '@/lib/wait-level';
 import type {
   OrderType,
   OrderStatusType,
 } from '@/schemaValidations/order.schema';
+
+function WaitBadge({ createdAt }: { createdAt: string }) {
+  const [info, setInfo] = useState<WaitInfo>(() => computeWaitInfo(createdAt));
+
+  useEffect(() => {
+    const id = setInterval(() => setInfo(computeWaitInfo(createdAt)), 60_000);
+    return () => clearInterval(id);
+  }, [createdAt]);
+
+  return (
+    <span
+      className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full border ${WAIT_LEVEL_STYLE[info.waitLevel]}`}
+    >
+      <Clock className='w-3 h-3' />
+      {info.waitTimeMinutes}m · {info.waitLevel}
+    </span>
+  );
+}
 
 const KITCHEN_STATUSES: OrderStatusType[] = [
   'Received',
@@ -160,7 +179,12 @@ export default function KitchenPage() {
                     ))}
                   </div>
 
-                  <p className='text-xs font-medium'>{order.timestamp}</p>
+                  <div className='flex items-center gap-2 flex-wrap'>
+                    <p className='text-xs font-medium'>{order.timestamp}</p>
+                    {order.createdAt && (
+                      <WaitBadge createdAt={order.createdAt} />
+                    )}
+                  </div>
                 </div>
 
                 {NEXT_STATUS[order.status] && (

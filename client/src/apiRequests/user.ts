@@ -60,8 +60,8 @@ const userApiRequest = {
   add: (body: any) => http.post<SingleUserRes>('users', body),
 
   // ── Restaurant backend (/api/v1/users) ─────────────────────────────────────
-  restaurantList: (params?: { limit?: number }) =>
-    http.get<AdminUserListResType>('api/v1/users', { params: { limit: 100, ...params } }),
+  restaurantList: (params?: { limit?: number; cursor?: string | number; search?: string }) =>
+    http.get<AdminUserListResType>('api/v1/users', { params: { limit: 20, ...params } }),
 
   restaurantCreate: (body: CreateAdminUserBodyType) =>
     http.post<AdminUserResType>('api/v1/users', body),

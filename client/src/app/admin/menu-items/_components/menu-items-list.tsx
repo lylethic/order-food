@@ -6,6 +6,7 @@ import { useAppContext } from '@/app/app-provider';
 import categoryApiRequest from '@/apiRequests/category';
 import menuItemApiRequest from '@/apiRequests/menu-item';
 import Spinner from '@/components/restaurant/spinner';
+import LoadMoreButton from '@/components/restaurant/load-more-button';
 import MenuItemModal from './menu-item-modal';
 import ConfirmDeleteModal from './confirm-delete-modal';
 import { formatVnd } from '@/lib/money';
@@ -15,6 +16,7 @@ import type {
   CategoryItemType,
 } from '@/schemaValidations/menu.schema';
 import Image from 'next/image';
+import { keyframes } from 'motion/react';
 
 export default function AdminMenuItemsList() {
   const { t } = useAppContext();
@@ -22,6 +24,9 @@ export default function AdminMenuItemsList() {
   const [items, setItems] = useState<MenuItemType[]>([]);
   const [categories, setCategories] = useState<CategoryItemType[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [nextCursor, setNextCursor] = useState<string | number | null>(null);
+  const [hasNextPage, setHasNextPage] = useState(false);
 
   const [search, setSearch] = useState('');
   const [activeCat, setActiveCat] = useState('');
@@ -49,41 +54,54 @@ export default function AdminMenuItemsList() {
     }
   }, []);
 
-  const fetchMenuItems = useCallback(async () => {
-    setLoading(true);
-
-    try {
-      const params: {
-        search?: string;
-        categoryId?: string;
-        limit?: number;
-        order?: 'asc' | 'desc';
-      } = {
+  const buildParams = useCallback(
+    (cursor?: string | number | null) => {
+      const params: Parameters<typeof menuItemApiRequest.list>[0] = {
         limit: 10,
         order: 'desc',
       };
+      if (search.trim()) params.search = `name=${search.trim()}`;
+      if (activeCat) params.categoryId = activeCat;
+      if (cursor) params.cursor = cursor;
+      return params;
+    },
+    [search, activeCat],
+  );
 
-      if (search.trim()) {
-        params.search = `name=${search.trim()}`;
-      }
-
-      if (activeCat) {
-        params.categoryId = activeCat;
-      }
-
-      const itemRes = await menuItemApiRequest.list(params);
-      const itemData = itemRes.payload.data;
-
-      setItems(
-        Array.isArray(itemData) ? itemData : ((itemData as any)?.data ?? []),
-      );
-    } catch (error) {
-      console.error('Fetch menu items error:', error);
+  const fetchMenuItems = useCallback(async () => {
+    setLoading(true);
+    setNextCursor(null);
+    setHasNextPage(false);
+    try {
+      const res = await menuItemApiRequest.list(buildParams());
+      const payload = res.payload.data as any;
+      const list = Array.isArray(payload) ? payload : (payload?.data ?? []);
+      setItems(list);
+      setHasNextPage(payload?.hasNextPage ?? false);
+      setNextCursor(payload?.hasNextPage ? payload?.nextCursor : null);
+    } catch {
       setItems([]);
     } finally {
       setLoading(false);
     }
-  }, [search, activeCat]);
+  }, [buildParams]);
+
+  const loadMore = useCallback(async () => {
+    if (!nextCursor || loadingMore) return;
+    setLoadingMore(true);
+    try {
+      const res = await menuItemApiRequest.list(buildParams(nextCursor));
+      const payload = res.payload.data as any;
+      const list = Array.isArray(payload) ? payload : (payload?.data ?? []);
+      setItems((prev) => [...prev, ...list]);
+      setHasNextPage(payload?.hasNextPage ?? false);
+      setNextCursor(payload?.hasNextPage ? payload?.nextCursor : null);
+    } catch {
+      // keep existing items
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [nextCursor, loadingMore, buildParams]);
 
   useEffect(() => {
     fetchCategories();
@@ -147,6 +165,7 @@ export default function AdminMenuItemsList() {
 
             <p className='text-xs text-muted-foreground'>
               {items.length} {t.items}
+              {hasNextPage && '+'}
             </p>
           </div>
         </div>
@@ -224,9 +243,9 @@ export default function AdminMenuItemsList() {
                   {item.name}
                 </p>
 
-                <p className='text-xs text-muted-foreground truncate'>
-                  {item.category}
-                </p>
+                {/* <p className='text-xs text-muted-foreground truncate'>
+                  {item.category.name}
+                </p> */}
               </div>
 
               <span className='text-sm font-extrabold text-foreground shrink-0 hidden sm:block'>
@@ -250,6 +269,10 @@ export default function AdminMenuItemsList() {
               </div>
             </div>
           ))}
+
+          {hasNextPage && (
+            <LoadMoreButton onClick={loadMore} loading={loadingMore} />
+          )}
         </div>
       )}
 

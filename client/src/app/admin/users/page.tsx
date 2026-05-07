@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Plus, Pencil, Trash2, Users, ShieldCheck } from 'lucide-react';
+import LoadMoreButton from '@/components/restaurant/load-more-button';
 import { useAppContext } from '@/app/app-provider';
 import userApiRequest from '@/apiRequests/user';
 import roleApiRequest from '@/apiRequests/role';
@@ -27,6 +28,9 @@ export default function AdminUsersPage() {
   const [users, setUsers] = useState<AdminUserType[]>([]);
   const [roles, setRoles] = useState<RestaurantRoleType[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [nextCursor, setNextCursor] = useState<string | number | null>(null);
+  const [hasNextPage, setHasNextPage] = useState(false);
   const [search, setSearch] = useState('');
   const [editTarget, setEditTarget] = useState<AdminUserType | null | 'new'>(
     null,
@@ -34,29 +38,61 @@ export default function AdminUsersPage() {
   const [deleteTarget, setDeleteTarget] = useState<AdminUserType | null>(null);
   const [roleTarget, setRoleTarget] = useState<AdminUserType | null>(null);
 
-  useEffect(() => {
-    Promise.all([
-      userApiRequest.restaurantList(),
-      roleApiRequest.restaurantList(),
-    ])
-      .then(([uRes, rRes]) => {
-        const uData = uRes.payload.data;
-        const rData = rRes.payload.data;
-        setUsers(Array.isArray(uData) ? uData : ((uData as any)?.data ?? []));
-        setRoles(Array.isArray(rData) ? rData : ((rData as any)?.data ?? []));
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
+  const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const fetchUsers = useCallback(async (searchVal: string, cursor?: string | number | null) => {
+    if (!cursor) setLoading(true);
+    try {
+      const params: Parameters<typeof userApiRequest.restaurantList>[0] = { limit: 20 };
+      if (searchVal.trim()) params.search = searchVal.trim();
+      if (cursor) params.cursor = cursor;
+      const uRes = await userApiRequest.restaurantList(params);
+      const uData = uRes.payload.data as any;
+      const list: AdminUserType[] = Array.isArray(uData) ? uData : (uData?.data ?? []);
+      if (cursor) {
+        setUsers((prev) => [...prev, ...list]);
+      } else {
+        setUsers(list);
+      }
+      setHasNextPage(uData?.hasNextPage ?? false);
+      setNextCursor(uData?.hasNextPage ? uData?.nextCursor : null);
+    } catch {
+      if (!cursor) setUsers([]);
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
+    }
   }, []);
 
-  const filtered = search.trim()
-    ? users.filter(
-        (u) =>
-          u.email.toLowerCase().includes(search.toLowerCase()) ||
-          u.username.toLowerCase().includes(search.toLowerCase()) ||
-          (u.name ?? '').toLowerCase().includes(search.toLowerCase()),
-      )
-    : users;
+  // Initial load + roles
+  useEffect(() => {
+    roleApiRequest.restaurantList()
+      .then((rRes) => {
+        const rData = rRes.payload.data;
+        setRoles(Array.isArray(rData) ? rData : ((rData as any)?.data ?? []));
+      })
+      .catch(() => {});
+    fetchUsers('');
+  }, [fetchUsers]);
+
+  // Debounced search
+  useEffect(() => {
+    if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+    searchDebounceRef.current = setTimeout(() => {
+      setNextCursor(null);
+      setHasNextPage(false);
+      fetchUsers(search);
+    }, 350);
+    return () => {
+      if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+    };
+  }, [search, fetchUsers]);
+
+  const loadMore = () => {
+    if (!nextCursor || loadingMore) return;
+    setLoadingMore(true);
+    fetchUsers(search, nextCursor);
+  };
 
   const handleSave = async (data: {
     username: string;
@@ -115,7 +151,8 @@ export default function AdminUsersPage() {
               {t.adminUsers}
             </h1>
             <p className='text-xs text-muted-foreground'>
-              {filtered.length} {t.items}
+              {users.length} {t.items}
+              {hasNextPage && '+'}
             </p>
           </div>
         </div>
@@ -141,13 +178,13 @@ export default function AdminUsersPage() {
         <div className='flex justify-center py-20'>
           <Spinner size='lg' />
         </div>
-      ) : filtered.length === 0 ? (
+      ) : users.length === 0 ? (
         <div className='text-center py-20 text-muted-foreground text-sm'>
           {t.noData}
         </div>
       ) : (
         <div className='space-y-2'>
-          {filtered.map((user) => (
+          {users.map((user) => (
             <div
               key={user.id}
               className='border border-border rounded-2xl px-4 py-3.5 flex items-center gap-4 shadow-sm'
@@ -217,6 +254,10 @@ export default function AdminUsersPage() {
               </div>
             </div>
           ))}
+
+          {hasNextPage && (
+            <LoadMoreButton onClick={loadMore} loading={loadingMore} />
+          )}
         </div>
       )}
 

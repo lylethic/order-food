@@ -75,6 +75,7 @@ function formatOrder(order: any): OrderDtoType {
       hour: '2-digit',
       minute: '2-digit',
     }),
+    createdAt: (order.created as Date).toISOString(),
     waitLevel: order.wait_level ?? undefined,
     waitTimeMinutes: order.wait_time_minutes ?? undefined,
     items: order.items.map(
