@@ -15,8 +15,8 @@ export const RegisterSchema = z.object({
 });
 
 export const GuestRegisterSchema = z.object({
-  name: z.string(),
-  phone: z.string(),
+  name: z.string().min(1).max(100),
+  phone: z.string().min(1).max(20),
   is_guest: z.boolean().default(true),
 });
 

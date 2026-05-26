@@ -10,6 +10,7 @@ import type {
   MenuItemDetailType,
 } from '@/schemaValidations/menu.schema';
 import Image from 'next/image';
+import envConfig from '@/config';
 
 interface Props {
   itemId: string;
@@ -89,7 +90,7 @@ export default function ImageManager({ itemId, images, onChange }: Props) {
           {images.map((img) => (
             <div key={img.id} className='relative group'>
               <Image
-                src={`/${img.image_url}`}
+                src={`${envConfig.NEXT_PUBLIC_API_ENDPOINT}/${img.image_url}`}
                 alt={itemId}
                 width={120}
                 height={120}

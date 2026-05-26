@@ -5,23 +5,32 @@ const SECURE = process.env.NODE_ENV === 'production';
 export async function POST(request: Request) {
   const body = await request.json();
 
-  const accessToken = body.accessToken as string;
+  const accessToken = (body.token ?? body.accessToken) as string;
   const refreshToken = body.refreshToken as string | undefined;
   const expiresAt = body.expiresAt as string | undefined;
-  const refreshTokenExpiresAt = body.refreshTokenExpiresAt as string | undefined;
+  const refreshTokenExpiresAt = body.refreshTokenExpiresAt as
+    | string
+    | undefined;
   const rawRole = body.role;
   const role = (
     Array.isArray(rawRole) ? String(rawRole[0] ?? '') : String(rawRole ?? '')
   ).toUpperCase();
 
   if (!accessToken) {
-    return NextResponse.json({ message: 'Could not authenticate user' }, { status: 400 });
+    return NextResponse.json(
+      { message: 'Could not authenticate user' },
+      { status: 400 },
+    );
   }
 
-  const accessExpires = expiresAt ? new Date(expiresAt) : new Date(Date.now() + 15 * 60 * 1000);
-  const refreshExpires = refreshTokenExpiresAt
-    ? new Date(refreshTokenExpiresAt)
-    : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+  // 60m
+  const accessExpires =
+    expiresAt ?? new Date(Date.now() + 60 * 60 * 1000).toISOString();
+
+  // 7d
+  const refreshExpires =
+    refreshTokenExpiresAt ??
+    new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
 
   const res = NextResponse.json(body, { status: 200 });
 
@@ -33,18 +42,18 @@ export async function POST(request: Request) {
     secure: SECURE,
     sameSite: 'lax',
     path: '/',
-    expires: accessExpires,
+    expires: new Date(accessExpires),
   });
 
   // Expiry timestamp — readable by JS and middleware
   res.cookies.set({
     name: 'accessTokenExpiresAt',
-    value: accessExpires.toISOString(),
+    value: accessExpires,
     httpOnly: false,
     secure: SECURE,
     sameSite: 'lax',
     path: '/',
-    expires: accessExpires,
+    expires: new Date(accessExpires),
   });
 
   // Role — readable by JS for client-side routing
@@ -55,7 +64,7 @@ export async function POST(request: Request) {
     secure: SECURE,
     sameSite: 'lax',
     path: '/',
-    expires: accessExpires,
+    expires: new Date(accessExpires),
   });
 
   // Refresh token — httpOnly, only Next.js server can read it
@@ -67,7 +76,7 @@ export async function POST(request: Request) {
       secure: SECURE,
       sameSite: 'lax',
       path: '/',
-      expires: refreshExpires,
+      expires: new Date(refreshExpires),
     });
   }
 

@@ -12,6 +12,7 @@ export type SafeUserType = z.TypeOf<typeof SafeUser>;
 
 export const AuthResult = z.object({
   token: z.string(),
+  expiresAt: z.string().optional(),
   user: SafeUser,
   role: z.array(z.string()),
 });

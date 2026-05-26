@@ -21,7 +21,7 @@ export class HttpError extends Error {
   status: number;
   payload: { message: string; [key: string]: any };
   constructor({ status, payload }: { status: number; payload: any }) {
-    super('Http Error');
+    super(payload?.message ?? 'Http Error');
     this.status = status;
     this.payload = payload;
   }
@@ -87,6 +87,15 @@ const request = async <Response>(
 
   const payload: Response = await res.json();
   const data = { status: res.status, payload };
+
+  if (
+    res.ok &&
+    payload &&
+    typeof payload === 'object' &&
+    (payload as { success?: boolean }).success === false
+  ) {
+    throw new HttpError({ status: res.status, payload });
+  }
 
   if (!res.ok) {
     if (res.status === ENTITY_ERROR_STATUS) {

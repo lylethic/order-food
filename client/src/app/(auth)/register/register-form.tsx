@@ -47,12 +47,24 @@ const RegisterForm = () => {
     try {
       const { confirmPassword: _c, ...body } = values;
       const result = await authApiRequest.register(body);
-      const { token, expiresIn, user } = result.payload.data;
+      const { token, expiresAt, refreshToken, refreshTokenExpiresAt, user, role: rawRole } =
+        result.payload.data;
 
-      const expiresAt = new Date(Date.now() + (expiresIn ?? 900) * 1000).toISOString();
-      await authApiRequest.auth({ accessToken: token, expiresAt, role: user.roleId });
+      const roleArray: string[] = Array.isArray(rawRole)
+        ? rawRole.map(String)
+        : rawRole
+          ? [String(rawRole)]
+          : [];
 
-      setUser(user);
+      await authApiRequest.auth({
+        accessToken: token,
+        expiresAt,
+        refreshToken,
+        refreshTokenExpiresAt,
+        role: roleArray[0] ?? 'CUSTOMER',
+      });
+
+      setUser({ ...user, role: roleArray });
       toast({ description: result.payload.message_en ?? result.payload.message });
       router.push('/menu');
       router.refresh();

@@ -8,7 +8,8 @@ const chefPaths = ['/kitchen'];
 const employeePaths = ['/server', '/orders'];
 const adminPaths = ['/admin'];
 
-const REFRESH_THRESHOLD_MS = 5 * 60 * 1000;
+const REFRESH_THRESHOLD_MS = 30 * 60 * 1000;
+const REFRESH_EXPIRES_DAYS = 7;
 const SECURE = process.env.NODE_ENV === 'production';
 
 function matchesPath(pathname: string, paths: string[]): boolean {
@@ -28,6 +29,7 @@ async function tryRefresh(
 ): Promise<{
   accessToken: string;
   refreshToken?: string;
+  expiresAt?: string;
   expiresIn?: number;
 } | null> {
   try {
@@ -51,10 +53,12 @@ function applyTokenCookies(
   response: NextResponse,
   accessToken: string,
   newRefreshToken: string | undefined,
-  expiresIn: number,
+  expiresAt: string,
 ) {
-  const accessExpires = new Date(Date.now() + expiresIn * 1000);
-  const refreshExpires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+  const accessExpires = new Date(expiresAt);
+  const refreshExpires = new Date(
+    Date.now() + REFRESH_EXPIRES_DAYS * 24 * 60 * 60 * 1000,
+  );
 
   response.cookies.set({
     name: 'accessToken',
@@ -131,15 +135,20 @@ export async function proxy(request: NextRequest) {
           isEmployee,
           request,
         );
-        applyTokenCookies(
-          response,
-          refreshed.accessToken,
-          refreshed.refreshToken,
-          refreshed.expiresIn ?? 900,
-        );
+        const nextExpiresAt =
+          refreshed.expiresAt ??
+          new Date(Date.now() + (refreshed.expiresIn ?? 3600) * 1000).toISOString();
+        applyTokenCookies(response, refreshed.accessToken, refreshed.refreshToken, nextExpiresAt);
         return response;
       } else {
-        // Refresh failed — clear session and send to login
+        // Refresh failed — clear session
+        if (matchesPath(pathname, publicPaths) || matchesPath(pathname, authPaths)) {
+          // Public/auth pages: clear stale cookies and let the request through
+          const response = NextResponse.next();
+          clearAuthCookies(response);
+          return response;
+        }
+        // Protected pages: redirect to login
         const loginUrl = new URL('/login', request.url);
         const response = NextResponse.redirect(loginUrl);
         clearAuthCookies(response);
@@ -169,8 +178,10 @@ function routingDecision(
   isEmployee: boolean,
   request: NextRequest,
 ): NextResponse {
-  // Logged-in user on login/register → redirect to their home
-  if (hasToken && matchesPath(pathname, authPaths)) {
+  // Logged-in user (non-guest) on login/register → redirect to their home
+  // GUEST role can still visit login/register to sign in with a real account
+  const isGuestRole = role === 'GUEST';
+  if (hasToken && role && !isGuestRole && matchesPath(pathname, authPaths)) {
     return NextResponse.redirect(new URL(homePath(role), request.url));
   }
 

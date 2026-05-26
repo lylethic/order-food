@@ -3,13 +3,13 @@ import jwt from 'jsonwebtoken';
 import { prisma } from '../lib/prisma.js';
 import { sendResponse } from '../utils/response.js';
 
-function unauthorized(res: Response) {
+function unauthorized(res: Response, message: string, messageEn: string) {
   sendResponse(res, {
     success: false,
     status_code: 401,
-    message: 'Token không hợp lệ hoặc đã hết hạn',
-    message_en: 'Invalid or expired token',
-    errors: ['Invalid or expired token'],
+    message,
+    message_en: messageEn,
+    errors: [messageEn],
   });
 }
 
@@ -22,6 +22,18 @@ export async function authenticate(
   next: NextFunction,
 ): Promise<void> {
   const authHeader = req.headers.authorization;
+  const jwtSecret = process.env.JWT_SECRET;
+
+  if (!jwtSecret) {
+    sendResponse(res, {
+      success: false,
+      status_code: 500,
+      message: 'JWT_SECRET chưa được cấu hình',
+      message_en: 'JWT_SECRET is not configured',
+      errors: ['JWT_SECRET is not configured'],
+    });
+    return;
+  }
 
   if (!authHeader?.startsWith('Bearer ')) {
     sendResponse(res, {
@@ -38,15 +50,33 @@ export async function authenticate(
 
   let decoded: { sub?: string; v?: number; userId?: string; email: string; role: string | string[] };
   try {
-    decoded = jwt.verify(token, process.env.JWT_SECRET!) as typeof decoded;
-  } catch {
-    unauthorized(res);
+    decoded = jwt.verify(token, jwtSecret) as typeof decoded;
+  } catch (error) {
+    if (error instanceof jwt.TokenExpiredError) {
+      unauthorized(
+        res,
+        'Token đã hết hạn',
+        'Token expired',
+      );
+      return;
+    }
+
+    if (error instanceof jwt.JsonWebTokenError) {
+      unauthorized(
+        res,
+        'Token không hợp lệ hoặc chữ ký không đúng',
+        'Invalid token or signature',
+      );
+      return;
+    }
+
+    unauthorized(res, 'Token không hợp lệ', 'Invalid token');
     return;
   }
 
   const userId = decoded.sub ?? decoded.userId;
   if (!userId) {
-    unauthorized(res);
+    unauthorized(res, 'Token không hợp lệ', 'Invalid token');
     return;
   }
 
@@ -58,7 +88,7 @@ export async function authenticate(
     }) as { id: bigint; token_version: number; deleted: boolean; active: boolean } | null;
 
     if (!user || user.deleted || !user.active) {
-      unauthorized(res);
+      unauthorized(res, 'Tài khoản không còn hợp lệ', 'User is inactive or deleted');
       return;
     }
 
