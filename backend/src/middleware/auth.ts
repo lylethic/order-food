@@ -1,17 +1,26 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import { prisma } from '../lib/prisma.js';
 import { sendResponse } from '../utils/response.js';
 
+function unauthorized(res: Response) {
+  sendResponse(res, {
+    success: false,
+    status_code: 401,
+    message: 'Token không hợp lệ hoặc đã hết hạn',
+    message_en: 'Invalid or expired token',
+    errors: ['Invalid or expired token'],
+  });
+}
+
 /**
- * Verifies the Bearer JWT in the Authorization header.
- * On success, attaches `req.user = { userId, email, role }`.
- * On failure, responds with 401.
+ * Verifies the Bearer JWT, checks token version against DB, attaches req.user.
  */
-export function authenticate(
+export async function authenticate(
   req: Request,
   res: Response,
   next: NextFunction,
-): void {
+): Promise<void> {
   const authHeader = req.headers.authorization;
 
   if (!authHeader?.startsWith('Bearer ')) {
@@ -27,48 +36,72 @@ export function authenticate(
 
   const token = authHeader.slice(7);
 
+  let decoded: { sub?: string; v?: number; userId?: string; email: string; role: string | string[] };
   try {
-    const payload = jwt.verify(token, process.env.JWT_SECRET!) as {
-      userId: string;
-      email: string;
-      role: string | string[];
-    };
-    req.user = payload;
-    next();
+    decoded = jwt.verify(token, process.env.JWT_SECRET!) as typeof decoded;
   } catch {
-    sendResponse(res, {
-      success: false,
-      status_code: 401,
-      message: 'Token không hợp lệ hoặc đã hết hạn',
-      message_en: 'Invalid or expired token',
-      errors: ['Invalid or expired token'],
-    });
+    unauthorized(res);
+    return;
   }
+
+  const userId = decoded.sub ?? decoded.userId;
+  if (!userId) {
+    unauthorized(res);
+    return;
+  }
+
+  // Version check — only for tokens that carry a version (new tokens have `v`)
+  if (decoded.v !== undefined) {
+    const user = await (prisma as any).user.findUnique({
+      where: { id: BigInt(userId) },
+      select: { id: true, token_version: true, deleted: true, active: true },
+    }) as { id: bigint; token_version: number; deleted: boolean; active: boolean } | null;
+
+    if (!user || user.deleted || !user.active) {
+      unauthorized(res);
+      return;
+    }
+
+    if (decoded.v !== user.token_version) {
+      sendResponse(res, {
+        success: false,
+        status_code: 401,
+        message: 'Token đã bị thu hồi',
+        message_en: 'Token revoked',
+        errors: ['Token revoked'],
+      });
+      return;
+    }
+  }
+
+  req.user = { userId, email: decoded.email, role: decoded.role };
+  next();
 }
 
 /**
  * Like `authenticate` but does NOT block the request if no token is present.
- * Useful for public routes that show extra data when logged in.
  */
-export function optionalAuthenticate(
+export async function optionalAuthenticate(
   req: Request,
   _res: Response,
   next: NextFunction,
-): void {
+): Promise<void> {
   const authHeader = req.headers.authorization;
   if (authHeader?.startsWith('Bearer ')) {
     try {
-      const payload = jwt.verify(
-        authHeader.slice(7),
-        process.env.JWT_SECRET!,
-      ) as {
-        userId: string;
+      const decoded = jwt.verify(authHeader.slice(7), process.env.JWT_SECRET!) as {
+        sub?: string;
+        v?: number;
+        userId?: string;
         email: string;
         role: string | string[];
       };
-      req.user = payload;
+      const userId = decoded.sub ?? decoded.userId;
+      if (userId) {
+        req.user = { userId, email: decoded.email, role: decoded.role };
+      }
     } catch {
-      // ignore — treat as unauthenticated
+      // ignore
     }
   }
   next();

@@ -3,7 +3,11 @@ import { prisma } from '../lib/prisma.js';
 export const menuItemImageProvider = {
   async createMany(
     menuItemId: number,
-    images: Array<{ image_url: string; is_primary?: boolean; display_order?: number }>,
+    images: Array<{
+      image_url: string;
+      is_primary?: boolean;
+      display_order?: number;
+    }>,
   ) {
     return prisma.menu_item_images.createMany({
       data: images.map((img) => ({

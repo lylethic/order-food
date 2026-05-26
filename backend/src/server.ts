@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 import path from 'path';
 import { setupSwagger } from './swagger.js';
 import { sendResponse } from './utils/response.js';
@@ -13,7 +14,11 @@ const FRONTEND_URL = process.env.FRONTEND_URL;
 const allowedOrigins = [
   FRONTEND_URL,
   'http://localhost:5173',
+  'http://localhost:3001',
   'http://127.0.0.1:5173',
+  'http://127.0.0.1:3000',
+  'http://localhost:3000',
+  'http://172.23.55.205:3000',
 ].filter(Boolean) as string[];
 
 app.use(
@@ -29,6 +34,7 @@ app.use(
   }),
 );
 app.use(express.json());
+app.use(cookieParser());
 
 // Serve uploaded static files at /uploads/*
 app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));

@@ -20,7 +20,7 @@ export const userProvider = {
         email: 'string',
         deleted: 'boolean',
         active: 'boolean',
-        phoen: 'string',
+        phone: 'string',
       },
       defaultSearchFields: ['name', 'email'],
       defaultDeleted: true,

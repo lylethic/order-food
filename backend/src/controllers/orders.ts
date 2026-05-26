@@ -1,7 +1,10 @@
 import { Router } from 'express';
 import { orderService } from '../services/order.service.js';
 import { orderEmitter, type OrderRealtimeEvent } from '../lib/orderEvents.js';
-import { registerSSEClient, unregisterSSEClient } from '../lib/commentEvents.js';
+import {
+  registerSSEClient,
+  unregisterSSEClient,
+} from '../lib/commentEvents.js';
 import { authenticate } from '../middleware/auth.js';
 import { isEmployee, isStaff } from '../middleware/rbac.js';
 import {
@@ -10,6 +13,7 @@ import {
   UpdateStatusSchema,
 } from '../schemas/validation.js';
 import { sendResponse, handleRouteError } from '../utils/response.js';
+import { BaseSearchRequest } from '../schemas/search.js';
 
 const router = Router();
 
@@ -27,13 +31,34 @@ const router = Router();
  *       - bearerAuth: []
  *     parameters:
  *       - in: query
- *         name: status
+ *         name: search
  *         schema:
  *           type: string
- *           enum: [Received, Preparing, Cooking, Ready, Delivered]
  *         required: false
- *         description: Filter by order status
- *         example: Ready
+ *         description: Search term
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 100
+ *           default: 10
+ *         required: false
+ *         description: Page size
+ *       - in: query
+ *         name: cursor
+ *         schema:
+ *           type: integer
+ *         required: false
+ *         description: Cursor user id
+ *       - in: query
+ *         name: order
+ *         schema:
+ *           type: string
+ *           enum: [asc, desc]
+ *           default: desc
+ *         required: false
+ *         description: Sort order by id
  *     responses:
  *       200:
  *         description: List of orders
@@ -52,8 +77,8 @@ const router = Router();
  */
 router.get('/orders', authenticate, isStaff, async (req, res) => {
   try {
-    const status = req.query.status as string | undefined;
-    const data = await orderService.getAll(status);
+    const request = BaseSearchRequest.parse(req.query);
+    const data = await orderService.getAll(request);
     sendResponse(res, {
       message: 'Lấy danh sách đơn hàng thành công',
       message_en: 'Orders retrieved successfully',
@@ -230,18 +255,56 @@ router.get('/orders/events', authenticate, (req, res) => {
  *     description: >
  *       Returns a summary list of all orders placed by the authenticated customer,
  *       sorted newest-first. Each item includes status, table, item count, and total.
+ *       Supports cursor-based pagination via `limit` and `cursor`.
  *       Click an order to load its full details via `GET /orders/:id`.
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         required: false
+ *         description: Search term
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 100
+ *           default: 10
+ *         required: false
+ *         description: Page size
+ *       - in: query
+ *         name: cursor
+ *         schema:
+ *           type: integer
+ *         required: false
+ *         description: Cursor user id
+ *       - in: query
+ *         name: order
+ *         schema:
+ *           type: string
+ *           enum: [asc, desc]
+ *           default: desc
+ *         required: false
+ *         description: Sort order by id
  *     responses:
  *       200:
- *         description: List of order summaries
+ *         description: Paginated list of order summaries
  *       401:
  *         description: Missing or invalid token
  */
 router.get('/orders/my', authenticate, async (req, res) => {
   try {
-    const data = await orderService.getByCustomer(req.user!.userId);
+    const user = req.user;
+    if (!user) throw new Error('Unauthorized');
+
+    const query = BaseSearchRequest.parse(req.query);
+    const request = { ...query, customer_id: Number(user.userId) };
+    console.log(user);
+
+    const data = await orderService.getByCustomer(request);
     sendResponse(res, {
       message: 'Lấy danh sách đơn hàng của bạn thành công',
       message_en: 'Your orders retrieved successfully',
@@ -283,10 +346,14 @@ router.get('/orders/my', authenticate, async (req, res) => {
  */
 router.get('/orders/:id', authenticate, async (req, res) => {
   try {
+    const user = req.user;
+    if (!user) {
+      throw new Error('Unauthorized');
+    }
     const data = await orderService.getDetail(
       req.params.id,
-      req.user!.userId,
-      req.user!.role,
+      user.userId,
+      user.role,
     );
     sendResponse(res, {
       message: 'Lấy chi tiết đơn hàng thành công',

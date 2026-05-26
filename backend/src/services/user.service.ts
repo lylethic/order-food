@@ -7,7 +7,10 @@ import {
   UserRes,
   UserUpdateBodyType,
 } from '../schemas/user';
-import { BaseListResType, BaseSearchRequestType } from '../schemas/search';
+import {
+  BaseListResType,
+  MenuItemCategoryBaseSearchRequestType,
+} from '../schemas/search';
 import { roleProvider } from '../providers/roleProvider';
 
 export const userService = {
@@ -47,7 +50,9 @@ export const userService = {
     return UserRes.parse(result);
   },
 
-  async findAll(request: BaseSearchRequestType): Promise<BaseListResType> {
+  async findAll(
+    request: MenuItemCategoryBaseSearchRequestType,
+  ): Promise<BaseListResType> {
     const limit = request.limit;
     const users = await userProvider.findAll(request);
     const hasNextPage = users.length > limit;

@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { z } from 'zod';
 import { authService } from '../services/auth.service.js';
 import { authenticate } from '../middleware/auth.js';
 import {
@@ -102,7 +103,13 @@ router.post('/auth/guestRegister', async (req, res) => {
  * @swagger
  * /api/v1/auth/login:
  *   post:
- *     summary: Login and receive a JWT
+ *     summary: Login — returns access token + refresh token
+ *     description: |
+ *       Validates credentials and issues a short-lived **access token** (15 min) and a
+ *       long-lived **refresh token** (30 days).
+ *
+ *       The refresh token is set as an `httpOnly` cookie (`refreshToken`) scoped to
+ *       `/api/v1/auth` and is also returned in the response body for non-browser clients.
  *     tags: [Auth]
  *     requestBody:
  *       required: true
@@ -112,16 +119,26 @@ router.post('/auth/guestRegister', async (req, res) => {
  *             $ref: '#/components/schemas/LoginRequest'
  *           example:
  *             email: chef@restaurant.com
- *             password: secret123
+ *             password: Aa@123123
  *     responses:
  *       200:
- *         description: Login successful — returns JWT + user profile + role
+ *         description: Login successful
+ *         headers:
+ *           Set-Cookie:
+ *             description: httpOnly refresh token cookie scoped to /api/v1/auth
+ *             schema:
+ *               type: string
+ *               example: refreshToken=abc123...; Path=/api/v1/auth; HttpOnly; SameSite=Strict
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/AuthResponse'
+ *               $ref: '#/components/schemas/LoginResponse'
  *       400:
  *         description: Validation error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  *       401:
  *         description: Invalid email or password
  *         content:
@@ -132,10 +149,259 @@ router.post('/auth/guestRegister', async (req, res) => {
 router.post('/auth/login', async (req, res) => {
   try {
     const dto = LoginSchema.parse(req.body);
-    const result = await authService.login(dto);
+    const result = await authService.login(dto, {
+      headers: req.headers as Record<string, string | string[] | undefined>,
+      ip: req.ip,
+    });
+    const { refreshToken, ...rest } = result;
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      path: '/api/v1/auth',
+      maxAge: 30 * 24 * 60 * 60 * 1000,
+    });
     sendResponse(res, {
       message: 'Đăng nhập thành công',
       message_en: 'Login successful',
+      data: { ...rest, refreshToken },
+    });
+  } catch (err) {
+    res.status(422).json({
+      success: false,
+      status_code: 422,
+      message: 'Email hoặc password không đúng',
+      message_en: 'Invalid email or password',
+      data: null,
+      errors: [
+        { field: 'password', message: 'Email hoặc password không đúng' },
+      ],
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /api/v1/auth/refresh:
+ *   post:
+ *     summary: Rotate refresh token — returns new access + refresh tokens
+ *     description: |
+ *       Exchanges a valid refresh token for a new **access token** and a new **refresh token**
+ *       (token rotation). The old refresh token is immediately revoked.
+ *
+ *       **Token reuse detection:** If a previously-revoked token is presented, the entire
+ *       token family is revoked and a `401` is returned. This signals a possible theft.
+ *
+ *       The refresh token can be supplied via:
+ *       1. `refreshToken` httpOnly cookie (preferred for browsers)
+ *       2. `refreshToken` field in the JSON body (for non-browser clients)
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/RefreshRequest'
+ *     responses:
+ *       200:
+ *         description: Tokens rotated successfully
+ *         headers:
+ *           Set-Cookie:
+ *             description: New httpOnly refresh token cookie
+ *             schema:
+ *               type: string
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/TokenPairResponse'
+ *       401:
+ *         description: Missing, invalid, expired, or reused refresh token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.post('/auth/refresh', async (req, res) => {
+  try {
+    const rawToken: string =
+      req.cookies?.refreshToken ?? req.body?.refreshToken;
+    if (!rawToken) {
+      sendResponse(res, {
+        success: false,
+        status_code: 401,
+        message: 'Refresh token required',
+        errors: [],
+      });
+      return;
+    }
+    const result = await authService.refresh(rawToken, {
+      headers: req.headers as Record<string, string | string[] | undefined>,
+      ip: req.ip,
+    });
+    res.cookie('refreshToken', result.refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      path: '/api/v1/auth',
+      maxAge: 30 * 24 * 60 * 60 * 1000,
+    });
+    sendResponse(res, { message: 'Token refreshed', data: result });
+  } catch (err) {
+    handleRouteError(err, res);
+  }
+});
+
+/**
+ * @swagger
+ * /api/v1/auth/logout:
+ *   post:
+ *     summary: Logout — revoke the current refresh token
+ *     description: |
+ *       Marks the provided refresh token as revoked and clears the `refreshToken` cookie.
+ *       This endpoint is **idempotent** — calling it when already logged out returns 200.
+ *
+ *       The access token is short-lived (15 min) and cannot be revoked server-side;
+ *       clients should discard it locally on logout.
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/RefreshRequest'
+ *     responses:
+ *       200:
+ *         description: Logged out successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/MessageResponse'
+ */
+router.post('/auth/logout', async (req, res) => {
+  try {
+    const rawToken: string =
+      req.cookies?.refreshToken ?? req.body?.refreshToken ?? '';
+    await authService.logout(rawToken);
+    res.clearCookie('refreshToken', { path: '/api/v1/auth' });
+    sendResponse(res, {
+      message: 'Đăng xuất thành công',
+      message_en: 'Logged out',
+    });
+  } catch (err) {
+    handleRouteError(err, res);
+  }
+});
+
+/**
+ * @swagger
+ * /api/v1/auth/logout-all:
+ *   post:
+ *     summary: Logout all devices — revoke every active session
+ *     description: |
+ *       Increments the user's `token_version`, which instantly invalidates **all** outstanding
+ *       access tokens. All refresh tokens for the user are also revoked.
+ *
+ *       Use this when a user suspects their account is compromised or wants to sign out
+ *       of every device at once.
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: All sessions revoked
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/MessageResponse'
+ *       401:
+ *         description: Missing or invalid access token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.post('/auth/logout-all', authenticate, async (req, res) => {
+  try {
+    await authService.logoutAll(BigInt(req.user!.userId));
+    res.clearCookie('refreshToken', { path: '/api/v1/auth' });
+    sendResponse(res, {
+      message: 'Tất cả phiên đã bị thu hồi',
+      message_en: 'All sessions revoked',
+    });
+  } catch (err) {
+    handleRouteError(err, res);
+  }
+});
+
+const ChangePasswordSchema = z.object({
+  currentPassword: z.string().min(1),
+  newPassword: z.string().min(8, 'New password must be at least 8 characters'),
+});
+
+/**
+ * @swagger
+ * /api/v1/auth/change-password:
+ *   post:
+ *     summary: Change password — forces re-login on all other devices
+ *     description: |
+ *       Verifies the current password, updates it, then performs a **logout-all**
+ *       (increments `token_version` + revokes all refresh tokens).
+ *
+ *       A fresh token pair is issued for the current session so the user does not need
+ *       to log in again on the device where the password was changed.
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/ChangePasswordRequest'
+ *     responses:
+ *       200:
+ *         description: Password changed — returns fresh token pair
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/TokenPairResponse'
+ *       400:
+ *         description: Validation error or new password too short
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Invalid current password or missing access token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.post('/auth/change-password', authenticate, async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = ChangePasswordSchema.parse(
+      req.body,
+    );
+    const result = await authService.changePassword(
+      BigInt(req.user!.userId),
+      currentPassword,
+      newPassword,
+      {
+        headers: req.headers as Record<string, string | string[] | undefined>,
+        ip: req.ip,
+      },
+    );
+    res.cookie('refreshToken', result.refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      path: '/api/v1/auth',
+      maxAge: 30 * 24 * 60 * 60 * 1000,
+    });
+    sendResponse(res, {
+      message: 'Đổi mật khẩu thành công',
+      message_en: 'Password changed',
       data: result,
     });
   } catch (err) {

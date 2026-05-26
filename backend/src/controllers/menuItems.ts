@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { menuItemService } from '../services/menuItem.service.js';
 import { sendResponse, handleRouteError } from '../utils/response.js';
-import { BaseSearchRequest } from '../schemas/search.js';
+import { MenuItemCategoryBaseSearchRequest } from '../schemas/search.js';
 import { MenuItemCreateBody, MenuItemUpdateBody } from '../schemas/menuItem.js';
 import { AppError } from '../utils/AppError.js';
 import { uploadMenuItemImage } from '../services/staticFile.service.js';
@@ -73,25 +73,11 @@ const router = Router();
  */
 router.get('/menuItems', async (_req, res) => {
   try {
-    const query = BaseSearchRequest.parse(_req.query);
+    const query = MenuItemCategoryBaseSearchRequest.parse(_req.query);
     const data = await menuItemService.getAll(query);
     sendResponse(res, {
       message: 'Lấy danh sách món ăn thành công',
       message_en: 'Menu items retrieved successfully',
-      data,
-    });
-  } catch (err) {
-    handleRouteError(err, res);
-  }
-});
-
-router.get('/menuItems/:id', async (_req, res) => {
-  try {
-    const id = Number(_req.params.id);
-    const data = await menuItemService.findById(id);
-    sendResponse(res, {
-      message: 'Lấy thông tin món ăn thành công',
-      message_en: 'Menu item retrieved successfully',
       data,
     });
   } catch (err) {
@@ -124,14 +110,13 @@ router.get('/menuItems/:id', async (_req, res) => {
  *       404:
  *         description: Menu item not found
  */
-
-router.post('/menuItems', async (_req, res) => {
+router.get('/menuItems/:id', async (_req, res) => {
   try {
-    const request = MenuItemCreateBody.parse(_req.body);
-    const data = await menuItemService.create(request);
+    const id = Number(_req.params.id);
+    const data = await menuItemService.findById(id);
     sendResponse(res, {
-      message: 'Tạo món ăn thành công',
-      message_en: 'Menu item',
+      message: 'Lấy thông tin món ăn thành công',
+      message_en: 'Menu item retrieved successfully',
       data,
     });
   } catch (err) {
@@ -171,6 +156,19 @@ router.post('/menuItems', async (_req, res) => {
  *       500:
  *         description: Database error
  */
+router.post('/menuItems', async (_req, res) => {
+  try {
+    const request = MenuItemCreateBody.parse(_req.body);
+    const data = await menuItemService.create(request);
+    sendResponse(res, {
+      message: 'Tạo món ăn thành công',
+      message_en: 'Menu item',
+      data,
+    });
+  } catch (err) {
+    handleRouteError(err, res);
+  }
+});
 
 /**
  * @swagger
@@ -211,25 +209,31 @@ router.post('/menuItems', async (_req, res) => {
  *       415:
  *         description: Unsupported file type
  */
-router.post('/menuItems/:id/images', uploadMenuItemImage.array('files', 10), async (req, res) => {
-  try {
-    const id = Number(req.params.id);
-    if (!Number.isInteger(id) || id <= 0) throw new AppError(400, 'Invalid menu item id');
+router.post(
+  '/menuItems/:id/images',
+  uploadMenuItemImage.array('files', 10),
+  async (req, res) => {
+    try {
+      const id = Number(req.params.id);
+      if (!Number.isInteger(id) || id <= 0)
+        throw new AppError(400, 'Invalid menu item id');
 
-    const files = req.files as Express.Multer.File[] | undefined;
-    if (!files || files.length === 0) throw new AppError(400, 'Chưa chọn file ảnh');
+      const files = req.files as Express.Multer.File[] | undefined;
+      if (!files || files.length === 0)
+        throw new AppError(400, 'Chưa chọn file ảnh');
 
-    const { primaryIndex } = req.body as { primaryIndex?: string };
-    const data = await menuItemService.uploadImages(id, files, primaryIndex);
-    sendResponse(res, {
-      message: 'Tải ảnh lên thành công',
-      message_en: 'Images uploaded successfully',
-      data,
-    });
-  } catch (err) {
-    handleRouteError(err, res);
-  }
-});
+      const { primaryIndex } = req.body as { primaryIndex?: string };
+      const data = await menuItemService.uploadImages(id, files, primaryIndex);
+      sendResponse(res, {
+        message: 'Tải ảnh lên thành công',
+        message_en: 'Images uploaded successfully',
+        data,
+      });
+    } catch (err) {
+      handleRouteError(err, res);
+    }
+  },
+);
 
 /**
  * @swagger
@@ -262,28 +266,15 @@ router.delete('/menuItems/:id/images/:imageId', async (req, res) => {
   try {
     const id = Number(req.params.id);
     const imageId = Number(req.params.imageId);
-    if (!Number.isInteger(id) || id <= 0) throw new AppError(400, 'Invalid menu item id');
-    if (!Number.isInteger(imageId) || imageId <= 0) throw new AppError(400, 'Invalid image id');
+    if (!Number.isInteger(id) || id <= 0)
+      throw new AppError(400, 'Invalid menu item id');
+    if (!Number.isInteger(imageId) || imageId <= 0)
+      throw new AppError(400, 'Invalid image id');
 
     const data = await menuItemService.deleteImage(id, imageId);
     sendResponse(res, {
       message: 'Xóa ảnh thành công',
       message_en: 'Image deleted successfully',
-      data,
-    });
-  } catch (err) {
-    handleRouteError(err, res);
-  }
-});
-
-router.put('/menuItems/:id', async (_req, res) => {
-  try {
-    const request = MenuItemUpdateBody.parse(_req.body);
-    const id = Number(_req.params.id);
-    const data = await menuItemService.update(request, id);
-    sendResponse(res, {
-      message: 'Cập nhật món ăn thành công',
-      message_en: 'Menu item updated',
       data,
     });
   } catch (err) {
@@ -325,5 +316,19 @@ router.put('/menuItems/:id', async (_req, res) => {
  *       404:
  *         description: Menu item not found
  */
+router.put('/menuItems/:id', async (_req, res) => {
+  try {
+    const request = MenuItemUpdateBody.parse(_req.body);
+    const id = Number(_req.params.id);
+    const data = await menuItemService.update(request, id);
+    sendResponse(res, {
+      message: 'Cập nhật món ăn thành công',
+      message_en: 'Menu item updated',
+      data,
+    });
+  } catch (err) {
+    handleRouteError(err, res);
+  }
+});
 
 export default router;

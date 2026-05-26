@@ -15,6 +15,7 @@ import {
   OrderStatusDtoType,
   OrderSummaryDtoType,
 } from '../schemas/order.js';
+import { BaseListResType, BaseSearchRequestType } from '../schemas/search.js';
 
 const STAFF_ROLES = new Set(['admin', 'employee', 'chef']);
 export const isStaffRole = (role: string | string[]) => {
@@ -74,6 +75,7 @@ function formatOrder(order: any): OrderDtoType {
       hour: '2-digit',
       minute: '2-digit',
     }),
+    createdAt: (order.created as Date).toISOString(),
     waitLevel: order.wait_level ?? undefined,
     waitTimeMinutes: order.wait_time_minutes ?? undefined,
     items: order.items.map(
@@ -81,6 +83,7 @@ function formatOrder(order: any): OrderDtoType {
         id: item.id.toString(),
         menuItemId: item.menu_item_id?.toString(),
         name: item.name_at_order,
+        image: item.menu_item?.menu_item_images?.[0]?.image_url ?? null,
         qty: item.qty,
         price: Number(item.price_at_order),
         modifications: item.modifications,
@@ -94,15 +97,37 @@ function formatOrder(order: any): OrderDtoType {
  * Handles order querying, creation, and status transitions.
  */
 export const orderService = {
-  async getAll(status?: string): Promise<OrderDtoType[]> {
-    const rows = await orderProvider.findAll(status);
-    return rows.map(formatOrder);
+  async getAll(request: BaseSearchRequestType): Promise<BaseListResType> {
+    const limit = request.limit;
+    const rows = await orderProvider.findAll(request);
+    const hasNextPage = rows.length > limit;
+    const items = hasNextPage ? rows.slice(0, limit) : rows;
+    const nextCursor = hasNextPage ? items[items.length - 1].id : null;
+    return {
+      data: items.map(formatOrder),
+      limit,
+      nextCursor,
+      hasNextPage,
+    };
   },
 
   /** List all orders placed by the given customer (summary only). */
-  async getByCustomer(customerId: string): Promise<OrderSummaryDtoType[]> {
-    const rows = await orderProvider.findByCustomerId(BigInt(customerId));
-    return rows.map(formatOrderSummary);
+  async getByCustomer(
+    request: BaseSearchRequestType,
+  ): Promise<BaseListResType> {
+    const limit = request.limit;
+    const rows = await orderProvider.findByCustomerId(request);
+    const hasNextPage = rows.length > request.limit;
+    const items = hasNextPage ? rows.slice(0, request.limit) : rows;
+    const nextCursor =
+      hasNextPage && items.length > 0 ? items[items.length - 1].id : null;
+
+    return {
+      data: items.map(formatOrderSummary),
+      limit,
+      nextCursor,
+      hasNextPage,
+    };
   },
 
   /**
@@ -112,7 +137,7 @@ export const orderService = {
   async getDetail(
     orderId: string,
     requesterId: string,
-    requesterRole: string,
+    requesterRole: string | string[],
   ): Promise<OrderDtoType> {
     const order = await orderProvider.findById(BigInt(orderId));
     if (!order) throw new AppError(404, 'Order not found');

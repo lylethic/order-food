@@ -5,6 +5,7 @@ export interface ParseOptions {
   fieldTypes?: Record<string, FieldType>;
   defaultSearchFields?: string[]; // when a plain text query is provided
   defaultDeleted?: boolean; // whether to add deleted:false by default
+  nullableBooleanFields?: string[]; // boolean? fields where false should also match null
 }
 
 export function parseFilterString(q?: string, opts: ParseOptions = {}) {
@@ -13,6 +14,7 @@ export function parseFilterString(q?: string, opts: ParseOptions = {}) {
     fieldTypes = {},
     defaultSearchFields = ['name', 'email'],
     defaultDeleted = true,
+    nullableBooleanFields = [],
   } = opts;
 
   if (!q || q.trim() === '') {
@@ -79,6 +81,9 @@ export function parseFilterString(q?: string, opts: ParseOptions = {}) {
       // number/boolean/date exact matches
       if (op === '!=') {
         andClauses.push({ NOT: { [key]: value } });
+      } else if (t === 'boolean' && value === false && nullableBooleanFields.includes(key)) {
+        // nullable boolean field: false should also match null rows
+        andClauses.push({ OR: [{ [key]: false }, { [key]: null }] });
       } else {
         andClauses.push({ [key]: value });
       }
