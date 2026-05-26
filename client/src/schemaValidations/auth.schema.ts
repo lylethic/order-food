@@ -54,8 +54,9 @@ export type AuthUserType = z.TypeOf<typeof AuthUser>;
 
 export const AuthResponseData = z.object({
   token: z.string(),
+  expiresAt: z.string(),
   refreshToken: z.string().optional(),
-  expiresIn: z.number().optional(),
+  refreshTokenExpiresAt: z.string(),
   user: AuthUser,
   role: z.union([z.string(), z.array(z.string())]).optional(),
 });

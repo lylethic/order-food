@@ -1,6 +1,6 @@
 # 🍽️ Ordering Food Management System
 
-Hệ thống quản lý đặt hàng và điều hành nhà hàng toàn diện, được xây dựng bằng **React + TypeScript + Vite** (Frontend) và **Node.js + Express + Prisma** (Backend), hỗ trợ 4 roles chính với các tính năng riêng biệt.
+Hệ thống quản lý đặt hàng và điều hành nhà hàng toàn diện, được xây dựng bằng **Next.js + TypeScript** (Client) và **Node.js + Express + Prisma** (Backend), hỗ trợ 4 roles chính với các tính năng riêng biệt.
 
 ---
 
@@ -44,8 +44,12 @@ _Theo dõi tiến độ đơn hàng realtime từ lúc tiếp nhận đến giao
 
 #### Bảng Điều Khiển Bếp
 
-![Chef Orders](public/chef_order_received.png)
+![Chef Orders](public/chef_order_received2.png)
 _Danh sách các phiếu nấu ăn, sắp xếp theo ưu tiên và thời gian_
+
+
+![Chef Orders](public/chef_thongKe.png)
+_Thống kê order, sắp xếp theo ưu tiên và thời gian_
 
 **Tính năng:**
 
@@ -62,7 +66,7 @@ Nhân viên phục vụ quản lý giao hàng, thu tiền và cập nhật trạ
 
 #### Trạm Giao Hàng
 
-![Employee Waiter](public/employee_waiter.png)
+![Employee Waiter](public/employee_waiter2.png)
 _Danh sách các đơn sẵn sàng giao và quản lý thanh toán_
 
 **Tính năng:**
@@ -109,13 +113,13 @@ _Quản lý tài khoản nhân viên, phân công vai trò (Admin/Chef/Employee)
 
 ## 🛠️ Công Nghệ Sử Dụng
 
-### **Frontend**
+### **Client**
 
-- ⚛️ **React 18** + **TypeScript**
-- ⚡ **Vite** - Build tool hiệu suất cao
+- ⚛️ **Next.js 16** + **React 19** + **TypeScript**
+- ⚡ **App Router** - File-based routing của Next.js
 - 🎨 **Tailwind CSS** - Styling responsive
 - 🎬 **Framer Motion** - Animations
-- 🌐 **React Router v7** - Navigation
+- 🌙 **next-themes** - Hỗ trợ theme sáng/tối
 - 🌍 **Multi-language** - Hỗ trợ Tiếng Việt & English
 
 ### **Backend**
@@ -138,8 +142,8 @@ _Quản lý tài khoản nhân viên, phân công vai trò (Admin/Chef/Employee)
 cd backend
 pnpm install
 
-# Frontend
-cd frontend
+# Client
+cd client
 pnpm install
 ```
 
@@ -163,8 +167,8 @@ pnpm prisma generate
 cd backend
 pnpm run dev
 
-# Terminal 2: Frontend (http://localhost:5173)
-cd frontend
+# Terminal 2: Client (http://localhost:3000)
+cd client
 pnpm run dev
 ```
 
@@ -219,16 +223,15 @@ ordering_food/
 │   │   └── schema.prisma       # Database schema
 │   └── src/server.ts           # Main app file
 │
-├── frontend/
+├── client/
 │   ├── src/
-│   │   ├── pages/              # Page components
-│   │   ├── layouts/            # Layout wrappers (Admin/Staff/Customer)
+│   │   ├── app/                # Next.js App Router routes
 │   │   ├── components/         # Reusable components
-│   │   ├── context/            # Auth & Lang contexts
+│   │   ├── contexts/           # Auth & Lang contexts
 │   │   ├── hooks/              # Custom hooks
-│   │   ├── services/           # API client
-│   │   ├── types.ts            # TypeScript types
-│   │   └── router/             # React Router config
+│   │   ├── lib/                # Shared utilities
+│   │   ├── apiRequests/        # API client
+│   │   └── schemaValidations/  # Client-side validation schemas
 │   └── public/                 # Static assets & screenshots
 │
 └── README.md                   # This file
@@ -271,39 +274,5 @@ ordering_food/
 
 Swagger API docs available at: `http://localhost:3001/api/docs`
 
-Main endpoints:
+![Swagger API Documentation](public/swaggerOrder.png)
 
-- `POST /api/v1/auth/login` - Đăng nhập
-- `POST /api/v1/auth/register` - Đăng ký
-- `GET /api/v1/menuItems` - Lấy menu
-- `POST /api/v1/orders` - Tạo đơn
-- `GET /api/v1/orders/{id}` - Chi tiết đơn
-- Admin routes: `/api/v1/categories`, `/api/v1/users`, `/api/v1/roles`
-
----
-
-## 🤝 Đóng Góp
-
-Để đóng góp:
-
-1. Fork dự án
-2. Tạo branch tính năng (`git checkout -b feature/YourFeature`)
-3. Commit thay đổi (`git commit -m 'Add YourFeature'`)
-4. Push lên branch (`git push origin feature/YourFeature`)
-5. Mở Pull Request
-
----
-
-## 📄 License
-
-MIT License - Xem file LICENSE để chi tiết
-
----
-
-## 📞 Liên Hệ
-
-Nếu có câu hỏi hoặc kiến nghị, vui lòng mở issue hoặc liên hệ qua email.
-
----
-
-**Cảm ơn bạn đã sử dụng Ordering Food Management System!** 🎉

@@ -10,6 +10,7 @@ import apiRouter from './controllers/index.js';
 const app = express();
 const PORT = process.env.PORT;
 const FRONTEND_URL = process.env.FRONTEND_URL;
+const PUBLIC_API_URL = process.env.API_PUBLIC_URL ?? `http://localhost:${PORT}`;
 
 const allowedOrigins = [
   FRONTEND_URL,
@@ -19,6 +20,7 @@ const allowedOrigins = [
   'http://127.0.0.1:3000',
   'http://localhost:3000',
   'http://172.23.55.205:3000',
+  'http://172.23.55.205:3001'
 ].filter(Boolean) as string[];
 
 app.use(
@@ -39,7 +41,7 @@ app.use(cookieParser());
 // Serve uploaded static files at /uploads/*
 app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
-// Swagger UI — http://localhost:3001/api/docs
+// Swagger UI is configured in swagger.ts from API_PUBLIC_URL.
 setupSwagger(app);
 
 // Use the Master Router with the version prefix
@@ -57,6 +59,6 @@ app.use('/api/v1/*', (_req, res) => {
 });
 
 app.listen(Number(PORT), '0.0.0.0', () => {
-  console.log(`Backend server running on http://localhost:${PORT}`);
+  console.log(`Backend server running on ${PUBLIC_API_URL}`);
   console.log(`Accepting requests from: ${FRONTEND_URL}`);
 });

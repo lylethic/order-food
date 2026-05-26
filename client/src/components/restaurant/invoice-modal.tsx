@@ -4,6 +4,7 @@ import { X, Printer, UtensilsCrossed, CheckCircle2 } from 'lucide-react';
 import { useAppContext } from '@/app/app-provider';
 import { formatVnd } from '@/lib/money';
 import { formatPaymentMethod } from '@/lib/payment';
+import Image from 'next/image';
 
 export interface InvoiceData {
   ticketNumber: string;
@@ -27,7 +28,11 @@ interface Props {
   onClose: () => void;
 }
 
-function buildPrintHtml(data: InvoiceData, lang: string): string {
+function buildPrintHtml(
+  data: InvoiceData,
+  lang: string,
+  qrImageUrl: string,
+): string {
   const fmt = (n: number) =>
     `${new Intl.NumberFormat('vi-VN').format(Math.round(n))} VND`;
 
@@ -75,6 +80,12 @@ function buildPrintHtml(data: InvoiceData, lang: string): string {
       lang === 'vi'
         ? 'Ẩm thực tinh tế, trong tầm tay.'
         : 'Fine dining, at your fingertips.',
+    transferTitle:
+      lang === 'vi' ? 'Quét QR để chuyển khoản' : 'Scan QR for bank transfer',
+    transferNote:
+      lang === 'vi'
+        ? 'Vui lòng chuyển khoản đúng nội dung để đối soát nhanh.'
+        : 'Please include the correct payment note for faster reconciliation.',
   };
 
   return `<!DOCTYPE html>
@@ -122,6 +133,11 @@ function buildPrintHtml(data: InvoiceData, lang: string): string {
     .footer{text-align:center;padding:24px 0 0;border-top:1px solid #e2e8f0}
     .footer-main{font-size:15px;font-weight:700;color:#1e293b;margin-bottom:6px}
     .footer-sub{font-size:13px;color:#94a3b8}
+    .transfer-box{margin:24px 0 8px;padding:20px;border:1px solid #c7d2fe;border-radius:18px;background:#eef2ff;display:flex;gap:20px;align-items:center}
+    .transfer-img{width:200px;height:200px;flex:0 0 160px;border-radius:16px;object-fit:cover;background:#fff;border:1px solid #e2e8f0}
+    .transfer-copy{flex:1;min-width:0}
+    .transfer-title{font-size:18px;font-weight:900;color:#312e81;margin-bottom:8px}
+    .transfer-note{font-size:13px;color:#4b5563;line-height:1.5}
   </style>
 </head>
 <body>
@@ -156,6 +172,13 @@ function buildPrintHtml(data: InvoiceData, lang: string): string {
       <div class="meta-row"><span class="meta-label">${t.paidAt}</span><span class="meta-value">${paidDate}</span></div>
     </div>
   </div>
+  <div class="transfer-box">
+    <img class="transfer-img" src="${qrImageUrl}" alt="QR Transfer" />
+    <div class="transfer-copy">
+      <div class="transfer-title">${t.transferTitle}</div>
+      <div class="transfer-note">${t.transferNote}</div>
+    </div>
+  </div>
   <table>
     <thead><tr><th>${t.item}</th><th class="center">${t.qty}</th><th class="right">${t.unitPrice}</th><th class="right">${t.amount}</th></tr></thead>
     <tbody>${rows}</tbody>
@@ -171,7 +194,8 @@ export default function InvoiceModal({ data, onClose }: Props) {
   const isVi = lang === 'vi';
 
   const handlePrint = () => {
-    const html = buildPrintHtml(data, lang);
+    const qrImageUrl = `${window.location.origin}/images/QR_Transfer.jpg`;
+    const html = buildPrintHtml(data, lang, qrImageUrl);
     const win = window.open('', '_blank', 'width=780,height=900');
     if (!win) return;
     win.document.write(html);
@@ -350,6 +374,29 @@ export default function InvoiceModal({ data, onClose }: Props) {
               <span className='text-xl font-black text-indigo-600'>
                 {formatVnd(data.total)}
               </span>
+            </div>
+          </div>
+
+          <div className='rounded-3xl border border-indigo-100 bg-indigo-50/70 p-4 flex flex-col sm:flex-row items-center gap-4'>
+            <div className='relative w-full h-32 sm:h-40 md:h-48 overflow-hidden rounded-2xl'>
+              <Image
+                src='images/QR_Transfer.jpg'
+                alt='QR Transfer'
+                fill
+                unoptimized
+                sizes='60px'
+                className='object-contain'
+              />
+            </div>
+            <div className='text-center sm:text-left'>
+              <p className='text-base font-extrabold text-indigo-900'>
+                {isVi ? 'Quét QR để chuyển khoản' : 'Scan QR for bank transfer'}
+              </p>
+              <p className='text-sm text-muted-foreground mt-1 leading-relaxed'>
+                {isVi
+                  ? 'Vui lòng chuyển khoản đúng nội dung để đối soát nhanh.'
+                  : 'Please include the correct payment note for faster reconciliation.'}
+              </p>
             </div>
           </div>
 

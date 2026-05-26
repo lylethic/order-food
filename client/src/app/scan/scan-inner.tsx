@@ -55,10 +55,17 @@ export default function ScanInner() {
         }, SUCCESS_DELAY);
         return () => clearTimeout(timer);
       })
-      .catch(() => {
+      .catch((err: unknown) => {
         if (cancelled) return;
-        setErrorMsg(t.qrVerifyError);
+        const msg =
+          err instanceof Error
+            ? err.message
+            : typeof err === 'object' && err !== null && 'payload' in err
+              ? JSON.stringify((err as any).payload)
+              : t.qrVerifyError;
+        setErrorMsg(msg);
         setState('error');
+        console.error('[QR scan] verifyToken error:', err);
       });
 
     return () => { cancelled = true; };

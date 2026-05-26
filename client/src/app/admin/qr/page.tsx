@@ -111,14 +111,14 @@ export default function AdminQRPage() {
     setGenerating(true);
     try {
       const res = await tableApiRequest.generateQrBatch({ from, to });
-      const data = res.payload.data as Record<string, unknown>;
-      const list = Array.isArray(data)
+      const data = res.payload.data as any;
+      const list: { tableNumber: string; url: string }[] = Array.isArray(data)
         ? data
-        : ((data as any)?.qrCodes ?? (data as any)?.data ?? []);
+        : (data?.tables ?? data?.qrCodes ?? data?.data ?? []);
       setQrList(
-        (list as Record<string, unknown>[]).map((item) => ({
-          tableNumber: String(item.tableNumber ?? item.table_number ?? ''),
-          url: String(item.url ?? item.qrUrl ?? item.qr_url ?? ''),
+        list.map((item) => ({
+          tableNumber: String(item.tableNumber ?? (item as any).table_number ?? ''),
+          url: String(item.url ?? (item as any).qrUrl ?? (item as any).qr_url ?? ''),
         })),
       );
     } catch (err) {

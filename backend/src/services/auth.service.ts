@@ -11,11 +11,14 @@ import type {
 } from '../schemas/validation.js';
 import { AuthResultType, SafeUserType } from '../schemas/auth.js';
 import {
+  ACCESS_TOKEN_EXPIRY_MS,
+  ACCESS_TOKEN_EXPIRY_SECONDS,
   generateAccessToken,
   generateRefreshToken,
   generateTokenFamily,
   hashToken,
   MAX_SESSIONS,
+  REFRESH_TOKEN_EXPIRY_SECONDS,
   REFRESH_TOKEN_EXPIRY_DAYS,
 } from '../utils/authUtils.js';
 
@@ -48,7 +51,8 @@ async function issueTokenPair(
   const count = await refreshTokenProvider.countActiveSessions(user.id);
   if (count >= MAX_SESSIONS) {
     const oldest = await refreshTokenProvider.findOldestActiveSession(user.id);
-    if (oldest) await refreshTokenProvider.revokeById(oldest.id, 'session_limit');
+    if (oldest)
+      await refreshTokenProvider.revokeById(oldest.id, 'session_limit');
   }
 
   const ip =
@@ -64,15 +68,28 @@ async function issueTokenPair(
     token_family: family,
     device_info: (req.headers['user-agent'] as string) ?? null,
     ip_address: ip as string | null,
-    expires_at: new Date(Date.now() + REFRESH_TOKEN_EXPIRY_DAYS * 24 * 60 * 60 * 1000),
+    expires_at: new Date(
+      Date.now() + Number(REFRESH_TOKEN_EXPIRY_DAYS) * 24 * 60 * 60 * 1000,
+    ),
   });
 
-  const accessToken = generateAccessToken(user.id, user.token_version, user.email ?? '', roles);
+  const accessToken = generateAccessToken(
+    user.id,
+    user.token_version,
+    user.email ?? '',
+    roles,
+  );
   return { accessToken, refreshToken: rawRefresh };
 }
 
 export const authService = {
-  async register(dto: RegisterBodyType): Promise<AuthResultType> {
+  async register(
+    dto: RegisterBodyType,
+    reqCtx: {
+      headers: Record<string, string | string[] | undefined>;
+      ip?: string;
+    } = { headers: {} },
+  ): Promise<AuthResultType & { refreshToken: string; refreshTokenExpiresAt: string }> {
     const existing = await userProvider.findByEmail(dto.email);
     if (existing) throw new AppError(409, 'Email already registered');
 
@@ -89,34 +106,58 @@ export const authService = {
     if (role) await roleProvider.assignRole(user.id, role.id);
 
     const roles = [roleName];
-    const { accessToken } = await issueTokenPair(
+    const { accessToken, refreshToken } = await issueTokenPair(
       { id: user.id, token_version: 0, email: user.email },
       roles,
-      { headers: {}, ip: undefined },
+      reqCtx,
     );
-    return { token: accessToken, user: toSafeUser(user), role: roles };
+    const expiresAt = new Date(Date.now() + ACCESS_TOKEN_EXPIRY_MS);
+    const refreshTokenExpiresAt = new Date(
+      Date.now() + Number(REFRESH_TOKEN_EXPIRY_DAYS) * 24 * 60 * 60 * 1000,
+    );
+    return {
+      token: accessToken,
+      expiresAt: expiresAt.toISOString(),
+      refreshToken,
+      refreshTokenExpiresAt: refreshTokenExpiresAt.toISOString(),
+      user: toSafeUser(user),
+      role: roles,
+    };
   },
 
   async guestRegister(dto: GuestRegisterBodyType): Promise<AuthResultType> {
     const existing = await userProvider.findByPhone(dto.phone);
-    const user = existing ?? await userProvider.createGuest({
-      name: dto.name,
-      phone: dto.phone,
-      is_guest: true,
-    });
+    const user =
+      existing ??
+      (await userProvider.createGuest({
+        name: dto.name,
+        phone: dto.phone,
+        is_guest: true,
+      }));
     const roles = ['GUEST'];
     const { accessToken } = await issueTokenPair(
       { id: user.id, token_version: 0, email: user.email },
       roles,
       { headers: {}, ip: undefined },
     );
-    return { token: accessToken, user: toSafeUser(user), role: roles };
+    const expiresAt = new Date(Date.now() + ACCESS_TOKEN_EXPIRY_MS);
+    return {
+      token: accessToken,
+      expiresAt: expiresAt.toISOString(),
+      user: toSafeUser(user),
+      role: roles,
+    };
   },
 
   async login(
     dto: LoginRequest,
-    reqCtx: { headers: Record<string, string | string[] | undefined>; ip?: string },
-  ): Promise<AuthResultType & { refreshToken: string; expiresIn: number }> {
+    reqCtx: {
+      headers: Record<string, string | string[] | undefined>;
+      ip?: string;
+    },
+  ): Promise<
+    AuthResultType & { refreshToken: string; refreshTokenExpiresAt: string }
+  > {
     const user = await userProvider.findByEmail(dto.email);
     if (!user) throw new AppError(401, 'Invalid email or password');
 
@@ -126,7 +167,10 @@ export const authService = {
     const roles = (user.roles as any[]).map((ur) => ur.role.name);
     const primaryRoles = roles.length > 0 ? roles : ['CUSTOMER'];
 
-    const fullUser = await (prisma.user.findUnique as any)({ where: { id: user.id }, select: { token_version: true } });
+    const fullUser = await (prisma.user.findUnique as any)({
+      where: { id: user.id },
+      select: { token_version: true },
+    });
     const tokenVersion = (fullUser as any)?.token_version ?? 0;
 
     const { accessToken, refreshToken } = await issueTokenPair(
@@ -134,11 +178,15 @@ export const authService = {
       primaryRoles,
       reqCtx,
     );
-
+    const expiresAt = new Date(Date.now() + ACCESS_TOKEN_EXPIRY_MS);
+    const refreshTokenExpiresAt = new Date(
+      Date.now() + Number(REFRESH_TOKEN_EXPIRY_DAYS) * 24 * 60 * 60 * 1000,
+    );
     return {
       token: accessToken,
+      expiresAt: expiresAt.toISOString(),
       refreshToken,
-      expiresIn: 900,
+      refreshTokenExpiresAt: refreshTokenExpiresAt.toISOString(),
       user: toSafeUser(user),
       role: primaryRoles,
     };
@@ -146,8 +194,17 @@ export const authService = {
 
   async refresh(
     rawToken: string,
-    reqCtx: { headers: Record<string, string | string[] | undefined>; ip?: string },
-  ): Promise<{ accessToken: string; refreshToken: string; expiresIn: number }> {
+    reqCtx: {
+      headers: Record<string, string | string[] | undefined>;
+      ip?: string;
+    },
+  ): Promise<{
+    accessToken: string;
+    expiresAt: string;
+    expiresIn: number;
+    refreshToken: string;
+    refreshExpires: number;
+  }> {
     const hashed = hashToken(rawToken);
     const stored = await refreshTokenProvider.findByToken(hashed);
     if (!stored) throw new AppError(401, 'Invalid refresh token');
@@ -165,7 +222,8 @@ export const authService = {
       where: { id: stored.user_id },
       include: { roles: { include: { role: true } } },
     });
-    if (!user || user.deleted || !user.active) throw new AppError(401, 'User not found');
+    if (!user || user.deleted || !user.active)
+      throw new AppError(401, 'User not found');
 
     await refreshTokenProvider.revokeById(stored.id, 'rotation');
 
@@ -185,11 +243,26 @@ export const authService = {
       token_family: stored.token_family,
       device_info: (reqCtx.headers['user-agent'] as string) ?? null,
       ip_address: ip as string | null,
-      expires_at: new Date(Date.now() + REFRESH_TOKEN_EXPIRY_DAYS * 24 * 60 * 60 * 1000),
+      expires_at: new Date(
+        Date.now() + Number(REFRESH_TOKEN_EXPIRY_DAYS) * 24 * 60 * 60 * 1000,
+      ),
     });
 
-    const accessToken = generateAccessToken(user.id, (user as any).token_version ?? 0, user.email ?? '', roles);
-    return { accessToken, refreshToken: rawNew, expiresIn: 900 };
+    const accessToken = generateAccessToken(
+      user.id,
+      (user as any).token_version ?? 0,
+      user.email ?? '',
+      roles,
+    );
+    const expiresAt = new Date(Date.now() + ACCESS_TOKEN_EXPIRY_MS);
+
+    return {
+      accessToken,
+      expiresAt: expiresAt.toISOString(),
+      expiresIn: ACCESS_TOKEN_EXPIRY_SECONDS,
+      refreshToken: rawNew,
+      refreshExpires: REFRESH_TOKEN_EXPIRY_SECONDS,
+    };
   },
 
   async logout(rawToken: string): Promise<void> {
@@ -212,7 +285,10 @@ export const authService = {
     userId: bigint,
     currentPassword: string,
     newPassword: string,
-    reqCtx: { headers: Record<string, string | string[] | undefined>; ip?: string },
+    reqCtx: {
+      headers: Record<string, string | string[] | undefined>;
+      ip?: string;
+    },
   ): Promise<{ accessToken: string; refreshToken: string }> {
     const user = await prisma.user.findUnique({
       where: { id: userId },
@@ -223,10 +299,14 @@ export const authService = {
     const valid = await bcrypt.compare(currentPassword, user.password!);
     if (!valid) throw new AppError(401, 'Current password is incorrect');
 
-    if (newPassword.length < 8) throw new AppError(400, 'New password must be at least 8 characters');
+    if (newPassword.length < 8)
+      throw new AppError(400, 'New password must be at least 8 characters');
 
     const newHash = await bcrypt.hash(newPassword, 12);
-    await prisma.user.update({ where: { id: userId }, data: { password: newHash } });
+    await prisma.user.update({
+      where: { id: userId },
+      data: { password: newHash },
+    });
 
     // Logout all — increment version + revoke all tokens
     await (prisma as any).user.update({
@@ -239,7 +319,11 @@ export const authService = {
     const updatedUser = await prisma.user.findUnique({ where: { id: userId } });
     const roles = (user.roles as any[]).map((ur) => ur.role.name);
     const { accessToken, refreshToken } = await issueTokenPair(
-      { id: userId, token_version: (updatedUser as any)!.token_version ?? 0, email: user.email },
+      {
+        id: userId,
+        token_version: (updatedUser as any)!.token_version ?? 0,
+        email: user.email,
+      },
       roles,
       reqCtx,
     );
@@ -250,6 +334,9 @@ export const authService = {
     const user = await userProvider.findById(Number(userId));
     if (!user) throw new AppError(404, 'User not found');
     const roles = (user.roles as any[]).map((ur: any) => ur.role.name);
-    return { ...toSafeUser(user), role: roles.length > 0 ? roles : ['CUSTOMER'] };
+    return {
+      ...toSafeUser(user),
+      role: roles.length > 0 ? roles : ['CUSTOMER'],
+    };
   },
 };

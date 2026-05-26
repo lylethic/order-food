@@ -43,8 +43,9 @@ const LoginForm = () => {
       // backend returns: { token, refreshToken, expiresIn, user, role }
       const {
         token,
+        expiresAt,
         refreshToken,
-        expiresIn,
+        refreshTokenExpiresAt,
         user,
         role: rawRole,
       } = result.payload.data;
@@ -56,14 +57,6 @@ const LoginForm = () => {
           ? [String(rawRole)]
           : [];
       const rolePrimary = roleArray[0] ?? 'CUSTOMER';
-
-      // Compute expiry from expiresIn (seconds) returned by backend
-      const expiresAt = new Date(
-        Date.now() + (expiresIn ?? 900) * 1000,
-      ).toISOString();
-      const refreshTokenExpiresAt = new Date(
-        Date.now() + 30 * 24 * 60 * 60 * 1000,
-      ).toISOString();
 
       // Persist tokens into cookies via Next.js API route
       await authApiRequest.auth({
@@ -80,7 +73,6 @@ const LoginForm = () => {
       toast({
         description: result.payload.message_en ?? result.payload.message,
       });
-      console.log(result);
 
       const roles = roleArray.map((r) => r.toUpperCase());
       const dest = roles.includes('ADMIN')
@@ -113,7 +105,12 @@ const LoginForm = () => {
             <FormItem>
               <FormLabel>Email</FormLabel>
               <FormControl>
-                <Input placeholder='you@example.com' type='email' {...field} />
+                <Input
+                  className='text-black'
+                  placeholder='you@example.com'
+                  type='email'
+                  {...field}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -126,7 +123,12 @@ const LoginForm = () => {
             <FormItem>
               <FormLabel>Mật khẩu</FormLabel>
               <FormControl>
-                <Input placeholder='••••••' type='password' {...field} />
+                <Input
+                  className='text-black'
+                  placeholder='••••••'
+                  type='password'
+                  {...field}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -152,6 +154,13 @@ const LoginForm = () => {
             className='w-full py-3 rounded-xl border border-slate-200 text-slate-500 text-sm font-semibold hover:bg-slate-50 transition-all'
           >
             {t.continueAsGuest}
+          </button>
+          <button
+            type='button'
+            onClick={() => router.push('/register')}
+            className='w-full py-3 rounded-xl border border-slate-200 text-slate-500 text-sm font-semibold hover:bg-slate-50 transition-all'
+          >
+            {t.continueRegister}
           </button>
         </div>
       </form>

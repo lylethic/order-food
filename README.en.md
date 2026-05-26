@@ -1,6 +1,6 @@
 # 🍽️ Ordering Food Management System
 
-A comprehensive restaurant management and ordering platform built with **React + TypeScript + Vite** (Frontend) and **Node.js + Express + Prisma** (Backend), supporting 4 main roles with dedicated features.
+A comprehensive restaurant management and ordering platform built with **Next.js + TypeScript** (Client) and **Node.js + Express + Prisma** (Backend), supporting 4 main roles with dedicated features.
 
 ---
 
@@ -44,8 +44,11 @@ Chefs can view order tickets, manage cooking order, and update order status.
 
 #### Chef Dashboard
 
-![Chef Orders](public/chef_order_received.png)
+![Chef Orders](public/chef_order_received2.png)
 _List of cooking tickets, sorted by priority and time_
+
+![Chef Orders](public/chef_thongKe.png)
+_Order chart, sorted by priority and time_
 
 **Features:**
 
@@ -62,7 +65,7 @@ Waitstaff manage order delivery, collect payments, and update payment status.
 
 #### Delivery Station
 
-![Employee Waiter](public/employee_waiter.png)
+![Employee Waiter](public/employee_waiter2.png)
 _List of ready-to-serve orders and payment management_
 
 **Features:**
@@ -109,13 +112,13 @@ _Manage employee accounts, assign roles (Admin/Chef/Employee)_
 
 ## 🛠️ Technology Stack
 
-### **Frontend**
+### **Client**
 
-- ⚛️ **React 18** + **TypeScript**
-- ⚡ **Vite** - High-performance build tool
+- ⚛️ **Next.js 16** + **React 19** + **TypeScript**
+- ⚡ **App Router** - File-based routing in Next.js
 - 🎨 **Tailwind CSS** - Responsive styling
 - 🎬 **Framer Motion** - Animations
-- 🌐 **React Router v7** - Navigation
+- 🌙 **next-themes** - Light/dark theme support
 - 🌍 **Multi-language** - Vietnamese & English support
 
 ### **Backend**
@@ -138,8 +141,8 @@ _Manage employee accounts, assign roles (Admin/Chef/Employee)_
 cd backend
 pnpm install
 
-# Frontend
-cd frontend
+# Client
+cd client
 pnpm install
 ```
 
@@ -163,8 +166,8 @@ pnpm prisma generate
 cd backend
 pnpm run dev
 
-# Terminal 2: Frontend (http://localhost:5173)
-cd frontend
+# Terminal 2: Client (http://localhost:3000)
+cd client
 pnpm run dev
 ```
 
@@ -219,16 +222,15 @@ ordering_food/
 │   │   └── schema.prisma       # Database schema
 │   └── src/server.ts           # Main app file
 │
-├── frontend/
+├── client/
 │   ├── src/
-│   │   ├── pages/              # Page components
-│   │   ├── layouts/            # Layout wrappers (Admin/Staff/Customer)
+│   │   ├── app/                # Next.js App Router routes
 │   │   ├── components/         # Reusable components
-│   │   ├── context/            # Auth & Lang contexts
+│   │   ├── contexts/           # Auth & Lang contexts
 │   │   ├── hooks/              # Custom hooks
-│   │   ├── services/           # API client
-│   │   ├── types.ts            # TypeScript types
-│   │   └── router/             # React Router config
+│   │   ├── lib/                # Shared utilities
+│   │   ├── apiRequests/        # API client
+│   │   └── schemaValidations/  # Client-side validation schemas
 │   └── public/                 # Static assets & screenshots
 │
 └── README.md                   # This file
@@ -271,39 +273,4 @@ ordering_food/
 
 Swagger API docs available at: `http://localhost:3001/api/docs`
 
-Main endpoints:
-
-- `POST /api/v1/auth/login` - Login
-- `POST /api/v1/auth/register` - Register
-- `GET /api/v1/menuItems` - Get menu
-- `POST /api/v1/orders` - Create order
-- `GET /api/v1/orders/{id}` - Order details
-- Admin routes: `/api/v1/categories`, `/api/v1/users`, `/api/v1/roles`
-
----
-
-## 🤝 Contributing
-
-To contribute:
-
-1. Fork the project
-2. Create feature branch (`git checkout -b feature/YourFeature`)
-3. Commit changes (`git commit -m 'Add YourFeature'`)
-4. Push to branch (`git push origin feature/YourFeature`)
-5. Open Pull Request
-
----
-
-## 📄 License
-
-MIT License - See LICENSE file for details
-
----
-
-## 📞 Contact
-
-If you have questions or suggestions, please open an issue or contact via email.
-
----
-
-**Thank you for using Ordering Food Management System!** 🎉
+![Swagger API Documentation](public/swaggerOrder.png)

@@ -2,6 +2,8 @@ import swaggerJSDoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
 import type { Express } from 'express';
 
+const PUBLIC_API_URL = process.env.API_PUBLIC_URL ?? 'http://localhost:3001';
+
 const options: swaggerJSDoc.Options = {
   definition: {
     openapi: '3.0.0',
@@ -11,7 +13,7 @@ const options: swaggerJSDoc.Options = {
       description: 'RubyKitchen Ordering API documentation',
     },
     servers: [
-      { url: 'http://localhost:3001', description: 'Development server' },
+      { url: PUBLIC_API_URL, description: 'Development server' },
     ],
     tags: [
       { name: 'Auth', description: 'Authentication and Authorization' },
@@ -774,6 +776,6 @@ export function setupSwagger(app: Express): void {
     res.send(swaggerSpec);
   });
 
-  console.log('📄 Swagger UI  → http://localhost:3001/api/docs');
-  console.log('📄 OpenAPI JSON → http://localhost:3001/api/docs.json');
+  console.log(`📄 Swagger UI  → ${PUBLIC_API_URL}/api/docs`);
+  console.log(`📄 OpenAPI JSON → ${PUBLIC_API_URL}/api/docs.json`);
 }

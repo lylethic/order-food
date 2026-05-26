@@ -198,7 +198,9 @@ export default function Sidebar({
               <p className='text-sm font-bold text-foreground truncate'>
                 {displayName}
               </p>
-              <p className='text-xs text-muted-foreground font-medium'>{roleLabel}</p>
+              <p className='text-xs text-muted-foreground font-medium'>
+                {roleLabel}
+              </p>
               <ModeToggle />
             </div>
             <button
@@ -209,6 +211,11 @@ export default function Sidebar({
               <LogOut className='w-4 h-4' />
             </button>
           </div>
+        </div>
+      )}
+      {!user && (
+        <div className='flex w-full justify-end p-6'>
+          <ModeToggle />
         </div>
       )}
     </aside>

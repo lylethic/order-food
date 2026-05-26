@@ -4,9 +4,9 @@ import authApiRequest from '@/apiRequests/auth';
 import { getCookie } from '@/lib/cookieUtils';
 import { useEffect } from 'react';
 
-// Check every 2 minutes; refresh if < 5 minutes left on the access token
-const CHECK_INTERVAL_MS = 2 * 60 * 1000;
-const REFRESH_THRESHOLD_MS = 5 * 60 * 1000;
+// Check every 30 minutes; refresh immediately if < 30 minutes left
+const CHECK_INTERVAL_MS = 30 * 60 * 1000;
+const REFRESH_THRESHOLD_MS = 30 * 60 * 1000;
 
 export default function SlideSession() {
   useEffect(() => {

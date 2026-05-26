@@ -23,22 +23,40 @@ export async function POST() {
 
     if (!backendRes.ok) {
       // Refresh failed (expired / reuse detected) — force logout
-      const res = NextResponse.json({ message: 'Session expired' }, { status: 401 });
-      for (const name of ['accessToken', 'accessTokenExpiresAt', 'refreshToken', 'role']) {
+      const res = NextResponse.json(
+        { message: 'Session expired' },
+        { status: 401 },
+      );
+      for (const name of [
+        'accessToken',
+        'accessTokenExpiresAt',
+        'refreshToken',
+        'role',
+      ]) {
         res.cookies.set({ name, value: '', path: '/', maxAge: 0 });
       }
       return res;
     }
 
     const json = await backendRes.json();
-    const { accessToken, refreshToken: newRefreshToken, expiresIn } = json.data ?? json;
+    const {
+      accessToken,
+      refreshToken: newRefreshToken,
+      expiresAt,
+      expiresIn,
+    } = json.data ?? json;
 
     if (!accessToken) {
-      return NextResponse.json({ message: 'Invalid refresh response' }, { status: 500 });
+      return NextResponse.json(
+        { message: 'Invalid refresh response' },
+        { status: 500 },
+      );
     }
 
-    const accessExpires = new Date(Date.now() + (expiresIn ?? 900) * 1000);
-    const refreshExpires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+    const accessExpires = expiresAt
+      ? new Date(expiresAt)
+      : new Date(Date.now() + (expiresIn ?? 3600) * 1000);
+    const refreshExpires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
     const res = NextResponse.json(
       { accessToken, expiresAt: accessExpires.toISOString() },
@@ -79,6 +97,9 @@ export async function POST() {
 
     return res;
   } catch {
-    return NextResponse.json({ message: 'Lỗi không xác định' }, { status: 500 });
+    return NextResponse.json(
+      { message: 'Lỗi không xác định' },
+      { status: 500 },
+    );
   }
 }

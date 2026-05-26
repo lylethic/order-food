@@ -156,7 +156,22 @@ export default function CustomerLayout({
         guestPhone: isGuest ? guestPhone : undefined,
       });
 
-      const order = res.payload.data as Record<string, unknown>;
+      const orderPayload = res.payload as {
+        success?: boolean;
+        message?: string;
+        message_en?: string;
+        data?: Record<string, unknown> | null;
+      };
+
+      if (!orderPayload?.data) {
+        throw new Error(
+          orderPayload?.message_en ??
+            orderPayload?.message ??
+            'Không thể tạo đơn hàng',
+        );
+      }
+
+      const order = orderPayload.data;
       setPlacedOrder({
         id: String(order.id ?? ''),
         ticketNumber: String(order.ticketNumber ?? order.ticket_number ?? ''),
@@ -201,7 +216,7 @@ export default function CustomerLayout({
                   {t.qrTableBadge} {tableSession.tableNumber}
                 </div>
               )}
-              <NotificationDropdown notificationEvent={notificationEvent} />
+              {!isGuest && <NotificationDropdown notificationEvent={notificationEvent} />}
               {cartCount > 0 && (
                 <button
                   onClick={() => setCartOpen(true)}

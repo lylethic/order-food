@@ -35,7 +35,7 @@ model User {
   updated_by                BigInt?
   deleted                   Boolean                     @default(false)
   active                    Boolean                     @default(true)
-  phone                     String?                     @db.VarChar(10)
+  phone                     String?                     @db.VarChar(20)
   is_guest                  Boolean?
   token_version             Int                         @default(0)
   menu_item_comment_replies menu_item_comment_replies[]

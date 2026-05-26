@@ -10,6 +10,7 @@ import {
 import notificationApiRequest from '@/apiRequests/notification';
 import type { NotificationItemType } from '@/schemaValidations/notification.schema';
 import type { NotificationCreatedEvent } from '@/hooks/useSSE';
+import { useAppContext } from '@/app/app-provider';
 
 interface Props {
   notificationEvent?: NotificationCreatedEvent | null;
@@ -37,6 +38,7 @@ function normalizeNotification(raw: unknown): NotificationItemType {
 }
 
 export default function NotificationDropdown({ notificationEvent }: Props) {
+  const { token } = useAppContext();
   const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState<NotificationItemType[]>(
     [],
@@ -47,6 +49,7 @@ export default function NotificationDropdown({ notificationEvent }: Props) {
   const unreadCount = notifications.filter((n) => !n.isRead).length;
 
   useEffect(() => {
+    if (!token) return;
     setLoading(true);
     notificationApiRequest
       .list()
@@ -57,7 +60,7 @@ export default function NotificationDropdown({ notificationEvent }: Props) {
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, []);
+  }, [token]);
 
   useEffect(() => {
     if (!notificationEvent) return;

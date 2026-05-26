@@ -8,6 +8,8 @@ import {
   GuestRegisterSchema,
 } from '../schemas/validation.js';
 import { sendResponse, handleRouteError } from '../utils/response.js';
+import { AppError } from '../utils/AppError.js';
+import { REFRESH_TOKEN_EXPIRY_MS } from '../utils/authUtils.js';
 
 const router = Router();
 
@@ -51,11 +53,22 @@ const router = Router();
 router.post('/auth/register', async (req, res) => {
   try {
     const dto = RegisterSchema.parse(req.body);
-    const result = await authService.register(dto);
+    const result = await authService.register(dto, {
+      headers: req.headers as Record<string, string | string[] | undefined>,
+      ip: req.ip,
+    });
+    const { refreshToken, ...rest } = result;
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      path: '/api/v1/auth',
+      maxAge: REFRESH_TOKEN_EXPIRY_MS,
+    });
     sendResponse(res, {
       message: 'Đăng ký tài khoản thành công',
       message_en: 'Account registered successfully',
-      data: result,
+      data: { ...rest, refreshToken },
     });
   } catch (err) {
     handleRouteError(err, res);
@@ -105,8 +118,8 @@ router.post('/auth/guestRegister', async (req, res) => {
  *   post:
  *     summary: Login — returns access token + refresh token
  *     description: |
- *       Validates credentials and issues a short-lived **access token** (15 min) and a
- *       long-lived **refresh token** (30 days).
+ *       Validates credentials and issues a short-lived **access token** (60 min) and a
+ *       long-lived **refresh token** (7 days).
  *
  *       The refresh token is set as an `httpOnly` cookie (`refreshToken`) scoped to
  *       `/api/v1/auth` and is also returned in the response body for non-browser clients.
@@ -159,7 +172,7 @@ router.post('/auth/login', async (req, res) => {
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
       path: '/api/v1/auth',
-      maxAge: 30 * 24 * 60 * 60 * 1000,
+      maxAge: REFRESH_TOKEN_EXPIRY_MS,
     });
     sendResponse(res, {
       message: 'Đăng nhập thành công',
@@ -167,16 +180,20 @@ router.post('/auth/login', async (req, res) => {
       data: { ...rest, refreshToken },
     });
   } catch (err) {
-    res.status(422).json({
-      success: false,
-      status_code: 422,
-      message: 'Email hoặc password không đúng',
-      message_en: 'Invalid email or password',
-      data: null,
-      errors: [
-        { field: 'password', message: 'Email hoặc password không đúng' },
-      ],
-    });
+    if (err instanceof AppError && err.status_code === 401) {
+      res.status(422).json({
+        success: false,
+        status_code: 422,
+        message: 'Email hoặc password không đúng',
+        message_en: 'Invalid email or password',
+        data: null,
+        errors: [
+          { field: 'password', message: 'Email hoặc password không đúng' },
+        ],
+      });
+      return;
+    }
+    handleRouteError(err, res);
   }
 });
 
@@ -243,7 +260,7 @@ router.post('/auth/refresh', async (req, res) => {
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
       path: '/api/v1/auth',
-      maxAge: 30 * 24 * 60 * 60 * 1000,
+      maxAge: REFRESH_TOKEN_EXPIRY_MS,
     });
     sendResponse(res, { message: 'Token refreshed', data: result });
   } catch (err) {
@@ -260,7 +277,7 @@ router.post('/auth/refresh', async (req, res) => {
  *       Marks the provided refresh token as revoked and clears the `refreshToken` cookie.
  *       This endpoint is **idempotent** — calling it when already logged out returns 200.
  *
- *       The access token is short-lived (15 min) and cannot be revoked server-side;
+ *       The access token is short-lived (60 min) and cannot be revoked server-side;
  *       clients should discard it locally on logout.
  *     tags: [Auth]
  *     requestBody:
@@ -397,7 +414,7 @@ router.post('/auth/change-password', authenticate, async (req, res) => {
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
       path: '/api/v1/auth',
-      maxAge: 30 * 24 * 60 * 60 * 1000,
+      maxAge: REFRESH_TOKEN_EXPIRY_MS,
     });
     sendResponse(res, {
       message: 'Đổi mật khẩu thành công',

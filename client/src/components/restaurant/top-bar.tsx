@@ -1,7 +1,8 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { LogOut } from 'lucide-react';
+import { LogOut, LogIn, UserPlus } from 'lucide-react';
+import Link from 'next/link';
 import { useAppContext } from '@/app/app-provider';
 import LangToggle from './lang-toggle';
 
@@ -12,7 +13,9 @@ interface Props {
 }
 
 export default function TopBar({ title, subtitle, right }: Props) {
-  const { t, logout } = useAppContext();
+  const { t, logout, user } = useAppContext();
+  const isGuest = !user;
+
   return (
     <header className='sticky top-0 backdrop-blur-md border-b border-border z-30 h-16 flex items-center px-8 justify-between shadow'>
       <div>
@@ -28,13 +31,36 @@ export default function TopBar({ title, subtitle, right }: Props) {
           <LangToggle />
         </div>
         {right}
-        <button
-          onClick={logout}
-          className='p-2 text-muted-foreground hover:text-rose-500 hover:bg-accent rounded-xl transition-all md:hidden'
-          title={t.logout}
-        >
-          <LogOut className='w-5 h-5' />
-        </button>
+        {isGuest ? (
+          <div className='flex items-center gap-2'>
+            <Link
+              href='/login'
+              className='flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold text-indigo-600 border border-indigo-200 rounded-xl hover:bg-indigo-50 transition-all'
+            >
+              <LogIn className='w-4 h-4' />
+              <span className='hidden sm:inline'>
+                {t.loginLink ?? 'Đăng nhập'}
+              </span>
+            </Link>
+            <Link
+              href='/register'
+              className='flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold text-white bg-indigo-600 rounded-xl hover:bg-indigo-500 transition-all'
+            >
+              <UserPlus className='w-4 h-4' />
+              <span className='hidden sm:inline'>
+                {t.continueRegister ?? 'Đăng ký'}
+              </span>
+            </Link>
+          </div>
+        ) : (
+          <button
+            onClick={logout}
+            className='p-2 text-muted-foreground hover:text-rose-500 hover:bg-accent rounded-xl transition-all'
+            title={t.logout}
+          >
+            <LogOut className='w-5 h-5' />
+          </button>
+        )}
       </div>
     </header>
   );

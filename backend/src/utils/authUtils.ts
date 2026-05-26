@@ -1,8 +1,27 @@
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 
-export const ACCESS_TOKEN_EXPIRY = '15m';
-export const REFRESH_TOKEN_EXPIRY_DAYS = 30;
+function parsePositiveInt(value: string | undefined, fallback: number): number {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : fallback;
+}
+
+export const ACCESS_TOKEN_EXPIRY_MINUTES = parsePositiveInt(
+  process.env.ACCESS_TOKEN_EXPIRY,
+  60,
+);
+export const ACCESS_TOKEN_EXPIRY =
+  process.env.ACCESS_TOKEN_EXPIRYTIME ?? `${ACCESS_TOKEN_EXPIRY_MINUTES}m`;
+export const ACCESS_TOKEN_EXPIRY_SECONDS = ACCESS_TOKEN_EXPIRY_MINUTES * 60;
+export const ACCESS_TOKEN_EXPIRY_MS = ACCESS_TOKEN_EXPIRY_SECONDS * 1000;
+
+export const REFRESH_TOKEN_EXPIRY_DAYS = parsePositiveInt(
+  process.env.REFRESHTOKEN_EXPIRYTIME,
+  7,
+);
+export const REFRESH_TOKEN_EXPIRY_SECONDS =
+  REFRESH_TOKEN_EXPIRY_DAYS * 24 * 60 * 60;
+export const REFRESH_TOKEN_EXPIRY_MS = REFRESH_TOKEN_EXPIRY_SECONDS * 1000;
 export const MAX_SESSIONS = 5;
 
 export function hashToken(rawToken: string): string {
@@ -16,9 +35,15 @@ export function generateAccessToken(
   roles: string[],
 ): string {
   return jwt.sign(
-    { sub: userId.toString(), v: tokenVersion, userId: userId.toString(), email, role: roles },
+    {
+      sub: userId.toString(),
+      v: tokenVersion,
+      userId: userId.toString(),
+      email,
+      role: roles,
+    },
     process.env.JWT_SECRET!,
-    { expiresIn: ACCESS_TOKEN_EXPIRY },
+    { expiresIn: ACCESS_TOKEN_EXPIRY as jwt.SignOptions['expiresIn'] },
   );
 }
 
@@ -37,6 +62,7 @@ export function generateToken(
   role: string[] | string,
 ): string {
   return jwt.sign({ userId, email, role }, process.env.JWT_SECRET!, {
-    expiresIn: (process.env.JWT_EXPIRES_IN ?? '7d') as jwt.SignOptions['expiresIn'],
+    expiresIn: (process.env.JWT_EXPIRES_IN ??
+      '7d') as jwt.SignOptions['expiresIn'],
   });
 }
