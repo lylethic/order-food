@@ -61,6 +61,10 @@ const request = async <Response>(
     if (accessToken) {
       baseHeaders.Authorization = `Bearer ${accessToken}`;
     }
+    const sessionId = getCookie('sessionId');
+    if (sessionId) {
+      baseHeaders['x-session-id'] = sessionId;
+    }
   }
 
   const baseUrl =

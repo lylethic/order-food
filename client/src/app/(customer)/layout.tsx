@@ -29,6 +29,7 @@ import type {
 } from '@/schemaValidations/order.schema';
 import type { SidebarNavItem } from '@/components/restaurant/sidebar';
 import type { BottomNavItem } from '@/components/restaurant/bottom-nav';
+import Link from 'next/link';
 
 function toStatusEvent(event: ReturnType<typeof useSSE>): StatusEvent | null {
   if (!event) return null;
@@ -216,7 +217,18 @@ export default function CustomerLayout({
                   {t.qrTableBadge} {tableSession.tableNumber}
                 </div>
               )}
-              {!isGuest && <NotificationDropdown notificationEvent={notificationEvent} />}
+              {!isGuest && (
+                <>
+                  <Link
+                    href='/status'
+                    className='hidden sm:flex items-center gap-1.5 px-2.5 py-1 hover:bg-accent rounded-full text-xs font-semibold transition-colors'
+                  >
+                    <ClipboardList className='w-3.5 h-3.5' />
+                    {t.status}
+                  </Link>
+                  <NotificationDropdown notificationEvent={notificationEvent} />
+                </>
+              )}
               {cartCount > 0 && (
                 <button
                   onClick={() => setCartOpen(true)}

@@ -38,6 +38,7 @@ model User {
   phone                     String?                     @db.VarChar(20)
   is_guest                  Boolean?
   token_version             Int                         @default(0)
+  carts                     carts?
   menu_item_comment_replies menu_item_comment_replies[]
   menu_item_comments        menu_item_comments[]
   notifications             notifications[]
@@ -94,6 +95,7 @@ model MenuItem {
   updated_by         BigInt?
   deleted            Boolean              @default(false)
   active             Boolean              @default(true)
+  cart_items         cart_items[]
   menu_item_comments menu_item_comments[]
   menu_item_images   menu_item_images[]
   category           Category?            @relation(fields: [category_id], references: [id])
@@ -233,4 +235,34 @@ model RefreshToken {
   @@index([token_family])
   @@index([expires_at])
   @@map("refresh_tokens")
+}
+
+model cart_items {
+  id            BigInt    @id @default(autoincrement())
+  cart_id       BigInt
+  menu_item_id  BigInt
+  quantity      Int?      @default(1)
+  modifications String[]
+  created       DateTime  @default(now()) @db.Timestamp(6)
+  updated       DateTime? @db.Timestamp(6)
+  created_by    BigInt?
+  updated_by    BigInt?
+  deleted       Boolean   @default(false)
+  active        Boolean   @default(true)
+  carts         carts     @relation(fields: [cart_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_cart")
+  menu_items    MenuItem  @relation(fields: [menu_item_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_menu_item")
+}
+
+model carts {
+  id         BigInt       @id @default(autoincrement())
+  user_id    BigInt?      @unique
+  session_id String?
+  created    DateTime     @default(now()) @db.Timestamp(6)
+  updated    DateTime?    @db.Timestamp(6)
+  created_by BigInt?
+  updated_by BigInt?
+  deleted    Boolean      @default(false)
+  active     Boolean      @default(true)
+  cart_items cart_items[]
+  users      User?        @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_user")
 }

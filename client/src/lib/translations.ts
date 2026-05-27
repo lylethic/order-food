@@ -21,7 +21,7 @@ export const translations = {
 
     // ── Nav & General ───────────────────────────────────────────────────────
     menu: 'Menu',
-    status: 'My Order',
+    status: 'My Orders',
     kitchen: 'Kitchen',
     server: 'Server',
     ourMenu: 'Our Menu',
@@ -215,7 +215,7 @@ export const translations = {
     statStatusCooking: 'Cooking',
     statStatusReady: 'Ready',
     statStatusDelivered: 'Delivered',
-    statStatusCancelled: 'Cancelled',
+    statStatusCancelled: 'Huỷ',
 
     // ── QR Code ──────────────────────────────────────────────────────────────
     qrVerifying: 'Verifying your table…',
@@ -261,7 +261,7 @@ export const translations = {
 
     // ── Nav & General ───────────────────────────────────────────────────────
     menu: 'Thực đơn',
-    status: 'Đơn hàng',
+    status: 'Đơn hàng của tôi',
     kitchen: 'Bếp',
     server: 'Phục vụ',
     ourMenu: 'Thực đơn',

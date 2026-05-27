@@ -119,7 +119,7 @@ export default function CartPanel({
             <div className='flex-1 overflow-y-auto px-6 py-4 space-y-3'>
               {cart.map((item: CartItemType) => (
                 <div
-                  key={item.menuItemId}
+                  key={item.id ?? item.menuItemId}
                   className='relative flex items-center gap-3 p-3 rounded-2xl border border-border'
                 >
                   {item.image && (
@@ -144,7 +144,7 @@ export default function CartPanel({
                   </div>
                   <div className='flex items-center gap-1'>
                     <button
-                      onClick={() => updateQty(item.menuItemId, item.qty - 1)}
+                      onClick={() => updateQty(item.id!, item.qty - 1)}
                       className='w-7 h-7 rounded-lg border border-border flex items-center justify-center text-muted-foreground hover:bg-accent active:scale-90 transition-all'
                     >
                       <Minus className='w-3 h-3' />
@@ -153,14 +153,14 @@ export default function CartPanel({
                       {item.qty}
                     </span>
                     <button
-                      onClick={() => updateQty(item.menuItemId, item.qty + 1)}
+                      onClick={() => updateQty(item.id!, item.qty + 1)}
                       className='w-7 h-7 rounded-lg bg-indigo-600 flex items-center justify-center text-white hover:bg-indigo-500 active:scale-90 transition-all'
                     >
                       <Plus className='w-3 h-3' />
                     </button>
                   </div>
                   <button
-                    onClick={() => removeItem(item.menuItemId)}
+                    onClick={() => removeItem(item.id!)}
                     className='text-muted-foreground hover:text-rose-500 transition-colors ml-1'
                   >
                     <X className='w-4 h-4' />

@@ -1,5 +1,6 @@
 import { orderProvider } from '../providers/orderProvider.js';
 import { menuItemProvider } from '../providers/menuItemProvider.js';
+import { cartService } from './cart.service.js';
 import { AppError } from '../utils/AppError.js';
 import { orderEmitter } from '../lib/orderEvents.js';
 import type {
@@ -157,10 +158,12 @@ export const orderService = {
    * 1. Resolve menu item prices from DB (prevents client-side price tampering)
    * 2. Generate unique ticket number
    * 3. Persist order + line items atomically via Prisma nested write
+   * 4. Clear the customer's cart
    */
   async create(
     dto: CreateOrderBodyType,
     customerId?: string,
+    sessionId?: string,
   ): Promise<OrderCreatedDtoType> {
     const menuItemIds = dto.items.map((i) => BigInt(i.menuItemId));
     const menuItems = await menuItemProvider.findByIds(menuItemIds);
@@ -198,6 +201,17 @@ export const orderService = {
       },
       ticketNumber,
     );
+
+    // Clear cart after successful order creation
+    try {
+      await cartService.clearCart(
+        customerId ? BigInt(customerId) : undefined,
+        sessionId,
+      );
+    } catch (err) {
+      console.error('Failed to clear cart after order:', err);
+      // We don't throw here as the order is already created
+    }
 
     return {
       id: order.id.toString(),
