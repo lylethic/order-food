@@ -6,12 +6,13 @@ import {
   useContext,
   useEffect,
   useMemo,
-  useRef,
   useState,
 } from 'react';
 import { AuthUserType } from '@/schemaValidations/auth.schema';
 import { CartItemType } from '@/schemaValidations/order.schema';
 import { translations, type Language, type TranslationKeys } from '@/lib/translations';
+import { getCookie, setCookie } from '@/lib/cookieUtils';
+import cartApiRequest from '@/apiRequests/cart';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -51,12 +52,13 @@ interface AppContextValue {
 
   // Cart
   cart: CartItemType[];
-  addItem: (item: Omit<CartItemType, 'qty' | 'modifications'>) => void;
-  removeItem: (menuItemId: string) => void;
-  updateQty: (menuItemId: string, qty: number) => void;
+  addItem: (item: { menuItemId: string; modifications?: string[]; qty?: number }) => Promise<void>;
+  removeItem: (id: string, isMenuItemId?: boolean) => Promise<void>;
+  updateQty: (id: string, qty: number, isMenuItemId?: boolean) => Promise<void>;
   clearCart: () => void;
   cartTotal: number;
   cartCount: number;
+  refreshCart: () => Promise<void>;
 
   // Table session
   tableSession: TableSession | null;
@@ -83,12 +85,13 @@ const AppContext = createContext<AppContextValue>({
   logout: () => {},
 
   cart: [],
-  addItem: () => {},
-  removeItem: () => {},
-  updateQty: () => {},
+  addItem: async () => {},
+  removeItem: async () => {},
+  updateQty: async () => {},
   clearCart: () => {},
   cartTotal: 0,
   cartCount: 0,
+  refreshCart: async () => {},
 
   tableSession: null,
   setTableSession: () => {},
@@ -149,7 +152,7 @@ export default function AppProvider({
 
   const token =
     typeof window !== 'undefined'
-      ? (document.cookie.match(/(?:^|; )accessToken=([^;]*)/))?.[1] ?? null
+      ? getCookie('accessToken') ?? null
       : null;
 
   const isAuthenticated = Boolean(user);
@@ -181,39 +184,125 @@ export default function AppProvider({
   // ── Cart ───────────────────────────────────────────────────────────────────
   const [cart, setCart] = useState<CartItemType[]>([]);
 
-  const addItem = useCallback(
-    (item: Omit<CartItemType, 'qty' | 'modifications'>) => {
-      setCart((prev) => {
-        const existing = prev.find((c) => c.menuItemId === item.menuItemId);
-        if (existing) {
-          return prev.map((c) =>
-            c.menuItemId === item.menuItemId ? { ...c, qty: c.qty + 1 } : c,
-          );
+  const refreshCart = useCallback(async () => {
+    try {
+      const res = await cartApiRequest.getCart();
+      const cartData = res.payload.data;
+      const mappedItems: CartItemType[] = cartData.cart_items.map((item) => {
+        // Safe price parsing to handle potential Decimal objects or strings
+        let price = 0;
+        const rawPrice = item.menu_items.price;
+        if (typeof rawPrice === 'number') {
+          price = rawPrice;
+        } else if (typeof rawPrice === 'string') {
+          price = Number(rawPrice);
+        } else if (rawPrice && typeof rawPrice === 'object') {
+          // Fallback for complex objects like Prisma Decimal {s, e, d}
+          if ('toNumber' in rawPrice && typeof (rawPrice as any).toNumber === 'function') {
+            price = (rawPrice as any).toNumber();
+          } else if ('d' in rawPrice && Array.isArray((rawPrice as any).d)) {
+            // Very specific fallback for the Decimal.js internal structure
+            price = (rawPrice as any).d[0];
+          }
         }
-        return [...prev, { ...item, qty: 1, modifications: [] }];
+
+        return {
+          id: item.id,
+          menuItemId: item.menu_item_id,
+          name: item.menu_items.name,
+          price: price,
+          qty: item.quantity,
+          modifications: item.modifications,
+          image: item.menu_items.menu_item_images[0]?.image_url,
+        };
       });
-    },
-    [],
-  );
-
-  const removeItem = useCallback((menuItemId: string) => {
-    setCart((prev) => prev.filter((c) => c.menuItemId !== menuItemId));
-  }, []);
-
-  const updateQty = useCallback((menuItemId: string, qty: number) => {
-    if (qty <= 0) {
-      setCart((prev) => prev.filter((c) => c.menuItemId !== menuItemId));
-    } else {
-      setCart((prev) =>
-        prev.map((c) => (c.menuItemId === menuItemId ? { ...c, qty } : c)),
-      );
+      setCart(mappedItems);
+    } catch (error) {
+      console.error('Failed to fetch cart:', error);
     }
   }, []);
+
+  // Initialize sessionId if not exists
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      let sid = getCookie('sessionId');
+      if (!sid) {
+        // Fallback for non-secure contexts where crypto.randomUUID might be missing
+        if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+          sid = crypto.randomUUID();
+        } else {
+          sid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+            const r = (Math.random() * 16) | 0;
+            const v = c === 'x' ? r : (r & 0x3) | 0x8;
+            return v.toString(16);
+          });
+        }
+        setCookie('sessionId', sid, 30);
+      }
+      refreshCart();
+    }
+  }, [refreshCart, user]);
+
+  const addItem = useCallback(
+    async (item: { menuItemId: string; modifications?: string[]; qty?: number }) => {
+      try {
+        await cartApiRequest.add({
+          menu_item_id: item.menuItemId,
+          quantity: item.qty ?? 1,
+          modifications: item.modifications ?? [],
+        });
+        await refreshCart();
+      } catch (error) {
+        console.error('Failed to add to cart:', error);
+      }
+    },
+    [refreshCart],
+  );
+
+  const removeItem = useCallback(
+    async (id: string, isMenuItemId = false) => {
+      try {
+        let cartItemId = id;
+        if (isMenuItemId) {
+          const item = cart.find((c) => c.menuItemId === id);
+          if (!item || !item.id) return;
+          cartItemId = item.id;
+        }
+        await cartApiRequest.removeItem(cartItemId);
+        await refreshCart();
+      } catch (error) {
+        console.error('Failed to remove from cart:', error);
+      }
+    },
+    [cart, refreshCart],
+  );
+
+  const updateQty = useCallback(
+    async (id: string, qty: number, isMenuItemId = false) => {
+      try {
+        let cartItemId = id;
+        if (isMenuItemId) {
+          const item = cart.find((c) => c.menuItemId === id);
+          if (!item || !item.id) return;
+          cartItemId = item.id;
+        }
+        if (qty <= 0) {
+          await cartApiRequest.removeItem(cartItemId);
+        } else {
+          await cartApiRequest.updateItem(cartItemId, { quantity: qty });
+        }
+        await refreshCart();
+      } catch (error) {
+        console.error('Failed to update qty:', error);
+      }
+    },
+    [cart, refreshCart],
+  );
 
   const clearCart = useCallback(() => setCart([]), []);
 
   const cartTotal = useMemo(
-    () => cart.reduce((sum, c) => sum + c.price * c.qty, 0),
+    () => cart.reduce((sum, c) => sum + Number(c.price) * c.qty, 0),
     [cart],
   );
 
@@ -265,6 +354,7 @@ export default function AppProvider({
       clearCart,
       cartTotal,
       cartCount,
+      refreshCart,
 
       tableSession,
       setTableSession,
@@ -277,7 +367,7 @@ export default function AppProvider({
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
       user, isAuthenticated, isAdmin, isChef, isEmployee, isStaff, token,
-      cart, cartTotal, cartCount,
+      cart, cartTotal, cartCount, refreshCart,
       tableSession,
       lang,
     ],

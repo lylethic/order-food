@@ -27,6 +27,15 @@ function normalizeJsonValue(value: unknown): unknown {
   }
 
   if (value && typeof value === 'object') {
+    // Handle Prisma Decimal types or any object with a toNumber() method
+    // This avoids direct dependency on Prisma runtime internals which can vary
+    if (
+      'toNumber' in value &&
+      typeof (value as { toNumber: unknown }).toNumber === 'function'
+    ) {
+      return (value as { toNumber: () => number }).toNumber();
+    }
+
     return Object.fromEntries(
       Object.entries(value as Record<string, unknown>).map(([key, item]) => [
         key,

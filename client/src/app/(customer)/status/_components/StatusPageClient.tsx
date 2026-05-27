@@ -93,6 +93,45 @@ export default function StatusPageClient() {
     Cancelled: t.steps.cancelled,
   };
 
+  const filteredHistory = myOrders.filter(o => o.id !== placedOrder?.id);
+
+  const OrderHistory = () => (
+    user && (
+      <div className='mt-10 border-t border-border pt-10'>
+        <h3 className='text-base font-extrabold mb-4'>
+          {placedOrder ? 'Lịch sử đơn hàng khác' : 'Lịch sử đơn hàng'}
+        </h3>
+        {ordersLoading ? (
+          <div className='flex justify-center py-10'>
+            <Spinner size='lg' />
+          </div>
+        ) : filteredHistory.length === 0 ? (
+          <p className='text-sm text-center py-8 opacity-60'>Chưa có đơn hàng nào khác.</p>
+        ) : (
+          <div className='space-y-3'>
+            {filteredHistory.map((order) => (
+              <button
+                key={order.id}
+                onClick={() => router.push(`/status/${order.id}`)}
+                className='w-full rounded-2xl border border-border shadow-sm px-5 py-4 flex items-center justify-between hover:shadow-md hover:border-border transition-all text-left bg-card'
+              >
+                <div>
+                  <p className='text-sm font-extrabold'>
+                    #{order.ticketNumber} · {t.table} {order.table}
+                  </p>
+                  <p className='text-xs mt-0.5 opacity-70'>
+                    {order.timestamp} · {formatVnd(order.total)}
+                  </p>
+                </div>
+                <StatusBadge status={order.status} />
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    )
+  );
+
   if (!placedOrder) {
     return (
       <div className='pt-8 pb-32 md:pb-10 px-6 md:px-10 max-w-2xl mx-auto'>
@@ -108,39 +147,7 @@ export default function StatusPageClient() {
           </button>
         </div>
 
-        {/* Order history */}
-        {user && (
-          <div className='mt-10'>
-            <h3 className='text-base font-extrabold mb-4'>Lịch sử đơn hàng</h3>
-            {ordersLoading ? (
-              <div className='flex justify-center py-10'>
-                <Spinner size='lg' />
-              </div>
-            ) : myOrders.length === 0 ? (
-              <p className='text-sm text-center py-8'>Chưa có đơn hàng nào.</p>
-            ) : (
-              <div className='space-y-3'>
-                {myOrders.map((order) => (
-                  <button
-                    key={order.id}
-                    onClick={() => router.push(`/status/${order.id}`)}
-                    className='w-full rounded-2xl border border-border shadow-sm px-5 py-4 flex items-center justify-between hover:shadow-md hover:border-border transition-all text-left'
-                  >
-                    <div>
-                      <p className='text-sm font-extrabold'>
-                        #{order.ticketNumber} · {t.table} {order.table}
-                      </p>
-                      <p className='text-xs mt-0.5'>
-                        {order.timestamp} · {formatVnd(order.total)}
-                      </p>
-                    </div>
-                    <StatusBadge status={order.status} />
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
+        <OrderHistory />
       </div>
     );
   }
@@ -236,6 +243,8 @@ export default function StatusPageClient() {
           {cancelling ? `${t.cancelling}...` : t.cancel}
         </button>
       )}
+
+      <OrderHistory />
     </div>
   );
 }

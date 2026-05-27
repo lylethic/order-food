@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { authService } from '../services/auth.service.js';
+import { cartService } from '../services/cart.service.js';
 import { authenticate } from '../middleware/auth.js';
 import {
   RegisterSchema,
@@ -58,6 +59,13 @@ router.post('/auth/register', async (req, res) => {
       ip: req.ip,
     });
     const { refreshToken, ...rest } = result;
+
+    // Merge cart if session_id exists
+    const sessionId = req.headers['x-session-id'] as string;
+    if (sessionId) {
+      await cartService.mergeCart(BigInt(result.user.id), sessionId);
+    }
+
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -167,6 +175,13 @@ router.post('/auth/login', async (req, res) => {
       ip: req.ip,
     });
     const { refreshToken, ...rest } = result;
+
+    // Merge cart if session_id exists
+    const sessionId = req.headers['x-session-id'] as string;
+    if (sessionId) {
+      await cartService.mergeCart(BigInt(result.user.id), sessionId);
+    }
+
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',

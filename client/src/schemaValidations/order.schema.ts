@@ -23,6 +23,7 @@ export type PaymentMethodType = z.TypeOf<typeof PaymentMethodEnum>;
 // ── Cart ─────────────────────────────────────────────────────────────────────
 
 export const CartItem = z.object({
+  id: z.string().optional(),
   menuItemId: z.string(),
   name: z.string(),
   price: z.number(),

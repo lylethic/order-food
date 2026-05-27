@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import authRouter from './auth.js';
+import cartRouter from './cart.js';
 import healthRouter from './health.js';
 import categoriesRouter from './categories.js';
 import menuItemsRouter from './menuItems.js';
@@ -17,6 +18,7 @@ const apiRouter = Router();
 // NOTE: each controller already contains the full path prefix in its route
 // definitions (e.g. router.get('/users', ...)), so all routers are mounted at '/'.
 apiRouter.use('/', authRouter);
+apiRouter.use('/', cartRouter);
 apiRouter.use('/', healthRouter);
 apiRouter.use('/', categoriesRouter);
 apiRouter.use('/', menuItemsRouter);

@@ -30,11 +30,10 @@ interface Props {
   cart: { menuItemId: string; qty: number }[];
   onAddItem: (item: {
     menuItemId: string;
-    name: string;
-    price: number;
-    image?: string;
-  }) => void;
-  onUpdateQty: (id: string, qty: number) => void;
+    modifications?: string[];
+    qty?: number;
+  }) => Promise<void>;
+  onUpdateQty: (id: string, qty: number, isMenuItemId?: boolean) => Promise<void>;
   onClose: () => void;
   currentUserId?: string | null;
   currentUserRole?: string | null;
@@ -463,9 +462,6 @@ export default function MenuItemDetailModal({
                       onClick={() =>
                         onAddItem({
                           menuItemId: detail.id,
-                          name: detail.name,
-                          price: detail.price,
-                          image: activeImg,
                         })
                       }
                       className='flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-5 py-3 rounded-xl active:scale-95 transition-all shadow-md shadow-indigo-100'
@@ -479,9 +475,6 @@ export default function MenuItemDetailModal({
                         onClick={() =>
                           onAddItem({
                             menuItemId: detail.id,
-                            name: detail.name,
-                            price: detail.price,
-                            image: activeImg,
                           })
                         }
                         className='w-9 h-9 rounded-lg bg-indigo-600 text-white flex items-center justify-center hover:bg-indigo-500 active:scale-90 transition-all'
@@ -492,7 +485,7 @@ export default function MenuItemDetailModal({
                         {qty}
                       </span>
                       <button
-                        onClick={() => onUpdateQty(detail.id, qty - 1)}
+                        onClick={() => onUpdateQty(detail.id, qty - 1, true)}
                         className='w-9 h-9 rounded-lg border border-border text-muted-foreground flex items-center justify-center hover:bg-accent active:scale-90 transition-all'
                       >
                         <Minus className='w-4 h-4' />

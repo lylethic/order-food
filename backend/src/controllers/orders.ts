@@ -5,7 +5,7 @@ import {
   registerSSEClient,
   unregisterSSEClient,
 } from '../lib/commentEvents.js';
-import { authenticate } from '../middleware/auth.js';
+import { authenticate, optionalAuthenticate } from '../middleware/auth.js';
 import { isEmployee, isStaff } from '../middleware/rbac.js';
 import {
   CreateOrderSchema,
@@ -97,7 +97,7 @@ router.get('/orders', authenticate, isStaff, async (req, res) => {
  *     tags: [Orders]
  *     description: >
  *       Creates a new order with status `Received`. Prices are resolved server-side
- *       from the database to prevent tampering. Requires authentication (any role).
+ *       from the database to prevent tampering. Supports both authenticated users and guests.
  *     security:
  *       - bearerAuth: []
  *     requestBody:
@@ -123,17 +123,16 @@ router.get('/orders', authenticate, isStaff, async (req, res) => {
  *               $ref: '#/components/schemas/CreateOrderResponse'
  *       400:
  *         description: Validation error
- *       401:
- *         description: Missing or invalid token
  *       422:
  *         description: None of the requested menu items were found
  *       500:
  *         description: Database error
  */
-router.post('/orders', authenticate, async (req, res) => {
+router.post('/orders', optionalAuthenticate, async (req, res) => {
   try {
     const dto = CreateOrderSchema.parse(req.body);
-    const data = await orderService.create(dto, req.user!.userId);
+    const sessionId = req.headers['x-session-id'] as string;
+    const data = await orderService.create(dto, req.user?.userId, sessionId);
     sendResponse(res, {
       message: 'Tạo đơn hàng thành công',
       message_en: 'Order created successfully',

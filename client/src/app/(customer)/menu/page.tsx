@@ -151,9 +151,6 @@ export default function MenuPage() {
                           onClick={() =>
                             addItem({
                               menuItemId: item.id,
-                              name: item.name,
-                              price: item.price,
-                              image: item.image,
                             })
                           }
                           className='flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold px-4 py-2.5 rounded-xl active:scale-95 transition-all shadow-md shadow-indigo-100'
@@ -167,9 +164,6 @@ export default function MenuPage() {
                             onClick={() =>
                               addItem({
                                 menuItemId: item.id,
-                                name: item.name,
-                                price: item.price,
-                                image: item.image,
                               })
                             }
                             className='w-7 h-7 rounded-lg bg-indigo-600 text-white flex items-center justify-center hover:bg-indigo-500 active:scale-90 transition-all'
@@ -180,7 +174,7 @@ export default function MenuPage() {
                             {qty}
                           </span>
                           <button
-                            onClick={() => updateQty(item.id, qty - 1)}
+                            onClick={() => updateQty(item.id, qty - 1, true)}
                             className='w-7 h-7 rounded-lg border border-border  flex items-center justify-center hover:bg-accent active:scale-90 transition-all'
                           >
                             <Minus className='w-3.5 h-3.5' />
