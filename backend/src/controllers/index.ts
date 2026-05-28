@@ -11,6 +11,7 @@ import userRouter from './user.js';
 import staticFilesRouter from './staticFiles.js';
 import tablesRouter from './tables.js';
 import statisticsRouter from './statistics.js';
+import restaurantLocationRouter from './restaurantLocation.js';
 
 const apiRouter = Router();
 
@@ -29,5 +30,6 @@ apiRouter.use('/', userRouter);
 apiRouter.use('/', staticFilesRouter);
 apiRouter.use('/', tablesRouter);
 apiRouter.use('/', statisticsRouter);
+apiRouter.use('/', restaurantLocationRouter);
 
 export default apiRouter;

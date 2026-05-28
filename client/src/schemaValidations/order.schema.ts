@@ -131,6 +131,10 @@ export const CreateOrderBody = z.object({
   items: z.array(CreateOrderItemBody).min(1, 'Đơn hàng phải có ít nhất 1 món'),
   guestName: z.string().optional(),
   guestPhone: z.string().optional(),
+  // GPS coordinates sent alongside the order for server-side geofence check
+  latitude: z.number().min(-90).max(90).optional(),
+  longitude: z.number().min(-180).max(180).optional(),
+  customerId: z.string().optional(),
 });
 export type CreateOrderBodyType = z.TypeOf<typeof CreateOrderBody>;
 

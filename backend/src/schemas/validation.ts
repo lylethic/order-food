@@ -38,6 +38,10 @@ export const CreateOrderSchema = z.object({
       }),
     )
     .min(1, 'Order must have at least one item'),
+  // GPS coordinates are optional (e.g. for orders created by staff)
+  latitude: z.number().min(-90).max(90).optional(),
+  longitude: z.number().min(-180).max(180).optional(),
+  customerId: z.string().optional(),
 });
 
 export const UpdateStatusSchema = z.object({
@@ -55,6 +59,19 @@ export const MarkOrderPaidSchema = z.object({
   paymentMethod: PaymentMethodSchema,
 });
 
+// ── Restaurant Location ────────────────────────────────────────────────────────
+
+export const UpsertRestaurantLocationSchema = z.object({
+  name: z.string().min(1).max(100).optional(),
+  latitude: z.number().min(-90).max(90),
+  longitude: z.number().min(-180).max(180),
+  radius_meters: z.number().int().min(10).max(10_000).optional(),
+});
+
+export const ToggleGeofenceSchema = z.object({
+  enabled: z.boolean(),
+});
+
 // Inferred TypeScript types from schemas
 export type RegisterBodyType = z.infer<typeof RegisterSchema>;
 export type GuestRegisterBodyType = z.infer<typeof GuestRegisterSchema>;
@@ -62,3 +79,6 @@ export type LoginRequest = z.infer<typeof LoginSchema>;
 export type CreateOrderBodyType = z.infer<typeof CreateOrderSchema>;
 export type UpdateStatusBodyType = z.infer<typeof UpdateStatusSchema>;
 export type MarkOrderPaidBodyType = z.infer<typeof MarkOrderPaidSchema>;
+export type UpsertRestaurantLocationBodyType = z.infer<typeof UpsertRestaurantLocationSchema>;
+export type ToggleGeofenceBodyType = z.infer<typeof ToggleGeofenceSchema>;
+

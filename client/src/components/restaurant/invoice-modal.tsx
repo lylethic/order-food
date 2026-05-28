@@ -95,16 +95,16 @@ function buildPrintHtml(
   <title>Invoice #${data.ticketNumber}</title>
   <style>
     *{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:'Segoe UI',Arial,sans-serif;background:#fff;color:#1e293b;padding:40px;max-width:680px;margin:0 auto;font-size:14px}
+    body{font-family:'Segoe UI',Arial,sans-serif;background:#fff;color:#1e293b;padding:40px;max-width:480px;margin:0 auto;font-size:14px}
     @media print{body{padding:20px}}
-    .header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:32px;padding-bottom:24px;border-bottom:2px solid #e2e8f0}
-    .logo-row{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+    .header{display:flex;flex-direction:column;align-items:center;text-align:center;margin-bottom:32px;padding-bottom:24px;border-bottom:2px solid #e2e8f0;gap:16px}
+    .logo-row{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:6px}
     .logo-box{width:38px;height:38px;background:#4f46e5;border-radius:10px;display:flex;align-items:center;justify-content:center}
     .logo-name{font-weight:900;font-size:22px;letter-spacing:-.5px;font-style:italic;text-transform:uppercase;color:#1e293b}
     .tagline{font-size:12px;color:#64748b;margin-top:2px}
-    .invoice-label{font-size:28px;font-weight:900;color:#4f46e5;letter-spacing:-1px;text-align:right}
-    .invoice-num{font-size:13px;font-weight:700;color:#64748b;text-align:right;margin-top:4px}
-    .meta-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:28px}
+    .invoice-label{font-size:28px;font-weight:900;color:#4f46e5;letter-spacing:-1px;text-align:center}
+    .invoice-num{font-size:13px;font-weight:700;color:#64748b;text-align:center;margin-top:4px}
+    .meta-grid{display:flex;flex-direction:column;gap:16px;margin-bottom:28px}
     .meta-box{background:#f8fafc;border-radius:12px;padding:16px}
     .meta-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#94a3b8;margin-bottom:12px}
     .meta-row{display:flex;justify-content:space-between;margin-bottom:8px}
@@ -125,19 +125,19 @@ function buildPrintHtml(
     .item-name{font-weight:700;color:#1e293b}
     .item-mod{font-size:11px;color:#94a3b8;margin-top:2px}
     .bold{font-weight:700;color:#1e293b}
-    .total-section{display:flex;justify-content:flex-end;margin-bottom:32px}
-    .total-box{width:280px;background:#f8fafc;border-radius:12px;padding:16px}
+    .total-section{margin-bottom:32px}
+    .total-box{width:100%;background:#f8fafc;border-radius:12px;padding:16px}
     .total-row{display:flex;justify-content:space-between;align-items:center;padding-top:12px;border-top:2px solid #e2e8f0}
     .total-label{font-size:16px;font-weight:900;color:#1e293b}
     .total-value{font-size:20px;font-weight:900;color:#4f46e5}
     .footer{text-align:center;padding:24px 0 0;border-top:1px solid #e2e8f0}
     .footer-main{font-size:15px;font-weight:700;color:#1e293b;margin-bottom:6px}
     .footer-sub{font-size:13px;color:#94a3b8}
-    .transfer-box{margin:24px 0 8px;padding:20px;border:1px solid #c7d2fe;border-radius:18px;background:#eef2ff;display:flex;gap:20px;align-items:center}
-    .transfer-img{width:200px;height:200px;flex:0 0 160px;border-radius:16px;object-fit:cover;background:#fff;border:1px solid #e2e8f0}
-    .transfer-copy{flex:1;min-width:0}
-    .transfer-title{font-size:18px;font-weight:900;color:#312e81;margin-bottom:8px}
-    .transfer-note{font-size:13px;color:#4b5563;line-height:1.5}
+    .transfer-box{margin:24px 0 8px;padding:20px;border:1px solid #c7d2fe;border-radius:18px;background:#eef2ff;display:flex;flex-direction:column;gap:16px;align-items:center;text-align:center}
+    .transfer-img{width:160px;height:160px;border-radius:16px;object-fit:cover;background:#fff;border:1px solid #e2e8f0}
+    .transfer-copy{width:100%}
+    .transfer-title{font-size:16px;font-weight:900;color:#312e81;margin-bottom:8px}
+    .transfer-note{font-size:12px;color:#4b5563;line-height:1.5;max-width:320px;margin:0 auto}
   </style>
 </head>
 <body>
@@ -242,7 +242,7 @@ export default function InvoiceModal({ data, onClose }: Props) {
             </span>
           </div>
 
-          <div className='grid grid-cols-2 gap-3'>
+          <div className='flex flex-col gap-3'>
             <div className='bg-muted/50 rounded-2xl p-3.5 border border-border'>
               <p className='text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2.5'>
                 {isVi ? 'Thông tin đơn' : 'Order Info'}
@@ -260,7 +260,7 @@ export default function InvoiceModal({ data, onClose }: Props) {
                   <span className='text-muted-foreground'>
                     {isVi ? 'Thời gian' : 'Time'}
                   </span>
-                  <span className='font-bold text-foreground text-right max-w-[110px] leading-tight'>
+                  <span className='font-bold text-foreground text-right max-w-[180px] leading-tight'>
                     {data.timestamp}
                   </span>
                 </div>
@@ -299,7 +299,7 @@ export default function InvoiceModal({ data, onClose }: Props) {
                   <span className='text-muted-foreground'>
                     {isVi ? 'Thời điểm' : 'Paid At'}
                   </span>
-                  <span className='font-bold text-foreground text-right max-w-[110px] leading-tight'>
+                  <span className='font-bold text-foreground text-right max-w-[180px] leading-tight'>
                     {data.paidAt
                       ? new Date(data.paidAt).toLocaleString(
                           lang === 'vi' ? 'vi-VN' : 'en-US',
@@ -342,12 +342,12 @@ export default function InvoiceModal({ data, onClose }: Props) {
                       <td className='px-3 py-2.5'>
                         <p className='font-bold text-foreground'>{item.name}</p>
                         {(item.modifications ?? []).map((m) => (
-                          <p
-                            key={m}
-                            className='text-muted-foreground text-[10px]'
-                          >
-                            {m}
-                          </p>
+                           <p
+                             key={m}
+                             className='text-muted-foreground text-[10px]'
+                           >
+                             {m}
+                           </p>
                         ))}
                       </td>
                       <td className='px-3 py-2.5 text-center font-extrabold text-indigo-600'>
@@ -366,33 +366,31 @@ export default function InvoiceModal({ data, onClose }: Props) {
             </div>
           </div>
 
-          <div className='flex justify-end'>
-            <div className='bg-indigo-50 border border-indigo-100 rounded-2xl px-5 py-3.5 flex items-center gap-6'>
-              <span className='text-sm font-extrabold text-foreground uppercase tracking-wide'>
-                {isVi ? 'Tổng cộng' : 'Total'}
-              </span>
-              <span className='text-xl font-black text-indigo-600'>
-                {formatVnd(data.total)}
-              </span>
-            </div>
+          <div className='bg-indigo-50 border border-indigo-100 rounded-2xl px-5 py-3.5 flex items-center justify-between shadow-sm shadow-indigo-100/30'>
+            <span className='text-sm font-extrabold text-foreground uppercase tracking-wide'>
+              {isVi ? 'Tổng cộng' : 'Total'}
+            </span>
+            <span className='text-xl font-black text-indigo-600'>
+              {formatVnd(data.total)}
+            </span>
           </div>
 
-          <div className='rounded-3xl border border-indigo-100 bg-indigo-50/70 p-4 flex flex-col sm:flex-row items-center gap-4'>
-            <div className='relative w-full h-32 sm:h-40 md:h-48 overflow-hidden rounded-2xl'>
+          <div className='rounded-3xl border border-indigo-100 bg-indigo-50/70 p-5 flex flex-col items-center text-center gap-4.5'>
+            <div className='relative w-40 h-40 overflow-hidden rounded-2xl bg-white p-2 border border-indigo-100 flex items-center justify-center shrink-0 shadow-sm shadow-indigo-100/50'>
               <Image
-                src='images/QR_Transfer.jpg'
+                src='/images/QR_Transfer.jpg'
                 alt='QR Transfer'
-                fill
+                width={160}
+                height={160}
                 unoptimized
-                sizes='60px'
                 className='object-contain'
               />
             </div>
-            <div className='text-center sm:text-left'>
+            <div>
               <p className='text-base font-extrabold text-indigo-900'>
                 {isVi ? 'Quét QR để chuyển khoản' : 'Scan QR for bank transfer'}
               </p>
-              <p className='text-sm text-muted-foreground mt-1 leading-relaxed'>
+              <p className='text-xs text-muted-foreground mt-1.5 leading-relaxed max-w-xs mx-auto'>
                 {isVi
                   ? 'Vui lòng chuyển khoản đúng nội dung để đối soát nhanh.'
                   : 'Please include the correct payment note for faster reconciliation.'}

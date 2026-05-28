@@ -1,213 +1,176 @@
 # 🍽️ Ordering Food Management System
 
-Hệ thống quản lý đặt hàng và điều hành nhà hàng toàn diện, được xây dựng bằng **Next.js + TypeScript** (Client) và **Node.js + Express + Prisma** (Backend), hỗ trợ 4 roles chính với các tính năng riêng biệt.
+A comprehensive restaurant management and ordering platform built with **Next.js + TypeScript** (Client) and **Node.js + Express + Prisma** (Backend), supporting 4 main roles with dedicated features.
 
 ---
 
-## 📋 Tổng Quan Dự Án
+## 📋 Project Overview
 
-Dự án cung cấp một nền tảng hoàn chỉnh để quản lý hoạt động nhà hàng:
+The project provides a complete platform for managing restaurant operations:
 
-- **Khách hàng**: Xem thực đơn, đặt món, theo dõi đơn hàng realtime
-- **Nhân viên phục vụ**: Xác nhận giao hàng, quản lý thanh toán
-- **Đầu bếp**: Theo dõi phiếu yêu cầu, cập nhật tiến độ nấu
-- **Quản trị viên**: Quản lý menu, hạng mục, người dùng, vai trò
+- **Customers**: Browse menu, place orders, track orders in real-time
+- **Waitstaff**: Confirm deliveries, manage payments
+- **Chefs**: Track order tickets, update cooking progress
+- **Administrators**: Manage menu, categories, users, roles
 
 ---
 
-## 🎯 4 Interfaces Chính
+## 🎯 4 Main Interfaces
 
-### 1. **👨‍💼 Customer - Giao diện khách hàng**
+### 1. **👨‍💼 Customer - Customer Interface**
 
-Khách hàng có thể duyệt thực đơn, thêm món vào giỏ, đặt hàng và theo dõi đơn hàng theo thời gian thực.
+Customers can browse the menu, add dishes to cart, place orders, and track their order status in real-time.
 
-#### Xem Thực Đơn
+#### Browse Menu
 
 ![Customer Menu](public/customer_menu.png)
-_Khách hàng duyệt thực đơn theo danh mục và tìm kiếm_
+_Customers browse the menu by category and search_
 
-#### Giỏ Hàng & Đặt Món
+#### Shopping Cart & Place Order
 
 ![Customer Cart Order](public/customer_cart_order2.png)
-_Quản lý giỏ hàng, nhập số bàn và đặt đơn_
+_Manage shopping cart, enter table number, and place order_
 
-#### Theo Dõi Đơn Hàng
+#### Track Order Status
 
 ![Customer Order Status](public/customer_order.png)
-_Theo dõi tiến độ đơn hàng realtime từ lúc tiếp nhận đến giao hàng_
+_Track order progress in real-time from order received to delivery_
 
 ---
 
-### 2. **👨‍🍳 Chef - Giao diện đầu bếp**
+### 2. **👨‍🍳 Chef - Chef Dashboard**
 
-Đầu bếp có thể xem các phiếu yêu cầu, quản lý thứ tự nấu ăn và cập nhật trạng thái đơn hàng.
+Chefs can view order tickets, manage cooking order, and update order status.
 
-#### Bảng Điều Khiển Bếp
+#### Chef Dashboard
 
 ![Chef Orders](public/chef_order_received2.png)
-_Danh sách các phiếu nấu ăn, sắp xếp theo ưu tiên và thời gian_
-
+_List of cooking tickets, sorted by priority and time_
 
 ![Chef Orders](public/chef_thongKe.png)
-_Thống kê order, sắp xếp theo ưu tiên và thời gian_
+_Order chart, sorted by priority and time_
 
-**Tính năng:**
+**Features:**
 
-- ✅ Xem các đơn hàng đang chờ xử lý
-- ✅ Cập nhật trạng thái (Nhận đơn → Chuẩn bị → Nấu → Sẵn sàng)
-- ✅ Hiển thị thông tin chi tiết món ăn
-- ✅ Theo dõi thời gian chờ
+- ✅ View pending orders
+- ✅ Update status (Order Received → Preparing → Cooking → Ready)
+- ✅ Display detailed dish information
+- ✅ Track wait time
 
 ---
 
-### 3. **🚚 Employee - Giao diện nhân viên phục vụ**
+### 3. **🚚 Employee - Waitstaff Interface**
 
-Nhân viên phục vụ quản lý giao hàng, thu tiền và cập nhật trạng thái thanh toán.
+Waitstaff manage order delivery, collect payments, and update payment status.
 
-#### Trạm Giao Hàng
+#### Delivery Station
 
 ![Employee Waiter](public/employee_waiter2.png)
-_Danh sách các đơn sẵn sàng giao và quản lý thanh toán_
+_List of ready-to-serve orders and payment management_
 
-**Tính năng:**
+**Features:**
 
-- ✅ Xem danh sách các đơn sẵn sàng
-- ✅ Xác nhận giao hàng cho khách
-- ✅ Thu tiền và quản lý phương thức thanh toán
-- ✅ Theo dõi đơn chưa thanh toán
+- ✅ View list of ready orders
+- ✅ Confirm delivery to customers
+- ✅ Collect payment and manage payment methods
+- ✅ Track unpaid orders
 
 ---
 
-### 4. **⚙️ Admin - Giao diện quản trị**
+### 4. **⚙️ Admin - Administration Interface**
 
-Quản trị viên có toàn quyền quản lý hệ thống: quản lý menu, hạng mục, người dùng và phân quyền.
+Administrators have full control to manage the system: menu, categories, users, and permissions.
 
-#### Quản Lý Danh Mục
+#### Manage Categories
 
 ![Admin Categories](public/admin_cate2.png)
-_Tạo, chỉnh sửa, xóa các danh mục menu_
+_Create, edit, delete menu categories_
 
-#### Quản Lý Món Ăn
+#### Manage Menu Items
 
 ![Admin Menu Items](public/admin_monAn2.png)
-_Quản lý toàn bộ menu: thêm/sửa/xóa món, tải ảnh, cập nhật giá_
+_Manage all menu items: add/edit/delete dishes, upload images, update prices_
 
 ![Admin Menu Items](public/admin_QR_generate.png)
-_Quản lý mã QR các bàn_
+_Manage QR table codes_
 
-#### Quản Lý Người Dùng & Vai Trò
+#### Manage Users & Roles
 
 ![Admin Users](public/admin_user2.png)
-_Quản lý tài khoản nhân viên, phân công vai trò (Admin/Chef/Employee)_
+_Manage employee accounts, assign roles (Admin/Chef/Employee)_
 
-**Tính năng:**
+![Admin Location](public/admin_location.png)
+_ Restaurant location Management (Admin)_
 
-- ✅ CRUD danh mục sản phẩm
-- ✅ CRUD món ăn (tên, giá, ảnh, mô tả, tag)
-- ✅ Quản lý ảnh sản phẩm (tải lên, xóa, đặt ảnh chính)
-- ✅ CRUD người dùng
-- ✅ Gán/xóa vai trò cho người dùng
-- ✅ Kích hoạt/vô hiệu hóa tài khoản
+**Features:**
+
+- ✅ CRUD product categories
+- ✅ CRUD menu items (name, price, images, description, tags)
+- ✅ Manage product images (upload, delete, set primary)
+- ✅ CRUD users
+- ✅ Assign/remove roles from users
+- ✅ Enable/disable accounts
+- ✅ Configure restaurant GPS coordinates and geofence radius
+- ✅ Toggle geofencing checks on/off instantly
 
 ---
 
-## 🛠️ Công Nghệ Sử Dụng
+## 🛠️ Technology Stack
 
 ### **Client**
 
 - ⚛️ **Next.js 16** + **React 19** + **TypeScript**
-- ⚡ **App Router** - File-based routing của Next.js
-- 🎨 **Tailwind CSS** - Styling responsive
+- ⚡ **App Router** - File-based routing in Next.js
+- 🎨 **Tailwind CSS** - Responsive styling
 - 🎬 **Framer Motion** - Animations
-- 🌙 **next-themes** - Hỗ trợ theme sáng/tối
-- 🌍 **Multi-language** - Hỗ trợ Tiếng Việt & English
+- 🌙 **next-themes** - Light/dark theme support
+- 🌍 **Multi-language** - Vietnamese & English support
 
 ### **Backend**
 
 - 🟢 **Node.js** + **Express.js**
 - 🗄️ **Prisma ORM** - Database management
 - 🐘 **PostgreSQL** (Supabase)
-- 🔐 **JWT Authentication** - Xác thực an toàn
+- 🔐 **JWT Authentication** - Secure authentication
 - 📚 **Swagger/OpenAPI** - API documentation
 - ✅ **Zod** - Schema validation
 
 ---
 
-## 🚀 Bắt Đầu
-
-### **Cài Đặt Dependencies**
-
-```bash
-# Backend
-cd backend
-pnpm install
-
-# Client
-cd client
-pnpm install
-```
-
-### **Cấu Hình Database**
-
-```bash
-# Di chuyển vào backend
-cd backend
-
-# Tạo migration từ schema
-pnpm prisma migrate dev --name init
-
-# Generate Prisma Client
-pnpm prisma generate
-```
-
-### **Chạy Ứng Dụng**
-
-```bash
-# Terminal 1: Backend (http://localhost:3001)
-cd backend
-pnpm run dev
-
-# Terminal 2: Client (http://localhost:3000)
-cd client
-pnpm run dev
-```
-
----
-
-## 📱 Luồng Sử Dụng
+## 📱 User Workflows
 
 ### **Customer Workflow**
 
-1. 🔐 Đăng nhập/Đăng ký
-2. 📖 Duyệt thực đơn
-3. 🛒 Thêm món vào giỏ
-4. 📝 Nhập số bàn và đặt đơn
-5. 👀 Theo dõi tiến độ nấu (realtime)
-6. 🎉 Nhận món ăn
+1. 🔐 Login/Register
+2. 📖 Browse menu
+3. 🛒 Add items to cart
+4. 📝 Enter table number and place order
+5. 👀 Track cooking progress (real-time)
+6. 🎉 Receive order
 
 ### **Chef Workflow**
 
-1. 📋 Xem phiếu yêu cầu mới
-2. ✍️ Cập nhật: Nhận đơn → Chuẩn bị → Nấu → Sẵn sàng
-3. 👀 Khách hàng thấy cập nhật realtime
+1. 📋 View new order tickets
+2. ✍️ Update status: Order Received → Preparing → Cooking → Ready
+3. 👀 Customers see real-time updates
 
-### **Employee Workflow**
+### **Waitstaff Workflow**
 
-1. 📦 Xem danh sách đơn sẵn sàng
-2. ✓ Giao hàng cho khách
-3. 💰 Thu tiền + chọn phương thức thanh toán
-4. ✅ Xác nhận thanh toán
+1. 📦 View list of ready orders
+2. ✓ Deliver to customer
+3. 💰 Collect payment + select payment method
+4. ✅ Confirm payment
 
 ### **Admin Workflow**
 
-1. ⚙️ Quản lý danh mục & menu
-2. 👥 Quản lý tài khoản nhân viên
-3. 🔑 Phân quyền vai trò
-4. 📊 Giám sát hoạt động hệ thống
+1. ⚙️ Manage categories & menu
+2. 👥 Manage employee accounts
+3. 🔑 Assign roles & permissions
+4. 📊 Monitor system activity
 
 ---
 
-## 📂 Cấu Trúc Thư Mục
+## 📂 Project Structure
 
 ```
 ordering_food/
@@ -239,34 +202,35 @@ ordering_food/
 
 ---
 
-## 🔐 Xác Thực & Phân Quyền
+## 🔐 Authentication & Authorization
 
 ### **Roles & Permissions**
 
 | Role         | Permissions                                      |
 | ------------ | ------------------------------------------------ |
-| **Customer** | Xem menu, đặt hàng, theo dõi                     |
-| **Chef**     | Xem phiếu, cập nhật trạng thái                   |
-| **Employee** | Xác nhận giao hàng, quản lý thanh toán           |
-| **Admin**    | Quản lý tất cả (CRUD danh mục, menu, người dùng) |
+| **Customer** | Browse menu, place orders, track status          |
+| **Chef**     | View tickets, update cooking status              |
+| **Employee** | Confirm delivery, manage payments                |
+| **Admin**    | Manage everything (CRUD categories, menu, users) |
 
 ### **Authentication**
 
-- JWT Token lưu trong `localStorage`
-- Auto-refresh token khi hết hạn
-- Redirect login khi không xác thực
+- JWT Token stored in `localStorage`
+- Auto-refresh token on expiry
+- Redirect to login when unauthenticated
 
 ---
 
-## 🌟 Tính Năng Chính
+## 🌟 Key Features
 
-✅ **Real-time Updates** - SSE (Server-Sent Events) cho trạng thái đơn hàng  
-✅ **Multi-language** - Tiếng Việt & English  
+✅ **Real-time Updates** - SSE (Server-Sent Events) for order status  
+✅ **Multi-language** - Vietnamese & English  
 ✅ **Responsive Design** - Mobile-first UI  
-✅ **Image Upload** - Tải ảnh menu với xử lý tối ưu  
-✅ **Search & Filter** - Tìm kiếm món ăn theo tên/danh mục  
-✅ **Role-based Access** - Kiểm soát quyền truy cập  
-✅ **Payment Methods** - Hỗ trợ nhiều hình thức thanh toán
+✅ **Image Upload** - Upload menu images with optimization  
+✅ **Search & Filter** - Search dishes by name/category  
+✅ **Role-based Access** - Permission control  
+✅ **Payment Methods** - Support multiple payment options  
+✅ **GPS Geofencing** - Configurable GPS coordinates and radius limitation for order placement, with real-time toggle controls for administrators.
 
 ---
 
@@ -275,4 +239,3 @@ ordering_food/
 Swagger API docs available at: `http://localhost:3001/api/docs`
 
 ![Swagger API Documentation](public/swaggerOrder.png)
-
