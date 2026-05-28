@@ -423,7 +423,7 @@ export default function MenuItemDetailModal({
                 <div className='flex items-center gap-2 flex-wrap'>
                   {detail.category && (
                     <span className='text-xs font-bold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full'>
-                      {detail.category}
+                      {typeof detail.category === 'string' ? detail.category : detail.category.name}
                     </span>
                   )}
                   {detail.tag && (

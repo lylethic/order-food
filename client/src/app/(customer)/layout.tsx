@@ -30,6 +30,7 @@ import type {
 import type { SidebarNavItem } from '@/components/restaurant/sidebar';
 import type { BottomNavItem } from '@/components/restaurant/bottom-nav';
 import Link from 'next/link';
+import { requireNearRestaurant } from '@/lib/location';
 
 function toStatusEvent(event: ReturnType<typeof useSSE>): StatusEvent | null {
   if (!event) return null;
@@ -121,7 +122,20 @@ export default function CustomerLayout({
   ) => {
     setPlacing(true);
     try {
-      // Guest: create a guest session first
+      // ── 1. Geofence check ─────────────────────────────────────────────
+      // This throws if the user is outside the 50 m radius or denies permission.
+      let coords: { latitude: number; longitude: number };
+      try {
+        coords = await requireNearRestaurant();
+      } catch (geoErr: unknown) {
+        const msg =
+          geoErr instanceof Error
+            ? geoErr.message
+            : 'Không thể xác định vị trí của bạn.';
+        throw new Error(msg);
+      }
+
+      // ── 2. Guest: create a guest session first ────────────────────────
       if (isGuest && guestName && guestPhone) {
         const guestRes = await authApiRequest.guestRegister({
           name: guestName,
@@ -146,6 +160,7 @@ export default function CustomerLayout({
         });
       }
 
+      // ── 3. Create the order (GPS coords forwarded for server-side validation) ──
       const res = await orderApiRequest.create({
         tableNumber,
         items: cart.map((c) => ({
@@ -155,6 +170,8 @@ export default function CustomerLayout({
         })),
         guestName: isGuest ? guestName : undefined,
         guestPhone: isGuest ? guestPhone : undefined,
+        latitude: coords.latitude,
+        longitude: coords.longitude,
       });
 
       const orderPayload = res.payload as {

@@ -14,6 +14,8 @@ import {
 } from '../schemas/validation.js';
 import { sendResponse, handleRouteError } from '../utils/response.js';
 import { BaseSearchRequest } from '../schemas/search.js';
+import { getDistanceInMeters } from '../utils/geo.js';
+import { restaurantLocationService } from '../services/restaurantLocation.service.js';
 
 const router = Router();
 
@@ -131,8 +133,56 @@ router.get('/orders', authenticate, isStaff, async (req, res) => {
 router.post('/orders', optionalAuthenticate, async (req, res) => {
   try {
     const dto = CreateOrderSchema.parse(req.body);
+
+    const isStaff = req.user && (
+      req.user.role === 'EMPLOYEE' || 
+      req.user.role === 'ADMIN' || 
+      (Array.isArray(req.user.role) && (req.user.role.includes('EMPLOYEE') || req.user.role.includes('ADMIN')))
+    );
+
+    // ── Server-Side Geofence Validation (coordinates loaded from DB) ──────────
+    const location = await restaurantLocationService.getActive();
+
+    if (location.geofence_enabled && !isStaff) {
+      if (dto.latitude === undefined || dto.longitude === undefined) {
+        res.status(400).json({
+          success: false,
+          statusCode: 400,
+          message: 'Vị trí GPS là bắt buộc để đặt hàng',
+          message_en: 'GPS location is required to place an order',
+          data: null,
+        });
+        return;
+      }
+
+      const distance = getDistanceInMeters(
+        dto.latitude,
+        dto.longitude,
+        location.latitude,
+        location.longitude,
+      );
+
+      if (distance > location.radius_meters) {
+        res.status(403).json({
+          success: false,
+          statusCode: 403,
+          message: `Bạn đang ở cách nhà hàng ${Math.round(distance)}m. Bạn phải ở trong phạm vi ${location.radius_meters}m để đặt món.`,
+          message_en: `Order rejected. You are ${Math.round(distance)}m from the restaurant. You must be within ${location.radius_meters}m to place an order.`,
+          data: null,
+        });
+        return;
+      }
+    }
+    // ─────────────────────────────────────────────────────────────────────────
+
+    // Resolve target customerId
+    let targetCustomerId = isStaff ? undefined : req.user?.userId;
+    if (isStaff && dto.customerId) {
+      targetCustomerId = dto.customerId;
+    }
+
     const sessionId = req.headers['x-session-id'] as string;
-    const data = await orderService.create(dto, req.user?.userId, sessionId);
+    const data = await orderService.create(dto, targetCustomerId, sessionId);
     sendResponse(res, {
       message: 'Tạo đơn hàng thành công',
       message_en: 'Order created successfully',
@@ -142,6 +192,8 @@ router.post('/orders', optionalAuthenticate, async (req, res) => {
     handleRouteError(err, res);
   }
 });
+
+
 
 /**
  * @swagger

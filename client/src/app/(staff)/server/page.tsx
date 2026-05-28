@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import Link from 'next/link';
 import {
   Truck,
   CheckCircle2,
@@ -9,6 +10,7 @@ import {
   CircleDollarSign,
   AlertCircle,
   Printer,
+  Plus,
 } from 'lucide-react';
 import { useAppContext } from '@/app/app-provider';
 import { useStaffLayout } from '@/contexts/staff-layout-context';
@@ -145,6 +147,26 @@ export default function ServerPage() {
 
   return (
     <div className='pt-8 pb-32 md:pb-10 px-6 md:px-10 max-w-7xl mx-auto'>
+      {/* Action Header */}
+      <div className='flex items-center justify-between mb-8 pb-4 border-b'>
+        <div>
+          <h1 className='text-2xl font-extrabold text-foreground'>
+            {lang === 'vi' ? 'Trạm Phục Vụ' : 'Waiter Station'}
+          </h1>
+          <p className='text-sm text-muted-foreground mt-0.5'>
+            {lang === 'vi' ? 'Tiếp nhận món ăn và quản lý thanh toán' : 'Receive dishes and manage payments'}
+          </p>
+        </div>
+        <Link
+          href='/server/create-order'
+          id='btn-create-order'
+          className='flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-bold shadow-sm transition-colors'
+        >
+          <Plus className='w-4 h-4' />
+          <span>{lang === 'vi' ? 'Tạo đơn tại bàn' : 'Create Order'}</span>
+        </Link>
+      </div>
+
       <AnimatePresence>
         {toast && (
           <motion.div

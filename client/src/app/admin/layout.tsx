@@ -14,6 +14,7 @@ import {
   BarChart2,
   Menu,
   X,
+  MapPin,
 } from 'lucide-react';
 import { useAppContext } from '@/app/app-provider';
 import { useSSE } from '@/hooks/useSSE';
@@ -140,6 +141,12 @@ export default function AdminDashboardLayout({
       icon: BarChart2,
       href: '/admin/statistic',
     },
+    {
+      id: 'restaurant-location',
+      label: 'Vị trí nhà hàng',
+      icon: MapPin,
+      href: '/admin/restaurant-location',
+    },
   ];
 
   const activeId = pathname.startsWith('/admin/menu-items')
@@ -154,7 +161,9 @@ export default function AdminDashboardLayout({
             ? 'orders'
             : pathname.startsWith('/admin/statistic')
               ? 'statistic'
-              : 'categories';
+              : pathname.startsWith('/admin/restaurant-location')
+                ? 'restaurant-location'
+                : 'categories';
 
   const activeNav = navItems.find((item) => item.id === activeId);
   const topTitle = activeNav?.label ?? t.adminPanel;
