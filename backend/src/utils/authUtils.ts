@@ -34,6 +34,12 @@ export function generateAccessToken(
   email: string,
   roles: string[],
 ): string {
+  let expiry: string | number = ACCESS_TOKEN_EXPIRY;
+  
+  if (typeof expiry === 'string' && /^\d+$/.test(expiry)) {
+    expiry = Number(expiry); 
+  }
+
   return jwt.sign(
     {
       sub: userId.toString(),
@@ -43,7 +49,7 @@ export function generateAccessToken(
       role: roles,
     },
     process.env.JWT_SECRET!,
-    { expiresIn: ACCESS_TOKEN_EXPIRY as jwt.SignOptions['expiresIn'] },
+    { expiresIn: expiry as jwt.SignOptions['expiresIn'] },
   );
 }
 
