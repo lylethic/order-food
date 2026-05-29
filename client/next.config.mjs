@@ -1,5 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Enable standalone output for Docker/Render deployment
+  output: 'standalone',
   images: {
     unoptimized: true,
     remotePatterns: [

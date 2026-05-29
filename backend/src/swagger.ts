@@ -752,7 +752,9 @@ const options: swaggerJSDoc.Options = {
     },
   },
   // swagger-jsdoc scans JSDoc @swagger comments in these files
-  apis: ['./src/controllers/*.ts'],
+  // In development (tsx): scan .ts source files
+  // In production (compiled Docker): scan .js files in dist/
+  apis: ['./src/controllers/*.ts', './dist/controllers/*.js'],
 };
 
 export const swaggerSpec = swaggerJSDoc(options);
