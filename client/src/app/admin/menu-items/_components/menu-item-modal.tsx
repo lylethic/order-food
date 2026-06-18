@@ -37,17 +37,16 @@ export default function MenuItemModal({
 }: Props) {
   const { t } = useAppContext();
 
-  // Khởi tạo state: Đảm bảo lấy đúng categoryId từ props initial
-  // Lưu ý: Kiểm tra xem API của bạn trả về categoryId hay category_id
   const [form, setForm] = useState({
     name: initial?.name ?? '',
     description: initial?.description ?? '',
     price: initial?.price ?? 0,
     category_id:
-      initial?.categoryId ??
+      (initial?.categoryId ? String(initial.categoryId) : undefined) ??
+      ((initial as any)?.category_id ? String((initial as any).category_id) : undefined) ??
       (typeof initial?.category === 'object' && initial?.category !== null
-        ? initial.category.id
-        : (initial?.category as string | undefined)) ??
+        ? String(initial.category.id)
+        : (initial?.category ? String(initial.category) : undefined)) ??
       '',
     tag: initial?.tag ?? '',
   });
@@ -55,7 +54,7 @@ export default function MenuItemModal({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [detail, setDetail] = useState<MenuItemDetailType | null>(null);
-  const [showImages, setShowImages] = useState(false);
+  const [showImages, setShowImages] = useState(true);
 
   useEffect(() => {
     if (initial?.id) {
@@ -194,7 +193,7 @@ export default function MenuItemModal({
                   </option>
                   {categories.map((c) => (
                     <option key={c.id} value={c.id}>
-                      {c.name}
+                      {c.name} aaa
                     </option>
                   ))}
                 </select>

@@ -20,7 +20,8 @@ const allowedOrigins = [
   'http://127.0.0.1:3000',
   'http://localhost:3000',
   'http://172.23.55.205:3000',
-  'http://172.23.55.205:3001'
+  'http://172.23.55.205:3001',
+  'https://order-food-60mj.onrender.com'
 ].filter(Boolean) as string[];
 
 app.use(
