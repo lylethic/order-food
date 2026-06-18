@@ -34,6 +34,22 @@ export function generateAccessToken(
   email: string,
   roles: string[],
 ): string {
+  let expiry: string | number = ACCESS_TOKEN_EXPIRY;
+  
+  console.log("[JWT Debug] Raw expiry value from env:", JSON.stringify(expiry), typeof expiry);
+  
+  if (typeof expiry === 'string') {
+    // Loại bỏ mọi dấu ngoặc kép hoặc ngoặc đơn bị thừa (ví dụ '"60m"' do lỗi copy)
+    expiry = expiry.replace(/['"]/g, '').trim();
+    
+    // Nếu là chuỗi số thuần túy như "60", chuyển thành number 60
+    if (/^\d+$/.test(expiry)) {
+      expiry = Number(expiry);
+    }
+  }
+
+  console.log("[JWT Debug] Final parsed expiry value:", expiry, typeof expiry);
+
   return jwt.sign(
     {
       sub: userId.toString(),
@@ -43,7 +59,7 @@ export function generateAccessToken(
       role: roles,
     },
     process.env.JWT_SECRET!,
-    { expiresIn: ACCESS_TOKEN_EXPIRY as jwt.SignOptions['expiresIn'] },
+    { expiresIn: expiry as jwt.SignOptions['expiresIn'] },
   );
 }
 

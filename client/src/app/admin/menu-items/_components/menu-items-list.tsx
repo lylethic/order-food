@@ -41,6 +41,12 @@ export default function AdminMenuItemsList() {
     ...categories,
   ];
 
+  const getCategoryName = (catId?: string | number | null) => {
+    if (!catId) return '';
+    const cat = categories.find((c) => String(c.id) === String(catId));
+    return cat ? cat.name : '';
+  };
+
   const fetchCategories = useCallback(async () => {
     try {
       const catRes = await categoryApiRequest.list();
@@ -152,9 +158,9 @@ export default function AdminMenuItemsList() {
 
   return (
     <div className='px-6 py-8 max-w-5xl mt-10 mx-auto w-full'>
-      <div className='flex items-center justify-between mb-6'>
+      <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6'>
         <div className='flex items-center gap-3'>
-          <div className='w-9 h-9 bg-amber-100 rounded-xl flex items-center justify-center'>
+          <div className='w-9 h-9 bg-amber-100 rounded-xl flex items-center justify-center shrink-0'>
             <UtensilsCrossed className='w-5 h-5 text-amber-600' />
           </div>
 
@@ -172,7 +178,7 @@ export default function AdminMenuItemsList() {
 
         <button
           onClick={() => setEditTarget('new')}
-          className='flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold px-4 py-2.5 rounded-xl active:scale-95 transition-all shadow-md shadow-indigo-100'
+          className='flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold px-4 py-2.5 rounded-xl active:scale-95 transition-all shadow-md shadow-indigo-100 w-full sm:w-auto shrink-0'
         >
           <Plus className='w-4 h-4' />
           {t.addNew}
@@ -217,35 +223,42 @@ export default function AdminMenuItemsList() {
           {items.map((item) => (
             <div
               key={item.id}
-              className='border border-border rounded-2xl px-4 py-3 flex items-center gap-4 shadow-sm'
+              className='border border-border rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3 flex items-center gap-3 sm:gap-4 shadow-sm hover:shadow-md transition-shadow'
             >
-              <div className='w-14 h-14 rounded-xl overflow-hidden bg-muted shrink-0'>
-                <div className='relative w-full h-[60px] rounded-lg bg-indigo-50 flex items-center justify-center shrink-0 overflow-hidden'>
-                  {item.image ? (
-                    <Image
-                      src={`${process.env.NEXT_PUBLIC_API_ENDPOINT}/${item.image}`}
-                      alt={item.name || 'Menu'}
-                      fill
-                      unoptimized
-                      sizes='60px'
-                      className='object-cover group-hover:scale-105 transition-transform duration-700'
-                    />
-                  ) : (
-                    <div className='w-full h-full flex items-center justify-center text-muted-foreground'>
-                      <ImageOff className='w-5 h-5' />
-                    </div>
-                  )}
-                </div>
+              <div className='w-12 h-12 sm:w-14 sm:h-14 rounded-xl overflow-hidden bg-muted shrink-0 relative flex items-center justify-center bg-indigo-50'>
+                {item.image ? (
+                  <Image
+                    src={`${process.env.NEXT_PUBLIC_API_ENDPOINT}/${item.image}`}
+                    alt={item.name || 'Menu'}
+                    fill
+                    unoptimized
+                    sizes='(max-width: 640px) 48px, 56px'
+                    className='object-cover group-hover:scale-105 transition-transform duration-700'
+                  />
+                ) : (
+                  <ImageOff className='w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground' />
+                )}
               </div>
 
               <div className='flex-1 min-w-0'>
                 <p className='text-sm font-bold text-foreground truncate'>
                   {item.name}
                 </p>
-
-                {/* <p className='text-xs text-muted-foreground truncate'>
-                  {item.category.name}
-                </p> */}
+                <div className='flex items-center gap-1.5 mt-0.5 flex-wrap'>
+                  {getCategoryName((item as any).category_id) && (
+                    <span className='inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200/50'>
+                      {getCategoryName((item as any).category_id)}
+                    </span>
+                  )}
+                  {item.tag && (
+                    <span className='inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200/50'>
+                      {item.tag}
+                    </span>
+                  )}
+                  <span className='text-xs font-extrabold text-foreground sm:hidden shrink-0'>
+                    {formatVnd(item.price)}
+                  </span>
+                </div>
               </div>
 
               <span className='text-sm font-extrabold text-foreground shrink-0 hidden sm:block'>
