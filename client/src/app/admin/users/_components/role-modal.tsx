@@ -9,6 +9,7 @@ import type { AdminUserType } from '@/schemaValidations/user.schema';
 import type { RestaurantRoleType } from '@/schemaValidations/role.schema';
 
 function roleBadgeColor(name: string) {
+  if (!name) return 'bg-muted text-muted-foreground';
   const n = name.toUpperCase();
   if (n === 'ADMIN') return 'bg-indigo-100 text-indigo-700';
   if (n === 'CHEF') return 'bg-amber-100 text-amber-700';

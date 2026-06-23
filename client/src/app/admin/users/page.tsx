@@ -15,7 +15,8 @@ import type { RestaurantRoleType } from '@/schemaValidations/role.schema';
 import Image from 'next/image';
 import envConfig from '@/config';
 
-function roleBadgeColor(name: string) {
+function roleBadgeColor(name?: string | null) {
+  if (!name) return 'bg-muted text-muted-foreground';
   const n = name.toUpperCase();
   if (n === 'ADMIN') return 'bg-indigo-100 text-indigo-700';
   if (n === 'CHEF') return 'bg-amber-100 text-amber-700';
@@ -218,9 +219,9 @@ export default function AdminUsersPage() {
                   <p className='text-xs text-muted-foreground truncate'>
                     {user.email}
                   </p>
-                  {user.roles.map((r) => (
+                  {user.roles.map((r, index) => (
                     <span
-                      key={r.id}
+                      key={r.id || index}
                       className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${roleBadgeColor(r.name)}`}
                     >
                       {r.name}

@@ -3,16 +3,54 @@ node_modules/
 uploads
 nul
 
-.claude
-
-CLAUDE.md
-
 backend/dist
-
-.gemini
-AGENTS.md
 
 # client
 frontend
 
+# Environments
+.env
+.venv/
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+
+# Uploads / Data
+uploads/
+*.sqlite3
+*.db
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+
+# agents
+.claude
+CLAUDE.md
 .antigravitycli
+.gemini
+AGENTS.md

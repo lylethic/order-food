@@ -1,6 +1,6 @@
 # 🍽️ Ordering Food Management System
 
-A comprehensive restaurant management and ordering platform built with **Next.js + TypeScript** (Client) and **Node.js + Express + Prisma** (Backend), supporting 4 main roles with dedicated features.
+A comprehensive restaurant management and ordering platform built with **Next.js + TypeScript** (Client) and **Python + FastAPI + SQLAlchemy** (Backend), supporting 4 main roles with dedicated features.
 
 ---
 
@@ -128,12 +128,12 @@ _ Restaurant location Management (Admin)_
 
 ### **Backend**
 
-- 🟢 **Node.js** + **Express.js**
-- 🗄️ **Prisma ORM** - Database management
+- 🐍 **Python** + **FastAPI**
+- 🗄️ **SQLAlchemy ORM** + **Alembic** - Database management & migrations
 - 🐘 **PostgreSQL** (Supabase)
-- 🔐 **JWT Authentication** - Secure authentication
-- 📚 **Swagger/OpenAPI** - API documentation
-- ✅ **Zod** - Schema validation
+- 🔐 **JWT Authentication** - Secure authentication (python-jose, passlib)
+- 📚 **Swagger/OpenAPI** - Auto-generated API documentation
+- ✅ **Pydantic** - Data validation and settings management
 
 ---
 
@@ -175,16 +175,16 @@ _ Restaurant location Management (Admin)_
 ```
 ordering_food/
 ├── backend/
-│   ├── src/
-│   │   ├── controllers/        # API route handlers
-│   │   ├── services/           # Business logic
-│   │   ├── providers/          # Data access layer (Prisma)
-│   │   ├── middleware/         # Auth, RBAC
-│   │   ├── schemas/            # Zod validation
-│   │   └── utils/              # Helpers
-│   ├── prisma/
-│   │   └── schema.prisma       # Database schema
-│   └── src/server.ts           # Main app file
+│   ├── app/
+│   │   ├── routers/            # API endpoints (FastAPI routers)
+│   │   ├── models/             # SQLAlchemy models
+│   │   ├── schemas/            # Pydantic validation schemas
+│   │   ├── crud/               # Database operations
+│   │   ├── core/               # Security, configs (settings)
+│   │   └── main.py             # FastAPI application instance
+│   ├── alembic/                # Database migrations
+│   ├── alembic.ini             # Alembic configuration
+│   └── requirements.txt        # Python dependencies
 │
 ├── client/
 │   ├── src/

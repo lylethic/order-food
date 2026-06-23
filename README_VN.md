@@ -1,6 +1,6 @@
 # 🍽️ Ordering Food Management System
 
-Hệ thống quản lý đặt hàng và điều hành nhà hàng toàn diện, được xây dựng bằng **Next.js + TypeScript** (Client) và **Node.js + Express + Prisma** (Backend), hỗ trợ 4 roles chính với các tính năng riêng biệt.
+Hệ thống quản lý đặt hàng và điều hành nhà hàng toàn diện, được xây dựng bằng **Next.js + TypeScript** (Client) và **Python + FastAPI + SQLAlchemy** (Backend), hỗ trợ 4 roles chính với các tính năng riêng biệt.
 
 ---
 
@@ -130,12 +130,12 @@ _Quản lý vị trí của nhà hàng (Admin)_
 
 ### **Backend**
 
-- 🟢 **Node.js** + **Express.js**
-- 🗄️ **Prisma ORM** - Database management
+- 🐍 **Python** + **FastAPI**
+- 🗄️ **SQLAlchemy ORM** + **Alembic** - Quản lý database & migrations
 - 🐘 **PostgreSQL** (Supabase)
-- 🔐 **JWT Authentication** - Xác thực an toàn
-- 📚 **Swagger/OpenAPI** - API documentation
-- ✅ **Zod** - Schema validation
+- 🔐 **JWT Authentication** - Xác thực an toàn (python-jose, passlib)
+- 📚 **Swagger/OpenAPI** - Auto-generated API documentation
+- ✅ **Pydantic** - Validation dữ liệu và quản lý settings
 
 ---
 
@@ -177,16 +177,16 @@ _Quản lý vị trí của nhà hàng (Admin)_
 ```
 ordering_food/
 ├── backend/
-│   ├── src/
-│   │   ├── controllers/        # API route handlers
-│   │   ├── services/           # Business logic
-│   │   ├── providers/          # Data access layer (Prisma)
-│   │   ├── middleware/         # Auth, RBAC
-│   │   ├── schemas/            # Zod validation
-│   │   └── utils/              # Helpers
-│   ├── prisma/
-│   │   └── schema.prisma       # Database schema
-│   └── src/server.ts           # Main app file
+│   ├── app/
+│   │   ├── routers/            # API route handlers
+│   │   ├── models/             # SQLAlchemy models
+│   │   ├── schemas/            # Pydantic validation schemas
+│   │   ├── crud/               # Truy vấn database
+│   │   ├── core/               # Auth, utils, config
+│   │   └── main.py             # Main app file
+│   ├── alembic/                # Database migrations
+│   ├── alembic.ini             # Alembic configuration
+│   └── requirements.txt        # Python dependencies
 │
 ├── client/
 │   ├── src/

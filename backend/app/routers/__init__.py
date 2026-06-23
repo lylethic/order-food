@@ -1,0 +1,33 @@
+from app.routers import (
+    health,
+    auth,
+    categories,
+    menu_items,
+    orders,
+    cart,
+    comments,
+    users,
+    roles,
+    tables,
+    statistics,
+    restaurant_location,
+    static_files,
+    vatConfiguration,
+)
+
+__all__ = [
+    "health",
+    "auth",
+    "categories",
+    "menu_items",
+    "orders",
+    "cart",
+    "comments",
+    "users",
+    "roles",
+    "tables",
+    "statistics",
+    "restaurant_location",
+    "static_files",
+    "vatConfiguration",
+]

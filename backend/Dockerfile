@@ -1,66 +1,34 @@
 # ============================================================
-# Stage 1 — deps: install ALL dependencies (dev + prod)
+# Python FastAPI Backend
 # ============================================================
-FROM node:22-alpine AS deps
+FROM python:3.12-slim
 
+# Set working directory
 WORKDIR /app
 
-RUN npm install -g pnpm
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV PORT=3001
 
-COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
 
-# ============================================================
-# Stage 2 — builder: generate Prisma client + compile TypeScript
-# ============================================================
-FROM node:22-alpine AS builder
+# Install Python dependencies
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
 
-WORKDIR /app
-
-RUN npm install -g pnpm
-
-COPY package.json pnpm-lock.yaml ./
-COPY --from=deps /app/node_modules ./node_modules
-
-COPY tsconfig.json ./
-COPY prisma.config.ts ./
-COPY prisma ./prisma
-COPY src ./src
-
-# Generate Prisma client BEFORE tsc so @prisma/client types exist
-RUN pnpm db:generate
-
-# Compile TypeScript → dist/
-RUN pnpm build
-
-# ============================================================
-# Stage 3 — runner: lean production image
-# ============================================================
-FROM node:22-alpine AS runner
-
-WORKDIR /app
-
-RUN npm install -g pnpm
-
-COPY package.json pnpm-lock.yaml ./
-
-# Install production-only dependencies
-RUN pnpm install --frozen-lockfile --prod
-
-# Copy Prisma schema, migrations, and config (needed for migrate deploy + generate)
-COPY prisma.config.ts ./
-COPY prisma ./prisma
-
-# Generate Prisma client against the production node_modules
-RUN pnpm db:generate
-
-# Copy compiled TypeScript output
-COPY --from=builder /app/dist ./dist
+# Copy application files
+COPY . .
 
 # Create uploads directory for serving static files
 RUN mkdir -p uploads
 
+# Expose port
 EXPOSE 3001
 
-# prisma db push syncs schema.prisma directly to DB (no migration gap)
-CMD ["sh", "-c", "npx prisma db push --accept-data-loss && node dist/server.js"]
+# Start command: run migrations and start the FastAPI server
+CMD ["sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-3001}"]

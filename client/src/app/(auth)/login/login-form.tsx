@@ -127,6 +127,7 @@ const LoginForm = () => {
                   className='text-black'
                   placeholder='••••••'
                   type='password'
+                  autoComplete='current-password'
                   {...field}
                 />
               </FormControl>
